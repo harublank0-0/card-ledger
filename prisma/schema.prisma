@@ -80,7 +80,7 @@ model Verification {
 // Domain models. See docs/database.md for conventions:
 // - money = Int minor units + ISO 4217 currency (never floats)
 // - date-only business values use @db.Date
-// - financial history is archived, never hard-deleted (onDelete: Restrict)
+// - financial history is archived, never hard-deleted (onDelete: NoAction, i.e. Restrict that still allows user cascade)
 // ---------------------------------------------------------------------------
 
 enum BillingUnit {
@@ -141,7 +141,7 @@ model Subscription {
   updatedAt            DateTime           @updatedAt
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: NoAction)
 
   @@index([userId, status])
   @@index([userId, paymentMethodId])
