@@ -131,6 +131,17 @@ export async function listTransactions(
 	};
 }
 
+/** The newest transactions across all dates (for the dashboard). */
+export async function listRecentTransactions(userId: string, limit: number) {
+	const rows = await prisma.transaction.findMany({
+		where: { userId },
+		include: viewInclude,
+		orderBy: [{ occurredOn: "desc" }, { id: "desc" }],
+		take: limit,
+	});
+	return rows.map(toView);
+}
+
 // ---------------------------------------------------------------------------
 // Reading one
 // ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	describeInterval,
+	monthlyCommitments,
 	monthlyEquivalentMinor,
 	occurrenceAt,
 	subscriptionState,
@@ -201,5 +202,35 @@ describe("describeInterval", () => {
 		expect(describeInterval(1, "WEEK")).toBe("Weekly");
 		expect(describeInterval(6, "MONTH")).toBe("Every 6 months");
 		expect(describeInterval(2, "WEEK")).toBe("Every 2 weeks");
+	});
+});
+
+describe("monthlyCommitments", () => {
+	const sub = (
+		state: "ACTIVE" | "NOT_RENEWING" | "CANCELLED" | "EXPIRED" | "ENDS_SOON",
+		currency: string,
+		monthlyEquivalentMinor: number,
+	) => ({ state, currency, monthlyEquivalentMinor });
+	it("adds up renewing subscriptions per currency without mixing currencies", () => {
+		expect(
+			monthlyCommitments([
+				sub("ACTIVE", "NPR", 64_900),
+				sub("ACTIVE", "NPR", 10_000),
+				sub("ACTIVE", "USD", 999),
+			]),
+		).toEqual([
+			{ currency: "NPR", monthlyMinor: 74_900, count: 2 },
+			{ currency: "USD", monthlyMinor: 999, count: 1 },
+		]);
+	});
+	it("skips subscriptions that are not renewing", () => {
+		expect(
+			monthlyCommitments([
+				sub("CANCELLED", "NPR", 5_000),
+				sub("NOT_RENEWING", "NPR", 5_000),
+				sub("EXPIRED", "NPR", 5_000),
+			]),
+		).toEqual([]);
+		expect(monthlyCommitments([])).toEqual([]);
 	});
 });

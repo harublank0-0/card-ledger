@@ -139,3 +139,73 @@ export function statusLabel(input: {
 		tone: "neutral",
 	};
 }
+
+/** A card, as needed to decide when its payment is due. */
+export type DueCard = {
+	id: string;
+	name: string;
+	last4: string;
+	paymentDueDay: number | null;
+	/** Any statement recorded (paid or not). Such cards are driven by their statements. */
+	hasStatements: boolean;
+};
+
+/** A statement with its outstanding amount. Paid statements may be passed; they are ignored. */
+export type DueStatement = {
+	id: string;
+	cardName: string;
+	last4: string;
+	dueDate: CalendarDate;
+	outstandingMinor: number;
+	currency: string;
+};
+
+export type CardPaymentDueEvent = {
+	source: "STATEMENT" | "CARD_DAY";
+	/** The statement id, or the card id for the due-day fallback. */
+	entityId: string;
+	cardName: string;
+	last4: string;
+	/** Before `today` for an overdue statement. */
+	dueDate: CalendarDate;
+	/** Statements only: what is still owed. */
+	amountMinor?: number;
+	currency?: string;
+};
+
+/**
+ * When card payments are due. An unpaid statement is due on its real due date for what is
+ * still owed (overdue ones are included, with a past date). A card with no statements falls
+ * back to its saved monthly due day; once a card has any statement, only statements count, so
+ * a paid-off card is not reported as due every month. Shared by reminders and the dashboard.
+ */
+export function cardPaymentDueEvents(input: {
+	today: CalendarDate;
+	cards: readonly DueCard[];
+	statements: readonly DueStatement[];
+}): CardPaymentDueEvent[] {
+	const events: CardPaymentDueEvent[] = [];
+	for (const statement of input.statements) {
+		if (statement.outstandingMinor <= 0) continue;
+		events.push({
+			source: "STATEMENT",
+			entityId: statement.id,
+			cardName: statement.cardName,
+			last4: statement.last4,
+			dueDate: statement.dueDate,
+			amountMinor: statement.outstandingMinor,
+			currency: statement.currency,
+		});
+	}
+	for (const card of input.cards) {
+		if (card.hasStatements || card.paymentDueDay === null) continue;
+		events.push({
+			source: "CARD_DAY",
+			entityId: card.id,
+			cardName: card.name,
+			last4: card.last4,
+			dueDate: nextMonthlyOccurrence(card.paymentDueDay, input.today),
+		});
+	}
+	return events;
+}

@@ -158,3 +158,32 @@ export function describeInterval(count: number, unit: BillingUnit) {
 	if (count === 3 && unit === "MONTH") return "Quarterly";
 	return `Every ${count} ${names[unit]}s`;
 }
+
+/**
+ * Expected monthly cost of the subscriptions that are still renewing, per currency.
+ * Derived from billing cycles; it is not what was actually charged, and currencies are never
+ * combined.
+ */
+export function monthlyCommitments(
+	subscriptions: readonly {
+		state: SubscriptionState;
+		currency: string;
+		monthlyEquivalentMinor: number;
+	}[],
+) {
+	const byCurrency = new Map<string, { monthlyMinor: number; count: number }>();
+	for (const s of subscriptions) {
+		if (s.state !== "ACTIVE") continue;
+		const entry = byCurrency.get(s.currency) ?? { monthlyMinor: 0, count: 0 };
+		entry.monthlyMinor += s.monthlyEquivalentMinor;
+		entry.count += 1;
+		byCurrency.set(s.currency, entry);
+	}
+	return [...byCurrency.entries()]
+		.map(([currency, { monthlyMinor, count }]) => ({
+			currency,
+			monthlyMinor,
+			count,
+		}))
+		.sort((a, b) => a.currency.localeCompare(b.currency));
+}

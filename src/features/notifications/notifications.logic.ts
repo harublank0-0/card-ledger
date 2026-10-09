@@ -1,4 +1,9 @@
 import {
+	cardPaymentDueEvents,
+	type DueCard,
+	type DueStatement,
+} from "#/features/statements/statements.logic";
+import {
 	type BillingUnit,
 	type SubscriptionStatus,
 	upcomingRenewals,
@@ -7,7 +12,6 @@ import {
 	type CalendarDate,
 	compareCalendarDates,
 	diffInDays,
-	nextMonthlyOccurrence,
 } from "#/lib/calendar-date";
 
 export type ReminderKind =
@@ -42,24 +46,10 @@ export type PlannerSubscription = {
 	cancellationDeadline: CalendarDate | null;
 };
 
-export type PlannerCard = {
-	id: string;
-	name: string;
-	last4: string;
-	paymentDueDay: number | null;
-	/** Any statement recorded (paid or not). Such cards are reminded from their statements. */
-	hasStatements: boolean;
-};
+export type PlannerCard = DueCard;
 
-/** A statement with something still owed. Paid statements are not passed in. */
-export type PlannerStatement = {
-	id: string;
-	cardName: string;
-	last4: string;
-	dueDate: CalendarDate;
-	outstandingMinor: number;
-	currency: string;
-};
+/** A statement with something still owed. Paid statements are ignored. */
+export type PlannerStatement = DueStatement;
 
 export type Reminder = {
 	kind: ReminderKind;
@@ -149,30 +139,23 @@ export function computeReminders(input: {
 	}
 
 	if (prefs.paymentDueEnabled) {
-		// An unpaid statement is reminded on its real due date, for what is still owed.
-		// Overdue ones are skipped here (daysUntil < 0); the statements page shows them.
-		for (const statement of input.statements) {
-			if (statement.outstandingMinor <= 0) continue;
+		// Unpaid statements by their real due date, or the card's monthly due day when it has no
+		// statements (see `cardPaymentDueEvents`). Overdue ones fall out here (daysUntil < 0);
+		// the statements page and dashboard show them.
+		for (const event of cardPaymentDueEvents({
+			today,
+			cards: input.cards,
+			statements: input.statements,
+		})) {
 			add({
 				kind: "CARD_PAYMENT_DUE",
-				entityId: statement.id,
-				label: statement.cardName,
-				last4: statement.last4,
-				amountMinor: statement.outstandingMinor,
-				currency: statement.currency,
-				eventDate: statement.dueDate,
-			});
-		}
-		// Cards without any statements fall back to their saved monthly due day. Once a card
-		// has statements, only those drive reminders (a paid-off card is not nagged monthly).
-		for (const card of input.cards) {
-			if (card.hasStatements || card.paymentDueDay === null) continue;
-			add({
-				kind: "CARD_PAYMENT_DUE",
-				entityId: card.id,
-				label: card.name,
-				last4: card.last4,
-				eventDate: nextMonthlyOccurrence(card.paymentDueDay, today),
+				entityId: event.entityId,
+				label: event.cardName,
+				last4: event.last4,
+				eventDate: event.dueDate,
+				...(event.amountMinor !== undefined
+					? { amountMinor: event.amountMinor, currency: event.currency }
+					: {}),
 			});
 		}
 	}

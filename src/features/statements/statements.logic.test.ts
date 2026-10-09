@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	cardPaymentDueEvents,
 	outstandingByCurrency,
 	outstandingMinor,
 	overpaidMinor,
@@ -240,5 +241,100 @@ describe("statusLabel", () => {
 		expect(
 			statusLabel({ status: "PAID", daysUntilDue: -40, paidMinor: 500 }),
 		).toEqual({ label: "Paid", tone: "success" });
+	});
+});
+
+describe("cardPaymentDueEvents", () => {
+	const card = {
+		id: "card-1",
+		name: "Daily",
+		last4: "0000",
+		paymentDueDay: 20,
+		hasStatements: false,
+	};
+	const statement = {
+		id: "st-1",
+		cardName: "Daily",
+		last4: "0000",
+		dueDate: "2025-03-20",
+		outstandingMinor: 500_000,
+		currency: "NPR",
+	};
+
+	it("reports an unpaid statement on its real due date with the amount owed", () => {
+		expect(
+			cardPaymentDueEvents({
+				today: "2025-03-10",
+				cards: [{ ...card, hasStatements: true }],
+				statements: [statement],
+			}),
+		).toEqual([
+			{
+				source: "STATEMENT",
+				entityId: "st-1",
+				cardName: "Daily",
+				last4: "0000",
+				dueDate: "2025-03-20",
+				amountMinor: 500_000,
+				currency: "NPR",
+			},
+		]);
+	});
+	it("includes overdue statements with their past date", () => {
+		const [event] = cardPaymentDueEvents({
+			today: "2025-04-01",
+			cards: [],
+			statements: [statement],
+		});
+		expect(event?.dueDate).toBe("2025-03-20");
+	});
+	it("ignores statements with nothing left to pay", () => {
+		expect(
+			cardPaymentDueEvents({
+				today: "2025-03-10",
+				cards: [],
+				statements: [{ ...statement, outstandingMinor: 0 }],
+			}),
+		).toEqual([]);
+	});
+	it("falls back to the card's due day only when it has no statements", () => {
+		expect(
+			cardPaymentDueEvents({
+				today: "2025-03-10",
+				cards: [card],
+				statements: [],
+			}),
+		).toEqual([
+			{
+				source: "CARD_DAY",
+				entityId: "card-1",
+				cardName: "Daily",
+				last4: "0000",
+				dueDate: "2025-03-20",
+			},
+		]);
+		expect(
+			cardPaymentDueEvents({
+				today: "2025-03-10",
+				cards: [{ ...card, hasStatements: true }],
+				statements: [],
+			}),
+		).toEqual([]);
+		expect(
+			cardPaymentDueEvents({
+				today: "2025-03-10",
+				cards: [{ ...card, paymentDueDay: null }],
+				statements: [],
+			}),
+		).toEqual([]);
+	});
+	it("rolls the fallback to next month once this month's day has passed", () => {
+		expect(
+			cardPaymentDueEvents({
+				today: "2025-03-21",
+				cards: [card],
+				statements: [],
+			})[0]?.dueDate,
+		).toBe("2025-04-20");
 	});
 });

@@ -4,10 +4,13 @@ import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import { listSubscriptionsFn } from "#/features/subscriptions/subscriptions.functions";
 import type { SubscriptionState } from "#/features/subscriptions/subscriptions.logic";
-import { describeInterval } from "#/features/subscriptions/subscriptions.logic";
+import {
+	describeInterval,
+	monthlyCommitments,
+} from "#/features/subscriptions/subscriptions.logic";
 import { diffInDays } from "#/lib/calendar-date";
 import type { CurrencyCode } from "#/lib/money";
-import { formatMoney, totalsByCurrency } from "#/lib/money";
+import { formatMoney } from "#/lib/money";
 
 export const Route = createFileRoute("/_authed/subscriptions/")({
 	validateSearch: z.object({ archived: z.boolean().optional() }),
@@ -38,14 +41,7 @@ function Subscriptions() {
 
 	const live = subscriptions.filter((s) => !s.archived);
 	const renewing = live.filter((s) => s.state === "ACTIVE");
-	const commitments = [
-		...totalsByCurrency(
-			renewing.map((s) => ({
-				amountMinor: s.monthlyEquivalentMinor,
-				currency: s.currency,
-			})),
-		),
-	];
+	const commitments = monthlyCommitments(live);
 
 	const sorted = [...subscriptions].sort((a, b) => {
 		// Upcoming renewals first (soonest first), then everything else by name.
@@ -88,9 +84,9 @@ function Subscriptions() {
 						<p className="text-2xl font-semibold">—</p>
 					) : (
 						<ul className="flex flex-wrap gap-x-6 gap-y-1">
-							{commitments.map(([currency, minor]) => (
+							{commitments.map(({ currency, monthlyMinor }) => (
 								<li key={currency} className="text-2xl font-semibold">
-									{formatMoney(minor, currency as CurrencyCode)}
+									{formatMoney(monthlyMinor, currency as CurrencyCode)}
 								</li>
 							))}
 						</ul>
