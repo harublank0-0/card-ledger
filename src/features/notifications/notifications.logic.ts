@@ -47,6 +47,18 @@ export type PlannerCard = {
 	name: string;
 	last4: string;
 	paymentDueDay: number | null;
+	/** Any statement recorded (paid or not). Such cards are reminded from their statements. */
+	hasStatements: boolean;
+};
+
+/** A statement with something still owed. Paid statements are not passed in. */
+export type PlannerStatement = {
+	id: string;
+	cardName: string;
+	last4: string;
+	dueDate: CalendarDate;
+	outstandingMinor: number;
+	currency: string;
 };
 
 export type Reminder = {
@@ -83,12 +95,15 @@ export function bucketFor(daysUntil: number, offsets: readonly number[]) {
  * Pure: it neither reads the database nor knows what was already sent; the runner dedupes
  * on (kind, entityId, eventDate, offsetDays).
  * Cancelled subscriptions never produce reminders.
+ * Card payment reminders come from unpaid statements, or from the card's due day when the
+ * card has no statements.
  */
 export function computeReminders(input: {
 	today: CalendarDate;
 	prefs: ReminderPrefs;
 	subscriptions: PlannerSubscription[];
 	cards: PlannerCard[];
+	statements: PlannerStatement[];
 }): Reminder[] {
 	const { today, prefs } = input;
 	const reminders: Reminder[] = [];
@@ -134,8 +149,24 @@ export function computeReminders(input: {
 	}
 
 	if (prefs.paymentDueEnabled) {
+		// An unpaid statement is reminded on its real due date, for what is still owed.
+		// Overdue ones are skipped here (daysUntil < 0); the statements page shows them.
+		for (const statement of input.statements) {
+			if (statement.outstandingMinor <= 0) continue;
+			add({
+				kind: "CARD_PAYMENT_DUE",
+				entityId: statement.id,
+				label: statement.cardName,
+				last4: statement.last4,
+				amountMinor: statement.outstandingMinor,
+				currency: statement.currency,
+				eventDate: statement.dueDate,
+			});
+		}
+		// Cards without any statements fall back to their saved monthly due day. Once a card
+		// has statements, only those drive reminders (a paid-off card is not nagged monthly).
 		for (const card of input.cards) {
-			if (card.paymentDueDay === null) continue;
+			if (card.hasStatements || card.paymentDueDay === null) continue;
 			add({
 				kind: "CARD_PAYMENT_DUE",
 				entityId: card.id,

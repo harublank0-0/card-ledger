@@ -1,13 +1,14 @@
 import { prisma } from "#/db";
 import { env } from "#/env";
+import { outstandingMinor } from "#/features/statements/statements.logic";
 import { type CalendarDate, todayIn } from "#/lib/calendar-date";
 import { fromDbDate, toDbDate } from "#/lib/db-dates";
 import type { Mailer } from "#/lib/mailer.server";
-
 import { renderDigest } from "./notifications.email";
 import {
 	computeReminders,
 	type PlannerCard,
+	type PlannerStatement,
 	type PlannerSubscription,
 	type Reminder,
 } from "./notifications.logic";
@@ -123,12 +124,20 @@ async function claim(userId: string, reminder: Reminder, now: Date) {
 }
 
 async function loadPlannerData(userId: string) {
-	const [subs, cards] = await Promise.all([
+	const [subs, cards, statements] = await Promise.all([
 		prisma.subscription.findMany({
 			where: { userId, archivedAt: null, status: "ACTIVE" },
 		}),
 		prisma.paymentMethod.findMany({
-			where: { userId, archivedAt: null, paymentDueDay: { not: null } },
+			where: { userId, archivedAt: null },
+			include: { _count: { select: { statements: true } } },
+		}),
+		prisma.cardStatement.findMany({
+			where: { userId, paymentMethod: { archivedAt: null } },
+			include: {
+				paymentMethod: { select: { name: true, last4: true } },
+				payments: { select: { amountMinor: true } },
+			},
 		}),
 	]);
 	const subscriptions: PlannerSubscription[] = subs.map((s) => ({
@@ -151,8 +160,26 @@ async function loadPlannerData(userId: string) {
 		name: c.name,
 		last4: c.last4,
 		paymentDueDay: c.paymentDueDay,
+		hasStatements: c._count.statements > 0,
 	}));
-	return { subscriptions, cards: plannerCards };
+	const unpaidStatements: PlannerStatement[] = statements
+		.map((st) => ({
+			id: st.id,
+			cardName: st.paymentMethod.name,
+			last4: st.paymentMethod.last4,
+			dueDate: fromDbDate(st.dueDate),
+			currency: st.currency,
+			outstandingMinor: outstandingMinor(
+				st.statementBalanceMinor,
+				st.payments.reduce((sum, p) => sum + p.amountMinor, 0),
+			),
+		}))
+		.filter((st) => st.outstandingMinor > 0);
+	return {
+		subscriptions,
+		cards: plannerCards,
+		statements: unpaidStatements,
+	};
 }
 
 export type RunSummary = {

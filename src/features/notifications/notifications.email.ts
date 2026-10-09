@@ -26,7 +26,7 @@ function line(r: Reminder) {
 		case "CANCELLATION_DEADLINE":
 			return `Cancel ${r.label} by ${r.eventDate} (${when(r.daysUntil)})`;
 		case "CARD_PAYMENT_DUE":
-			return `${r.label} •••• ${r.last4} payment is due ${when(r.daysUntil)}, on ${r.eventDate}`;
+			return `${r.label} •••• ${r.last4} payment${amount} is due ${when(r.daysUntil)}, on ${r.eventDate}`;
 	}
 }
 

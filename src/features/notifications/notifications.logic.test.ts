@@ -40,6 +40,7 @@ const plan = (
 		prefs,
 		subscriptions: [monthly],
 		cards: [],
+		statements: [],
 		...over,
 	});
 
@@ -138,6 +139,7 @@ describe("computeReminders: expiry, cancel-by and card payments", () => {
 			prefs,
 			subscriptions: [sub],
 			cards: [],
+			statements: [],
 		}).map((r) => [r.kind, r.eventDate, r.daysUntil]);
 		expect(kinds).toEqual([
 			["CANCELLATION_DEADLINE", "2025-03-08", 1],
@@ -156,6 +158,7 @@ describe("computeReminders: expiry, cancel-by and card payments", () => {
 			prefs: { ...prefs, renewalEnabled: false },
 			subscriptions: [sub],
 			cards: [],
+			statements: [],
 		});
 		expect(reminders).toEqual([]);
 	});
@@ -166,12 +169,14 @@ describe("computeReminders: expiry, cancel-by and card payments", () => {
 			name: "Daily card",
 			last4: "0000",
 			paymentDueDay: 31,
+			hasStatements: false,
 		};
 		const r = computeReminders({
 			today: "2025-02-26",
 			prefs,
 			subscriptions: [],
 			cards: [card],
+			statements: [],
 		});
 		expect(r).toHaveLength(1);
 		expect(r[0]).toMatchObject({
@@ -186,6 +191,7 @@ describe("computeReminders: expiry, cancel-by and card payments", () => {
 				prefs,
 				subscriptions: [],
 				cards: [{ ...card, paymentDueDay: null }],
+				statements: [],
 			}),
 		).toEqual([]);
 		expect(
@@ -194,8 +200,113 @@ describe("computeReminders: expiry, cancel-by and card payments", () => {
 				prefs: { ...prefs, paymentDueEnabled: false },
 				subscriptions: [],
 				cards: [card],
+				statements: [],
 			}),
 		).toEqual([]);
+	});
+});
+
+describe("computeReminders: statement-driven card payments", () => {
+	const card = {
+		id: "22222222-2222-4222-8222-222222222222",
+		name: "Daily card",
+		last4: "0000",
+		paymentDueDay: 20,
+		hasStatements: true,
+	};
+	const statement = {
+		id: "33333333-3333-4333-8333-333333333333",
+		cardName: "Daily card",
+		last4: "0000",
+		dueDate: "2025-03-20",
+		outstandingMinor: 1_200_000,
+		currency: "NPR",
+	};
+	const run = (today: string, over: object = {}) =>
+		computeReminders({
+			today,
+			prefs,
+			subscriptions: [],
+			cards: [card],
+			statements: [statement],
+			...over,
+		});
+
+	it("reminds about an unpaid statement on its real due date, with the amount owed", () => {
+		const [r] = run("2025-03-17");
+		expect(r).toMatchObject({
+			kind: "CARD_PAYMENT_DUE",
+			entityId: statement.id,
+			eventDate: "2025-03-20",
+			offsetDays: 3,
+			daysUntil: 3,
+			amountMinor: 1_200_000,
+			currency: "NPR",
+			last4: "0000",
+		});
+		expect(run("2025-03-19")[0]).toMatchObject({ offsetDays: 1, daysUntil: 1 });
+		expect(run("2025-03-20")[0]).toMatchObject({ offsetDays: 1, daysUntil: 0 });
+	});
+
+	it("reflects what is still owed after a partial payment", () => {
+		expect(
+			run("2025-03-17", {
+				statements: [{ ...statement, outstandingMinor: 700_000 }],
+			})[0].amountMinor,
+		).toBe(700_000);
+	});
+
+	it("stops once nothing is owed", () => {
+		expect(
+			run("2025-03-17", {
+				statements: [{ ...statement, outstandingMinor: 0 }],
+			}),
+		).toEqual([]);
+		expect(run("2025-03-17", { statements: [] })).toEqual([]);
+	});
+
+	it("does not remind about an overdue statement or one too far away", () => {
+		expect(run("2025-03-21")).toEqual([]);
+		expect(run("2025-03-01")).toEqual([]);
+	});
+
+	it("does not also use the card's due day once the card has statements", () => {
+		// Fallback would fire on the 20th; only the statement reminder may appear.
+		const reminders = run("2025-03-17");
+		expect(reminders).toHaveLength(1);
+		expect(reminders[0].entityId).toBe(statement.id);
+		expect(run("2025-03-17", { statements: [] })).toEqual([]);
+	});
+
+	it("still uses the due-day fallback for a card with no statements", () => {
+		const reminders = run("2025-03-17", {
+			cards: [{ ...card, hasStatements: false }],
+			statements: [],
+		});
+		expect(reminders).toHaveLength(1);
+		expect(reminders[0]).toMatchObject({
+			entityId: card.id,
+			eventDate: "2025-03-20",
+		});
+		expect(reminders[0].amountMinor).toBeUndefined();
+	});
+
+	it("respects the payment-due toggle", () => {
+		expect(
+			run("2025-03-17", { prefs: { ...prefs, paymentDueEnabled: false } }),
+		).toEqual([]);
+	});
+
+	it("names the amount in the email", () => {
+		const [r] = run("2025-03-17");
+		const { text } = renderDigest({
+			reminders: [r],
+			timezone: "UTC",
+			settingsUrl: "x",
+		});
+		expect(text).toContain(
+			"Daily card •••• 0000 payment (NPR 12,000.00) is due in 3 days, on 2025-03-20",
+		);
 	});
 });
 
@@ -221,6 +332,7 @@ describe("renderDigest", () => {
 			prefs,
 			subscriptions: [sub],
 			cards: [],
+			statements: [],
 		});
 		const { subject, text } = renderDigest({
 			reminders,

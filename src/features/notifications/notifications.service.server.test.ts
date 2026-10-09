@@ -2,6 +2,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "#/db";
 import { createPaymentMethod } from "#/features/payment-methods/payment-methods.service.server";
+import {
+	addPayment,
+	createStatement,
+} from "#/features/statements/statements.service.server";
 import { createSubscription } from "#/features/subscriptions/subscriptions.service.server";
 import type { Mailer, MailMessage } from "#/lib/mailer.server";
 import {
@@ -55,6 +59,12 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	await prisma.notificationLog.deleteMany({
+		where: { userId: { in: [alice.id, bob.id] } },
+	});
+	await prisma.statementPayment.deleteMany({
+		where: { userId: { in: [alice.id, bob.id] } },
+	});
+	await prisma.cardStatement.deleteMany({
 		where: { userId: { in: [alice.id, bob.id] } },
 	});
 	await prisma.subscription.deleteMany({
@@ -392,5 +402,151 @@ describe("failures and retries", () => {
 		});
 		await runReminders({ mailer, settingsUrl, now: NOW });
 		expect(mailsTo(sent, alice)).toHaveLength(1);
+	});
+});
+
+describe("statement-driven card payment reminders", () => {
+	// NOW is 2025-02-25 in Kathmandu; a statement due 2025-02-28 is 3 days away.
+	async function cardWithStatement(
+		userId: string,
+		over: {
+			due?: string;
+			balance?: number;
+			cardName?: string;
+			paymentDueDay?: number;
+		} = {},
+	) {
+		const card = await createPaymentMethod(
+			userId,
+			cardData({
+				name: over.cardName ?? "Daily card",
+				last4: "0000",
+				paymentDueDay: over.paymentDueDay ?? 28,
+			}),
+		);
+		const dueDate = over.due ?? "2025-02-28";
+		const statement = await createStatement(userId, {
+			paymentMethodId: card.id,
+			currency: "NPR",
+			periodStart: "2025-01-01",
+			// The due date can never precede the end of the period.
+			periodEnd: dueDate < "2025-02-25" ? dueDate : "2025-02-25",
+			dueDate,
+			statementBalanceMinor: over.balance ?? 1_200_000,
+			minimumDueMinor: null,
+		});
+		return { card, statement };
+	}
+	const payment = (statementId: string, amountMinor: number) => ({
+		statementId,
+		currency: "NPR" as const,
+		amountMinor,
+		paidOn: "2025-02-25",
+		notes: null,
+	});
+
+	it("emails the amount owed once, on the statement's real due date, and never repeats it", async () => {
+		const { statement } = await cardWithStatement(alice.id);
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		await runReminders({ mailer, settingsUrl, now: NOW });
+
+		const mails = mailsTo(sent, alice);
+		expect(mails).toHaveLength(1);
+		expect(mails[0].subject).toContain(
+			"Daily card •••• 0000 payment (NPR 12,000.00) is due in 3 days, on 2025-02-28",
+		);
+		const log = await prisma.notificationLog.findMany({
+			where: { userId: alice.id },
+		});
+		expect(log).toHaveLength(1);
+		expect(log[0]).toMatchObject({
+			kind: "CARD_PAYMENT_DUE",
+			entityId: statement.id,
+			offsetDays: 3,
+			status: "SENT",
+		});
+	});
+
+	it("shows only what is still owed after a partial payment", async () => {
+		const { statement } = await cardWithStatement(alice.id);
+		await addPayment(alice.id, payment(statement.id, 500_000));
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		expect(mailsTo(sent, alice)[0].subject).toContain("NPR 7,000.00");
+	});
+
+	it("goes quiet once the statement is paid, now or after the first email", async () => {
+		const { statement } = await cardWithStatement(alice.id);
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		expect(mailsTo(sent, alice)).toHaveLength(1);
+
+		await addPayment(alice.id, payment(statement.id, 1_200_000));
+		await runReminders({
+			mailer,
+			settingsUrl,
+			now: new Date("2025-02-27T05:00:00Z"),
+		}); // the "1 day" bucket
+		expect(mailsTo(sent, alice)).toHaveLength(1);
+	});
+
+	it("does not fall back to the card's due day when the card has statements", async () => {
+		// The card's own due day (28th) would trigger a reminder today; the paid statement must not.
+		const { statement } = await cardWithStatement(alice.id, {
+			paymentDueDay: 28,
+		});
+		await addPayment(alice.id, payment(statement.id, 1_200_000));
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		expect(mailsTo(sent, alice)).toHaveLength(0);
+	});
+
+	it("keeps reminding by due day for a card that has no statements", async () => {
+		await createPaymentMethod(
+			alice.id,
+			cardData({ name: "No statements", last4: "9999", paymentDueDay: 28 }),
+		);
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		expect(mailsTo(sent, alice)[0].subject).toContain(
+			"No statements •••• 9999 payment is due in 3 days",
+		);
+	});
+
+	it("skips overdue and archived-card statements", async () => {
+		const overdue = await cardWithStatement(alice.id, {
+			due: "2025-02-24",
+			cardName: "Overdue card",
+		});
+		expect(overdue.statement.id).toBeDefined();
+		const archived = await cardWithStatement(bob.id, {
+			cardName: "Archived card",
+		});
+		await prisma.paymentMethod.update({
+			where: { id: archived.card.id },
+			data: { archivedAt: new Date() },
+		});
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		expect(mailsTo(sent, alice)).toHaveLength(0);
+		expect(mailsTo(sent, bob)).toHaveLength(0);
+	});
+
+	it("keeps each user's statements to themselves", async () => {
+		await cardWithStatement(alice.id, {
+			cardName: "Alice card",
+			balance: 111_100,
+		});
+		await cardWithStatement(bob.id, { cardName: "Bob card", balance: 999_900 });
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		const a = mailsTo(sent, alice)[0];
+		const b = mailsTo(sent, bob)[0];
+		expect(a.text).toContain("Alice card");
+		expect(a.text).not.toContain("Bob card");
+		expect(a.text).not.toContain("9,999.00");
+		expect(b.text).toContain("Bob card");
+		expect(b.text).not.toContain("Alice card");
 	});
 });
