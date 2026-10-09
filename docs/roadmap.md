@@ -28,7 +28,7 @@ Global requirements for every feature ticket:
 | yes | F-03 Better Auth persistence | Prisma adapter, `SIGNUP_MODE`, 12-character minimum password. |
 | yes | F-04 Auth UI and middleware | Sign-in/up pages, `_authed` layout, `authMiddleware`. |
 | yes | F-05 Core libraries | `money.ts`, `calendar-date.ts` with tests. |
-| no | F-06 LICENSE | Still to do. |
+| yes | F-06 LICENSE | AGPL-3.0-only `LICENSE` (unmodified FSF text), `package.json` license field, short `CONTRIBUTING.md` with DCO. |
 | yes | M-02 Payment methods | CRUD UI, archive, last4 only. Categories (M-01) not needed yet. |
 | yes | M-03 Recurrence engine | `subscriptions.logic.ts`. |
 | yes | M-04 / M-05 Subscriptions | CRUD, cancel, reactivate, archive, next renewal, state, monthly equivalent per currency. Expiry and cancel-by dates are stored and shown; **reminder emails are not built yet (M-11 to M-13)**. |

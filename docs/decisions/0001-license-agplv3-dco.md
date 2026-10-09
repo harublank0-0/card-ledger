@@ -1,12 +1,12 @@
 # 0001 — License: AGPLv3 with DCO
 
-Status: Proposed (license choice confirmed by maintainer; contribution model decided: DCO).
+Status: Accepted.
 
 ## Context
 Card Ledger is open source and self-hostable, with a possible future managed cloud. The license must keep the software free to self-host, discourage closed hosted forks, and keep contribution friction low.
 
 ## Decision
-- License the project under **GNU AGPLv3**. Choose `AGPL-3.0-only` vs `AGPL-3.0-or-later` when adding LICENSE (ticket F-06) and record it here.
+- License the project under **GNU AGPLv3**. The SPDX identifier is **`AGPL-3.0-only`** (decided in F-06): the terms stay fixed at version 3, so a future FSF license version cannot change the terms for this code without the maintainers' decision. `LICENSE` is the unmodified FSF text of 19 November 2007 and `package.json` declares the same identifier.
 - Accept contributions under the **Developer Certificate of Origin (DCO)**: each commit carries `Signed-off-by` (`git commit -s`). Contributions are licensed under the project license (inbound = outbound). **No CLA.**
 - No proprietary licensing, feature locks, license keys, or license verification, in any edition.
 
