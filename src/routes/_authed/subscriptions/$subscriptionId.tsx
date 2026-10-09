@@ -1,4 +1,9 @@
-import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	notFound,
+	useRouter,
+} from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
@@ -106,6 +111,13 @@ function EditSubscription() {
 						</div>
 					</>
 				)}
+				<div>
+					<Button asChild variant="outline" size="sm">
+						<Link to="/transactions/new" search={{ subscriptionId: s.id }}>
+							Record charge
+						</Link>
+					</Button>
+				</div>
 				<div>
 					<Button
 						variant="ghost"

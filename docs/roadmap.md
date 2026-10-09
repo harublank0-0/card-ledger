@@ -35,8 +35,9 @@ Global requirements for every feature ticket:
 | yes | M-11 Notification preferences | Settings page: time zone, reminder days (0, 1, 2, 3, 5, 7, 14, 30), per-kind toggles. The subscriptions pages now use the user's own time zone for "today". |
 | yes | M-12 Reminder planner | `notifications.logic.ts`. A reminder belongs to the smallest configured day bucket covering the days left, so a missed cron run yields one up-to-date reminder instead of a burst. Card payment due reminders use the card's saved due day (not statements, which are M-08). |
 | yes | M-13 Reminder delivery | `scripts/send-reminders.ts` (`npm run reminders:send`), one digest email per user per run, claim-before-send via the log's unique key, retry with backoff (15m, 1h, 4h, 12h, then give up after 5 attempts), stale-claim recovery. SMTP via nodemailer; Mailpit in development. |
+| in progress | M-01, M-06, M-07 Categories, transactions, filters | Data layer, services, tests and all screens are built (`/transactions`, `/transactions/new`, `/transactions/$transactionId`, `/categories`, "Record charge" on subscriptions). Browser-verified so far: "Record charge" prefill and save, refund prefill, valid partial refund, over-cap refund rejected with a clear message, default categories seeded. **Still to check in the browser:** URL filters and reload, pagination past 25 rows, edit, the blocked and confirmed delete, the categories page, and a final production build check. |
 
-Not started: M-01, M-06 to M-10, M-14 to M-16, all of Phase 2 and Phase 3.
+Not started: M-08 to M-10, M-14 to M-16, all of Phase 2 and Phase 3.
 
 Ticket format: **ID — Title** · Objective · Scope · Acceptance criteria (AC) · Dependencies · Tests.
 

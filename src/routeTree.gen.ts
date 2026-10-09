@@ -14,6 +14,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedCategoriesRouteImport } from './routes/_authed/categories'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedCardsIndexRouteImport } from './routes/_authed/cards/index'
 import { Route as AuthedCardsCardIdRouteImport } from './routes/_authed/cards/$cardId'
@@ -21,6 +22,9 @@ import { Route as AuthedCardsNewRouteImport } from './routes/_authed/cards/new'
 import { Route as AuthedSubscriptionsIndexRouteImport } from './routes/_authed/subscriptions/index'
 import { Route as AuthedSubscriptionsSubscriptionIdRouteImport } from './routes/_authed/subscriptions/$subscriptionId'
 import { Route as AuthedSubscriptionsNewRouteImport } from './routes/_authed/subscriptions/new'
+import { Route as AuthedTransactionsIndexRouteImport } from './routes/_authed/transactions/index'
+import { Route as AuthedTransactionsTransactionIdRouteImport } from './routes/_authed/transactions/$transactionId'
+import { Route as AuthedTransactionsNewRouteImport } from './routes/_authed/transactions/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const AuthedRoute = AuthedRouteImport.update({
@@ -45,6 +49,11 @@ const SignUpRoute = SignUpRouteImport.update({
 const AuthedIndexRoute = AuthedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCategoriesRoute = AuthedCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
@@ -84,6 +93,22 @@ const AuthedSubscriptionsNewRoute = AuthedSubscriptionsNewRouteImport.update({
   path: '/subscriptions/new',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedTransactionsIndexRoute = AuthedTransactionsIndexRouteImport.update({
+  id: '/transactions/',
+  path: '/transactions/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedTransactionsTransactionIdRoute =
+  AuthedTransactionsTransactionIdRouteImport.update({
+    id: '/transactions/$transactionId',
+    path: '/transactions/$transactionId',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedTransactionsNewRoute = AuthedTransactionsNewRouteImport.update({
+  id: '/transactions/new',
+  path: '/transactions/new',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -95,28 +120,36 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/categories': typeof AuthedCategoriesRoute
   '/settings': typeof AuthedSettingsRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
   '/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
   '/subscriptions/new': typeof AuthedSubscriptionsNewRoute
+  '/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
+  '/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/cards/': typeof AuthedCardsIndexRoute
   '/subscriptions/': typeof AuthedSubscriptionsIndexRoute
+  '/transactions/': typeof AuthedTransactionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/categories': typeof AuthedCategoriesRoute
   '/settings': typeof AuthedSettingsRoute
   '/': typeof AuthedIndexRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
   '/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
   '/subscriptions/new': typeof AuthedSubscriptionsNewRoute
+  '/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
+  '/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/cards': typeof AuthedCardsIndexRoute
   '/subscriptions': typeof AuthedSubscriptionsIndexRoute
+  '/transactions': typeof AuthedTransactionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,15 +157,19 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/_authed/categories': typeof AuthedCategoriesRoute
   '/_authed/settings': typeof AuthedSettingsRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/_authed/cards/new': typeof AuthedCardsNewRoute
   '/_authed/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
   '/_authed/subscriptions/new': typeof AuthedSubscriptionsNewRoute
+  '/_authed/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
+  '/_authed/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_authed/cards/': typeof AuthedCardsIndexRoute
   '/_authed/subscriptions/': typeof AuthedSubscriptionsIndexRoute
+  '/_authed/transactions/': typeof AuthedTransactionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,43 +178,55 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/sign-in'
     | '/sign-up'
+    | '/categories'
     | '/settings'
     | '/cards/$cardId'
     | '/cards/new'
     | '/subscriptions/$subscriptionId'
     | '/subscriptions/new'
+    | '/transactions/$transactionId'
+    | '/transactions/new'
     | '/api/auth/$'
     | '/cards/'
     | '/subscriptions/'
+    | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/mcp'
     | '/sign-in'
     | '/sign-up'
+    | '/categories'
     | '/settings'
     | '/'
     | '/cards/$cardId'
     | '/cards/new'
     | '/subscriptions/$subscriptionId'
     | '/subscriptions/new'
+    | '/transactions/$transactionId'
+    | '/transactions/new'
     | '/api/auth/$'
     | '/cards'
     | '/subscriptions'
+    | '/transactions'
   id:
     | '__root__'
     | '/_authed'
     | '/mcp'
     | '/sign-in'
     | '/sign-up'
+    | '/_authed/categories'
     | '/_authed/settings'
     | '/_authed/'
     | '/_authed/cards/$cardId'
     | '/_authed/cards/new'
     | '/_authed/subscriptions/$subscriptionId'
     | '/_authed/subscriptions/new'
+    | '/_authed/transactions/$transactionId'
+    | '/_authed/transactions/new'
     | '/api/auth/$'
     | '/_authed/cards/'
     | '/_authed/subscriptions/'
+    | '/_authed/transactions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthedIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/categories': {
+      id: '/_authed/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof AuthedCategoriesRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/settings': {
@@ -274,6 +330,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSubscriptionsNewRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/transactions/': {
+      id: '/_authed/transactions/'
+      path: '/transactions'
+      fullPath: '/transactions/'
+      preLoaderRoute: typeof AuthedTransactionsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/transactions/$transactionId': {
+      id: '/_authed/transactions/$transactionId'
+      path: '/transactions/$transactionId'
+      fullPath: '/transactions/$transactionId'
+      preLoaderRoute: typeof AuthedTransactionsTransactionIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/transactions/new': {
+      id: '/_authed/transactions/new'
+      path: '/transactions/new'
+      fullPath: '/transactions/new'
+      preLoaderRoute: typeof AuthedTransactionsNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -285,17 +362,22 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedCategoriesRoute: typeof AuthedCategoriesRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedCardsCardIdRoute: typeof AuthedCardsCardIdRoute
   AuthedCardsNewRoute: typeof AuthedCardsNewRoute
   AuthedSubscriptionsSubscriptionIdRoute: typeof AuthedSubscriptionsSubscriptionIdRoute
   AuthedSubscriptionsNewRoute: typeof AuthedSubscriptionsNewRoute
+  AuthedTransactionsTransactionIdRoute: typeof AuthedTransactionsTransactionIdRoute
+  AuthedTransactionsNewRoute: typeof AuthedTransactionsNewRoute
   AuthedCardsIndexRoute: typeof AuthedCardsIndexRoute
   AuthedSubscriptionsIndexRoute: typeof AuthedSubscriptionsIndexRoute
+  AuthedTransactionsIndexRoute: typeof AuthedTransactionsIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedCategoriesRoute: AuthedCategoriesRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedCardsCardIdRoute: AuthedCardsCardIdRoute,
@@ -303,8 +385,11 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedSubscriptionsSubscriptionIdRoute:
     AuthedSubscriptionsSubscriptionIdRoute,
   AuthedSubscriptionsNewRoute: AuthedSubscriptionsNewRoute,
+  AuthedTransactionsTransactionIdRoute: AuthedTransactionsTransactionIdRoute,
+  AuthedTransactionsNewRoute: AuthedTransactionsNewRoute,
   AuthedCardsIndexRoute: AuthedCardsIndexRoute,
   AuthedSubscriptionsIndexRoute: AuthedSubscriptionsIndexRoute,
+  AuthedTransactionsIndexRoute: AuthedTransactionsIndexRoute,
 }
 
 const AuthedRouteWithChildren =

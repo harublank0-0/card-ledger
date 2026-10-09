@@ -163,6 +163,16 @@ function Subscriptions() {
 											{relativeDays(deadlineDays)})
 										</p>
 									)}
+								<div className="mt-2">
+									<Button asChild variant="outline" size="sm">
+										<Link
+											to="/transactions/new"
+											search={{ subscriptionId: s.id }}
+										>
+											Record charge
+										</Link>
+									</Button>
+								</div>
 							</li>
 						);
 					})}
