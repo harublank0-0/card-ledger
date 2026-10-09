@@ -1,6 +1,16 @@
 # card-ledger
 
-Early-stage scaffold (TanStack Start CLI template); no product features yet. Only the Todo demo model, an MCP todo tool, and the Better Auth endpoint exist.
+Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Early-stage scaffold (TanStack Start CLI template); no product features yet. Only the Todo demo model, an MCP todo tool, and the Better Auth endpoint exist.
+
+Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/database.md`, `docs/roadmap.md`, `docs/decisions/`. Work one roadmap ticket at a time; read the relevant doc sections first and update docs when a decision changes.
+
+## Product principles
+- One codebase for self-hosted and any future cloud; no feature locks, license checks, or edition flags.
+- No telemetry and no required calls to external services; email (SMTP) is optional and operator-configured.
+- Never store full card numbers, CVV, PIN, or banking credentials (`last4` only). Never commit secrets or real financial data; demo data is synthetic.
+- Every domain row has `userId`; every query is user-scoped; enforce auth in server functions/middleware, not only route guards; each feature needs cross-user and unauthenticated tests.
+- Money = integer minor units + ISO 4217 currency, never floats, never summed across currencies. Date-only deadlines are calendar dates (`@db.Date`); timestamps are UTC.
+- Validate input on the server with `.validator()` + Zod. Keep financial logic in pure modules (no React/Prisma).
 
 ## Stack
 - TanStack Start + Router (file-based routes in `src/routes`, generated `src/routeTree.gen.ts` — never edit by hand), React 19 with React Compiler, Vite 8, Nitro server (`npm run build` → `node dist/server/index.mjs`).
