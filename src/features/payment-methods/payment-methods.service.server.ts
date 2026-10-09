@@ -33,6 +33,19 @@ export async function updatePaymentMethod(
 	id: string,
 	data: PaymentMethodData,
 ) {
+	const existing = await getPaymentMethod(userId, id);
+	if (!existing) throw new Error("Payment method not found");
+	// Statements are in the card's currency, so it cannot change once any exist.
+	if (data.currency !== existing.currency) {
+		const statements = await prisma.cardStatement.count({
+			where: { userId, paymentMethodId: id },
+		});
+		if (statements > 0) {
+			throw new Error(
+				"The currency cannot change while this card has statements",
+			);
+		}
+	}
 	const { count } = await prisma.paymentMethod.updateMany({
 		where: { id, userId },
 		data,

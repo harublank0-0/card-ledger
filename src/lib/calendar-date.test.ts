@@ -9,6 +9,7 @@ import {
 	isLeapYear,
 	isValidCalendarDate,
 	nextMonthlyOccurrence,
+	previousMonthlyOccurrence,
 	todayIn,
 } from "./calendar-date";
 
@@ -116,5 +117,22 @@ describe("nextMonthlyOccurrence", () => {
 		expect(nextMonthlyOccurrence(31, "2024-02-10")).toBe("2024-02-29");
 		expect(nextMonthlyOccurrence(31, "2025-04-30")).toBe("2025-04-30");
 		expect(nextMonthlyOccurrence(30, "2025-01-31")).toBe("2025-02-28");
+	});
+});
+
+describe("previousMonthlyOccurrence", () => {
+	it("returns this month when the day has arrived", () => {
+		expect(previousMonthlyOccurrence(20, "2025-03-20")).toBe("2025-03-20");
+		expect(previousMonthlyOccurrence(20, "2025-03-28")).toBe("2025-03-20");
+	});
+	it("falls back to last month while the day is still ahead", () => {
+		expect(previousMonthlyOccurrence(20, "2025-03-19")).toBe("2025-02-20");
+		expect(previousMonthlyOccurrence(5, "2025-01-03")).toBe("2024-12-05");
+	});
+	it("clamps short months", () => {
+		expect(previousMonthlyOccurrence(31, "2025-03-15")).toBe("2025-02-28");
+		expect(previousMonthlyOccurrence(31, "2024-03-15")).toBe("2024-02-29");
+		expect(previousMonthlyOccurrence(31, "2025-05-31")).toBe("2025-05-31");
+		expect(previousMonthlyOccurrence(30, "2025-03-10")).toBe("2025-02-28");
 	});
 });

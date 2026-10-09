@@ -32,6 +32,9 @@ model User {
   categories   Category[]
   transactions Transaction[]
 
+  cardStatements    CardStatement[]
+  statementPayments StatementPayment[]
+
   @@map("user")
 }
 
@@ -120,6 +123,7 @@ model PaymentMethod {
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptions Subscription[]
   transactions  Transaction[]
+  statements    CardStatement[]
 
   @@index([userId, archivedAt])
   @@map("payment_method")
@@ -274,4 +278,49 @@ model Transaction {
   @@index([userId, categoryId, occurredOn])
   @@index([refundOfId])
   @@map("transaction")
+}
+
+/// What the bank says is owed for one billing period. Entered from the bank's statement and
+/// never derived from manually entered transactions. Currency always equals the card's.
+model CardStatement {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  userId                String
+  paymentMethodId       String   @db.Uuid
+  periodStart           DateTime @db.Date
+  periodEnd             DateTime @db.Date
+  dueDate               DateTime @db.Date
+  statementBalanceMinor Int
+  minimumDueMinor       Int?
+  currency              String   @db.Char(3)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod      @relation(fields: [paymentMethodId], references: [id], onDelete: NoAction)
+  payments      StatementPayment[]
+
+  @@unique([paymentMethodId, periodStart, periodEnd])
+  @@index([userId, dueDate])
+  @@index([paymentMethodId, periodEnd])
+  @@map("card_statement")
+}
+
+/// A payment toward a statement. Never counted as spending: paying the card bill is not an
+/// expense. Its currency is the statement's currency.
+model StatementPayment {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  userId      String
+  statementId String   @db.Uuid
+  amountMinor Int
+  paidOn      DateTime @db.Date
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statement CardStatement @relation(fields: [statementId], references: [id], onDelete: NoAction)
+
+  @@index([userId, paidOn])
+  @@index([statementId])
+  @@map("statement_payment")
 }

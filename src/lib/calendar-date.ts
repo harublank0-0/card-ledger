@@ -137,3 +137,23 @@ export function nextMonthlyOccurrence(
 	const { year: ny, month: nm } = parseCalendarDate(next);
 	return formatCalendarDate(ny, nm, Math.min(day, daysInMonth(ny, nm)));
 }
+
+/**
+ * The latest date on or before `from` that falls on `day` of the month, clamping short
+ * months (day 31 -> Feb 28/29, Apr 30). The mirror image of `nextMonthlyOccurrence`.
+ */
+export function previousMonthlyOccurrence(
+	day: number,
+	from: CalendarDate,
+): CalendarDate {
+	const { year, month } = parseCalendarDate(from);
+	const inThisMonth = formatCalendarDate(
+		year,
+		month,
+		Math.min(day, daysInMonth(year, month)),
+	);
+	if (compareCalendarDates(inThisMonth, from) <= 0) return inThisMonth;
+	const prev = addMonths(formatCalendarDate(year, month, 1), -1);
+	const { year: py, month: pm } = parseCalendarDate(prev);
+	return formatCalendarDate(py, pm, Math.min(day, daysInMonth(py, pm)));
+}
