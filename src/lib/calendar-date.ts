@@ -117,3 +117,23 @@ export function isValidTimeZone(timeZone: string) {
 		return false;
 	}
 }
+
+/**
+ * The next date on or after `from` that falls on `day` of the month, clamping short months
+ * (day 31 -> Feb 28/29, Apr 30). Used for "due on the 20th of every month" style dates.
+ */
+export function nextMonthlyOccurrence(
+	day: number,
+	from: CalendarDate,
+): CalendarDate {
+	const { year, month } = parseCalendarDate(from);
+	const inThisMonth = formatCalendarDate(
+		year,
+		month,
+		Math.min(day, daysInMonth(year, month)),
+	);
+	if (compareCalendarDates(inThisMonth, from) >= 0) return inThisMonth;
+	const next = addMonths(formatCalendarDate(year, month, 1), 1);
+	const { year: ny, month: nm } = parseCalendarDate(next);
+	return formatCalendarDate(ny, nm, Math.min(day, daysInMonth(ny, nm)));
+}

@@ -26,6 +26,9 @@ model User {
   paymentMethods PaymentMethod[]
   subscriptions  Subscription[]
 
+  notificationPreference NotificationPreference?
+  notificationLogs       NotificationLog[]
+
   @@map("user")
 }
 
@@ -146,4 +149,66 @@ model Subscription {
   @@index([userId, status])
   @@index([userId, paymentMethodId])
   @@map("subscription")
+}
+
+enum NotificationKind {
+  SUBSCRIPTION_RENEWAL
+  SUBSCRIPTION_EXPIRY
+  CANCELLATION_DEADLINE
+  CARD_PAYMENT_DUE
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model NotificationPreference {
+  id                  String   @id @default(uuid(7)) @db.Uuid
+  userId              String   @unique
+  /// IANA time zone name; decides what "today" means for reminders.
+  timezone            String   @default("Asia/Kathmandu")
+  emailEnabled        Boolean  @default(true)
+  /// Days before an event to remind (0 = on the day). Default 7, 3 and 1.
+  offsetsDays         Int[]    @default([7, 3, 1])
+  renewalEnabled      Boolean  @default(true)
+  expiryEnabled       Boolean  @default(true)
+  cancellationEnabled Boolean  @default(true)
+  paymentDueEnabled   Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preference")
+}
+
+/// One row per reminder (event + threshold). The unique key makes sending idempotent:
+/// a row is claimed before an email is sent, so overlapping runs cannot double-send.
+/// `entityId` is deliberately not a foreign key: the log must survive archiving.
+model NotificationLog {
+  id            String             @id @default(uuid(7)) @db.Uuid
+  userId        String
+  kind          NotificationKind
+  entityId      String             @db.Uuid
+  /// The date being reminded about (renewal date, expiry date, ...).
+  eventDate     DateTime           @db.Date
+  /// The threshold bucket (7, 3, 1, 0 days before).
+  offsetDays    Int
+  channel       String             @default("email")
+  status        NotificationStatus @default(PENDING)
+  attempts      Int                @default(0)
+  /// Short failure reason; never contains financial details.
+  lastError     String?
+  nextAttemptAt DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, entityId, eventDate, offsetDays, channel])
+  @@index([status, nextAttemptAt])
+  @@map("notification_log")
 }

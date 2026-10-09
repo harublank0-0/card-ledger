@@ -53,6 +53,14 @@ function AuthedLayout() {
 						>
 							Cards
 						</Link>
+						<Link
+							to="/settings"
+							className={navClass}
+							activeProps={{ className: "bg-secondary text-foreground" }}
+							activeOptions={{ exact: false }}
+						>
+							Settings
+						</Link>
 					</nav>
 				</div>
 				<div className="flex items-center gap-3 text-sm text-muted-foreground">

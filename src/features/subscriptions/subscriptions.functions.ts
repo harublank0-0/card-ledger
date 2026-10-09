@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { env } from "#/env";
 import { authMiddleware } from "#/lib/auth-middleware";
-import { todayIn } from "#/lib/calendar-date";
 
 import {
 	cancelSubscriptionSchema,
@@ -12,14 +10,17 @@ import {
 // The service imports the database client, so load it inside handlers to keep it server-only.
 const service = () => import("./subscriptions.service.server");
 
-// Reminders and "today" use the instance default timezone until per-user settings exist (M-11).
-const today = () => todayIn(env.DEFAULT_TIMEZONE);
+// "Today" is the calendar date in the user's own time zone (notification settings).
+const todayFor = async (userId: string) =>
+	(
+		await import("#/features/notifications/notifications.service.server")
+	).getUserToday(userId);
 
 export const listSubscriptionsFn = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.validator(z.object({ includeArchived: z.boolean().optional() }).optional())
 	.handler(async ({ context, data }) => {
-		const now = today();
+		const now = await todayFor(context.user.id);
 		const subscriptions = await (await service()).listSubscriptions(
 			context.user.id,
 			{ today: now, includeArchived: data?.includeArchived },
@@ -31,7 +32,11 @@ export const getSubscriptionFn = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.validator(z.object({ id: z.uuid() }))
 	.handler(async ({ context, data }) =>
-		(await service()).getSubscription(context.user.id, data.id, today()),
+		(await service()).getSubscription(
+			context.user.id,
+			data.id,
+			await todayFor(context.user.id),
+		),
 	);
 
 export const createSubscriptionFn = createServerFn({ method: "POST" })
@@ -61,7 +66,7 @@ export const cancelSubscriptionFn = createServerFn({ method: "POST" })
 	.validator(cancelSubscriptionSchema)
 	.handler(async ({ context, data }) => {
 		await (await service()).cancelSubscription(context.user.id, data.id, {
-			today: today(),
+			today: await todayFor(context.user.id),
 			expiresOn: data.expiresOn,
 		});
 	});

@@ -8,6 +8,7 @@ import {
 	diffInDays,
 	isLeapYear,
 	isValidCalendarDate,
+	nextMonthlyOccurrence,
 	todayIn,
 } from "./calendar-date";
 
@@ -98,5 +99,22 @@ describe("todayIn", () => {
 	it("can be behind UTC", () => {
 		const now = new Date("2025-01-01T03:00:00Z");
 		expect(todayIn("America/New_York", now)).toBe("2024-12-31");
+	});
+});
+
+describe("nextMonthlyOccurrence", () => {
+	it("returns this month when the day is still ahead or today", () => {
+		expect(nextMonthlyOccurrence(20, "2025-03-05")).toBe("2025-03-20");
+		expect(nextMonthlyOccurrence(20, "2025-03-20")).toBe("2025-03-20");
+	});
+	it("rolls to next month once the day has passed", () => {
+		expect(nextMonthlyOccurrence(20, "2025-03-21")).toBe("2025-04-20");
+		expect(nextMonthlyOccurrence(5, "2025-12-31")).toBe("2026-01-05");
+	});
+	it("clamps short months", () => {
+		expect(nextMonthlyOccurrence(31, "2025-02-10")).toBe("2025-02-28");
+		expect(nextMonthlyOccurrence(31, "2024-02-10")).toBe("2024-02-29");
+		expect(nextMonthlyOccurrence(31, "2025-04-30")).toBe("2025-04-30");
+		expect(nextMonthlyOccurrence(30, "2025-01-31")).toBe("2025-02-28");
 	});
 });

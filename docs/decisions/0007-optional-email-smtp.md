@@ -7,3 +7,8 @@ Email is optional. A small mailer interface has an SMTP transport (Nodemailer, t
 
 ## Consequences
 No vendor lock-in and no mandatory external calls. Deliverability is the operator's responsibility (documented in the self-hosting guide).
+
+## Implementation notes (M-11 to M-13)
+- `src/lib/mailer.server.ts`: SMTP transport (nodemailer, MIT-0 licensed) when `SMTP_HOST` is set; in development without SMTP a console transport logs only recipient and subject; in production without SMTP the runner exits and the Settings page says reminders are paused.
+- Development uses Mailpit (`compose.dev.yaml`): SMTP on 127.0.0.1:1025, inbox at http://localhost:8025.
+- One digest email per user per run. Bodies are plain text and are never logged.

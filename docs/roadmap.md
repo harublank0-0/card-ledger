@@ -32,8 +32,11 @@ Global requirements for every feature ticket:
 | yes | M-02 Payment methods | CRUD UI, archive, last4 only. Categories (M-01) not needed yet. |
 | yes | M-03 Recurrence engine | `subscriptions.logic.ts`. |
 | yes | M-04 / M-05 Subscriptions | CRUD, cancel, reactivate, archive, next renewal, state, monthly equivalent per currency. Expiry and cancel-by dates are stored and shown; **reminder emails are not built yet (M-11 to M-13)**. |
+| yes | M-11 Notification preferences | Settings page: time zone, reminder days (0, 1, 2, 3, 5, 7, 14, 30), per-kind toggles. The subscriptions pages now use the user's own time zone for "today". |
+| yes | M-12 Reminder planner | `notifications.logic.ts`. A reminder belongs to the smallest configured day bucket covering the days left, so a missed cron run yields one up-to-date reminder instead of a burst. Card payment due reminders use the card's saved due day (not statements, which are M-08). |
+| yes | M-13 Reminder delivery | `scripts/send-reminders.ts` (`npm run reminders:send`), one digest email per user per run, claim-before-send via the log's unique key, retry with backoff (15m, 1h, 4h, 12h, then give up after 5 attempts), stale-claim recovery. SMTP via nodemailer; Mailpit in development. |
 
-Not started: M-01, M-06 to M-16, all of Phase 2 and Phase 3.
+Not started: M-01, M-06 to M-10, M-14 to M-16, all of Phase 2 and Phase 3.
 
 Ticket format: **ID — Title** · Objective · Scope · Acceptance criteria (AC) · Dependencies · Tests.
 

@@ -26,7 +26,7 @@ Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/dat
 - Package manager is **npm** (ignore `pnpm dlx` in README/.cursorrules; use `npx shadcn@latest add <component>`).
 - Import alias `#/*` → `src/*` (also `@/*` in tsconfig). TypeScript is strict with no unused locals/params.
 - DB scripts load `.env.local` (`DATABASE_URL` required; Better Auth needs `BETTER_AUTH_SECRET`).
-- Local DB: `docker compose -f compose.dev.yaml up -d` (Postgres on 127.0.0.1:5434). `.env.local` needs `DATABASE_URL`, `BETTER_AUTH_URL=http://localhost:3100`, `BETTER_AUTH_SECRET` (32+ chars).
+- Local services: `docker compose -f compose.dev.yaml up -d` (Postgres on 127.0.0.1:5434; Mailpit SMTP 127.0.0.1:1025, inbox http://localhost:8025). Reminders: `npm run reminders:send`. `.env.local` needs `DATABASE_URL`, `BETTER_AUTH_URL=http://localhost:3100`, `BETTER_AUTH_SECRET` (32+ chars).
 - Commands: `npm run dev` (port 3100, strict), `npm run check` (Biome), `npm run typecheck`, `npm test` (Vitest; integration tests auto-create `<db>_test`), `npm run build`, `npm run db:migrate|studio|seed`.
 - Biome ignores `src/routeTree.gen.ts` and `src/styles.css`.
 

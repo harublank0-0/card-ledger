@@ -12,3 +12,8 @@ A standalone script (`scripts/send-reminders.ts`) run by cron (or a loop in a co
 
 ## Consequences
 Needs a second process in the container setup and the script must be buildable or runnable with `tsx`. Missed runs are caught up per a documented, tested policy in the planner.
+
+## Implementation notes
+- `npm run reminders:send` runs `scripts/send-reminders.ts` (tsx). In containers the same script runs with the environment provided; schedule it hourly with cron.
+- The log's unique key is claimed with an insert before sending. A failed send records only a short error code, retries after 15 minutes, 1 hour, 4 hours and 12 hours, and stops after 5 attempts. A claim left `PENDING` for more than 15 minutes (crashed run) can be taken over; the takeover uses an optimistic `updatedAt` check so only one run wins.
+- Catch-up rule: a reminder belongs to the smallest configured day bucket that still covers the days left. After an outage you get one current reminder rather than a burst of stale ones.

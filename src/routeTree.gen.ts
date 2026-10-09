@@ -14,6 +14,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedCardsIndexRouteImport } from './routes/_authed/cards/index'
 import { Route as AuthedCardsCardIdRouteImport } from './routes/_authed/cards/$cardId'
 import { Route as AuthedCardsNewRouteImport } from './routes/_authed/cards/new'
@@ -44,6 +45,11 @@ const SignUpRoute = SignUpRouteImport.update({
 const AuthedIndexRoute = AuthedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedCardsIndexRoute = AuthedCardsIndexRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/settings': typeof AuthedSettingsRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
   '/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/settings': typeof AuthedSettingsRoute
   '/': typeof AuthedIndexRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/_authed/settings': typeof AuthedSettingsRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/_authed/cards/new': typeof AuthedCardsNewRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/sign-in'
     | '/sign-up'
+    | '/settings'
     | '/cards/$cardId'
     | '/cards/new'
     | '/subscriptions/$subscriptionId'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/sign-in'
     | '/sign-up'
+    | '/settings'
     | '/'
     | '/cards/$cardId'
     | '/cards/new'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/sign-in'
     | '/sign-up'
+    | '/_authed/settings'
     | '/_authed/'
     | '/_authed/cards/$cardId'
     | '/_authed/cards/new'
@@ -213,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/cards/': {
       id: '/_authed/cards/'
       path: '/cards'
@@ -266,6 +285,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedCardsCardIdRoute: typeof AuthedCardsCardIdRoute
   AuthedCardsNewRoute: typeof AuthedCardsNewRoute
@@ -276,6 +296,7 @@ interface AuthedRouteChildren {
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedCardsCardIdRoute: AuthedCardsCardIdRoute,
   AuthedCardsNewRoute: AuthedCardsNewRoute,
