@@ -19,6 +19,9 @@ import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedCardsIndexRouteImport } from './routes/_authed/cards/index'
 import { Route as AuthedCardsCardIdRouteImport } from './routes/_authed/cards/$cardId'
 import { Route as AuthedCardsNewRouteImport } from './routes/_authed/cards/new'
+import { Route as AuthedStatementsIndexRouteImport } from './routes/_authed/statements/index'
+import { Route as AuthedStatementsStatementIdRouteImport } from './routes/_authed/statements/$statementId'
+import { Route as AuthedStatementsNewRouteImport } from './routes/_authed/statements/new'
 import { Route as AuthedSubscriptionsIndexRouteImport } from './routes/_authed/subscriptions/index'
 import { Route as AuthedSubscriptionsSubscriptionIdRouteImport } from './routes/_authed/subscriptions/$subscriptionId'
 import { Route as AuthedSubscriptionsNewRouteImport } from './routes/_authed/subscriptions/new'
@@ -76,6 +79,22 @@ const AuthedCardsNewRoute = AuthedCardsNewRouteImport.update({
   path: '/cards/new',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedStatementsIndexRoute = AuthedStatementsIndexRouteImport.update({
+  id: '/statements/',
+  path: '/statements/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedStatementsStatementIdRoute =
+  AuthedStatementsStatementIdRouteImport.update({
+    id: '/statements/$statementId',
+    path: '/statements/$statementId',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedStatementsNewRoute = AuthedStatementsNewRouteImport.update({
+  id: '/statements/new',
+  path: '/statements/new',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedSubscriptionsIndexRoute =
   AuthedSubscriptionsIndexRouteImport.update({
     id: '/subscriptions/',
@@ -124,12 +143,15 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthedSettingsRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
+  '/statements/$statementId': typeof AuthedStatementsStatementIdRoute
+  '/statements/new': typeof AuthedStatementsNewRoute
   '/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
   '/subscriptions/new': typeof AuthedSubscriptionsNewRoute
   '/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
   '/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/cards/': typeof AuthedCardsIndexRoute
+  '/statements/': typeof AuthedStatementsIndexRoute
   '/subscriptions/': typeof AuthedSubscriptionsIndexRoute
   '/transactions/': typeof AuthedTransactionsIndexRoute
 }
@@ -142,12 +164,15 @@ export interface FileRoutesByTo {
   '/': typeof AuthedIndexRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
+  '/statements/$statementId': typeof AuthedStatementsStatementIdRoute
+  '/statements/new': typeof AuthedStatementsNewRoute
   '/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
   '/subscriptions/new': typeof AuthedSubscriptionsNewRoute
   '/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
   '/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/cards': typeof AuthedCardsIndexRoute
+  '/statements': typeof AuthedStatementsIndexRoute
   '/subscriptions': typeof AuthedSubscriptionsIndexRoute
   '/transactions': typeof AuthedTransactionsIndexRoute
 }
@@ -162,12 +187,15 @@ export interface FileRoutesById {
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/_authed/cards/new': typeof AuthedCardsNewRoute
+  '/_authed/statements/$statementId': typeof AuthedStatementsStatementIdRoute
+  '/_authed/statements/new': typeof AuthedStatementsNewRoute
   '/_authed/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
   '/_authed/subscriptions/new': typeof AuthedSubscriptionsNewRoute
   '/_authed/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
   '/_authed/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_authed/cards/': typeof AuthedCardsIndexRoute
+  '/_authed/statements/': typeof AuthedStatementsIndexRoute
   '/_authed/subscriptions/': typeof AuthedSubscriptionsIndexRoute
   '/_authed/transactions/': typeof AuthedTransactionsIndexRoute
 }
@@ -182,12 +210,15 @@ export interface FileRouteTypes {
     | '/settings'
     | '/cards/$cardId'
     | '/cards/new'
+    | '/statements/$statementId'
+    | '/statements/new'
     | '/subscriptions/$subscriptionId'
     | '/subscriptions/new'
     | '/transactions/$transactionId'
     | '/transactions/new'
     | '/api/auth/$'
     | '/cards/'
+    | '/statements/'
     | '/subscriptions/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
@@ -200,12 +231,15 @@ export interface FileRouteTypes {
     | '/'
     | '/cards/$cardId'
     | '/cards/new'
+    | '/statements/$statementId'
+    | '/statements/new'
     | '/subscriptions/$subscriptionId'
     | '/subscriptions/new'
     | '/transactions/$transactionId'
     | '/transactions/new'
     | '/api/auth/$'
     | '/cards'
+    | '/statements'
     | '/subscriptions'
     | '/transactions'
   id:
@@ -219,12 +253,15 @@ export interface FileRouteTypes {
     | '/_authed/'
     | '/_authed/cards/$cardId'
     | '/_authed/cards/new'
+    | '/_authed/statements/$statementId'
+    | '/_authed/statements/new'
     | '/_authed/subscriptions/$subscriptionId'
     | '/_authed/subscriptions/new'
     | '/_authed/transactions/$transactionId'
     | '/_authed/transactions/new'
     | '/api/auth/$'
     | '/_authed/cards/'
+    | '/_authed/statements/'
     | '/_authed/subscriptions/'
     | '/_authed/transactions/'
   fileRoutesById: FileRoutesById
@@ -309,6 +346,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCardsNewRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/statements/': {
+      id: '/_authed/statements/'
+      path: '/statements'
+      fullPath: '/statements/'
+      preLoaderRoute: typeof AuthedStatementsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/statements/$statementId': {
+      id: '/_authed/statements/$statementId'
+      path: '/statements/$statementId'
+      fullPath: '/statements/$statementId'
+      preLoaderRoute: typeof AuthedStatementsStatementIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/statements/new': {
+      id: '/_authed/statements/new'
+      path: '/statements/new'
+      fullPath: '/statements/new'
+      preLoaderRoute: typeof AuthedStatementsNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/subscriptions/': {
       id: '/_authed/subscriptions/'
       path: '/subscriptions'
@@ -367,11 +425,14 @@ interface AuthedRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedCardsCardIdRoute: typeof AuthedCardsCardIdRoute
   AuthedCardsNewRoute: typeof AuthedCardsNewRoute
+  AuthedStatementsStatementIdRoute: typeof AuthedStatementsStatementIdRoute
+  AuthedStatementsNewRoute: typeof AuthedStatementsNewRoute
   AuthedSubscriptionsSubscriptionIdRoute: typeof AuthedSubscriptionsSubscriptionIdRoute
   AuthedSubscriptionsNewRoute: typeof AuthedSubscriptionsNewRoute
   AuthedTransactionsTransactionIdRoute: typeof AuthedTransactionsTransactionIdRoute
   AuthedTransactionsNewRoute: typeof AuthedTransactionsNewRoute
   AuthedCardsIndexRoute: typeof AuthedCardsIndexRoute
+  AuthedStatementsIndexRoute: typeof AuthedStatementsIndexRoute
   AuthedSubscriptionsIndexRoute: typeof AuthedSubscriptionsIndexRoute
   AuthedTransactionsIndexRoute: typeof AuthedTransactionsIndexRoute
 }
@@ -382,12 +443,15 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedCardsCardIdRoute: AuthedCardsCardIdRoute,
   AuthedCardsNewRoute: AuthedCardsNewRoute,
+  AuthedStatementsStatementIdRoute: AuthedStatementsStatementIdRoute,
+  AuthedStatementsNewRoute: AuthedStatementsNewRoute,
   AuthedSubscriptionsSubscriptionIdRoute:
     AuthedSubscriptionsSubscriptionIdRoute,
   AuthedSubscriptionsNewRoute: AuthedSubscriptionsNewRoute,
   AuthedTransactionsTransactionIdRoute: AuthedTransactionsTransactionIdRoute,
   AuthedTransactionsNewRoute: AuthedTransactionsNewRoute,
   AuthedCardsIndexRoute: AuthedCardsIndexRoute,
+  AuthedStatementsIndexRoute: AuthedStatementsIndexRoute,
   AuthedSubscriptionsIndexRoute: AuthedSubscriptionsIndexRoute,
   AuthedTransactionsIndexRoute: AuthedTransactionsIndexRoute,
 }

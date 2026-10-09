@@ -54,6 +54,14 @@ function AuthedLayout() {
 							Transactions
 						</Link>
 						<Link
+							to="/statements"
+							className={navClass}
+							activeProps={{ className: "bg-secondary text-foreground" }}
+							activeOptions={{ exact: false }}
+						>
+							Statements
+						</Link>
+						<Link
 							to="/cards"
 							className={navClass}
 							activeProps={{ className: "bg-secondary text-foreground" }}

@@ -6,6 +6,7 @@ import {
 	overpaidMinor,
 	periodsOverlap,
 	statementStatus,
+	statusLabel,
 	suggestNextStatement,
 } from "./statements.logic";
 
@@ -213,5 +214,31 @@ describe("outstandingByCurrency", () => {
 			{ currency: "USD", outstandingMinor: 2_500 },
 		]);
 		expect(outstandingByCurrency([])).toEqual([]);
+	});
+});
+
+describe("statusLabel", () => {
+	it("words each state", () => {
+		expect(
+			statusLabel({ status: "OVERDUE", daysUntilDue: -1, paidMinor: 0 }),
+		).toEqual({ label: "Overdue by 1 day", tone: "danger" });
+		expect(
+			statusLabel({ status: "OVERDUE", daysUntilDue: -12, paidMinor: 0 }).label,
+		).toBe("Overdue by 12 days");
+		expect(
+			statusLabel({ status: "OPEN", daysUntilDue: 0, paidMinor: 0 }).label,
+		).toBe("Due today");
+		expect(
+			statusLabel({ status: "OPEN", daysUntilDue: 1, paidMinor: 0 }).label,
+		).toBe("Due tomorrow");
+		expect(
+			statusLabel({ status: "OPEN", daysUntilDue: 9, paidMinor: 0 }).label,
+		).toBe("Due in 9 days");
+		expect(
+			statusLabel({ status: "OPEN", daysUntilDue: 9, paidMinor: 500 }).label,
+		).toBe("Partly paid · due in 9 days");
+		expect(
+			statusLabel({ status: "PAID", daysUntilDue: -40, paidMinor: 500 }),
+		).toEqual({ label: "Paid", tone: "success" });
 	});
 });

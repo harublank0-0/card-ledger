@@ -113,3 +113,29 @@ export function outstandingByCurrency(
 		}))
 		.sort((a, b) => a.currency.localeCompare(b.currency));
 }
+
+/** Short wording and tone for a statement's state, e.g. "Overdue by 2 days". */
+export function statusLabel(input: {
+	status: StatementStatus;
+	daysUntilDue: number;
+	paidMinor: number;
+}): { label: string; tone: "danger" | "neutral" | "success" } {
+	const plural = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
+	if (input.status === "PAID") return { label: "Paid", tone: "success" };
+	if (input.status === "OVERDUE") {
+		return {
+			label: `Overdue by ${plural(-input.daysUntilDue)}`,
+			tone: "danger",
+		};
+	}
+	const due =
+		input.daysUntilDue === 0
+			? "Due today"
+			: input.daysUntilDue === 1
+				? "Due tomorrow"
+				: `Due in ${plural(input.daysUntilDue)}`;
+	return {
+		label: input.paidMinor > 0 ? `Partly paid · ${due.toLowerCase()}` : due,
+		tone: "neutral",
+	};
+}

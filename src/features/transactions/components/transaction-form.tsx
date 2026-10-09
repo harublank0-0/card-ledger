@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { FormField } from "#/components/form-field";
@@ -79,7 +80,11 @@ export function TransactionForm({
 			{!isRefund && (
 				<p className="rounded-md bg-secondary p-3 text-sm text-muted-foreground">
 					Record things you bought. Paying your credit card bill is not an
-					expense; it will be tracked under card statements (coming soon).
+					expense; record it as a payment on the card's{" "}
+					<Link to="/statements" className="font-medium underline">
+						statement
+					</Link>
+					.
 				</p>
 			)}
 

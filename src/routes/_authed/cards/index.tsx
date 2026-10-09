@@ -105,6 +105,13 @@ function Cards() {
 										Edit
 									</Link>
 								</Button>
+								{!card.archivedAt && (
+									<Button asChild variant="ghost" size="sm">
+										<Link to="/statements/new" search={{ cardId: card.id }}>
+											Add statement
+										</Link>
+									</Button>
+								)}
 								<Button
 									variant="ghost"
 									size="sm"

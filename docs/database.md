@@ -1,6 +1,6 @@
 # Card Ledger — Database Design
 
-Status: partially implemented. `prisma/schema.prisma` currently contains the Better Auth models, `PaymentMethod` and `Subscription` (with CHECK constraints added by migration `domain_checks`). The remaining models below are proposed. Prisma 7.10, `prisma-client` generator (output `src/generated/prisma`), PostgreSQL via `@prisma/adapter-pg`. Schema changes go through `prisma migrate` migrations committed to the repo.
+Status: partially implemented. `prisma/schema.prisma` currently contains the Better Auth models, `PaymentMethod`, `Subscription`, `Category`, `Transaction`, `NotificationPreference`, `NotificationLog`, `CardStatement` and `StatementPayment`, all with CHECK constraints added in their migrations. `StatementPayment` has no currency column (it is the statement's) and `CardStatement.currency` always equals the card's. Prisma 7.10, `prisma-client` generator (output `src/generated/prisma`), PostgreSQL via `@prisma/adapter-pg`. Schema changes go through `prisma migrate` migrations committed to the repo.
 
 ## 1. Conventions
 
