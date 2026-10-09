@@ -1,6 +1,6 @@
 # Card Ledger — Database Design
 
-Status: **proposed**. Current schema (`prisma/schema.prisma`) only contains the starter `Todo` model, which is removed in ticket F-02. Prisma 7.10, `prisma-client` generator (output `src/generated/prisma`), PostgreSQL via `@prisma/adapter-pg`. Schema changes go through `prisma migrate` migrations committed to the repo.
+Status: partially implemented. `prisma/schema.prisma` currently contains the Better Auth models, `PaymentMethod` and `Subscription` (with CHECK constraints added by migration `domain_checks`). The remaining models below are proposed. Prisma 7.10, `prisma-client` generator (output `src/generated/prisma`), PostgreSQL via `@prisma/adapter-pg`. Schema changes go through `prisma migrate` migrations committed to the repo.
 
 ## 1. Conventions
 
@@ -9,7 +9,7 @@ Status: **proposed**. Current schema (`prisma/schema.prisma`) only contains the 
 - **Money**: `Int` minor units (`amountMinor`) + `currency Char(3)` (ISO 4217). Never `Float`. Amounts stored positive; direction is encoded by `type` (expense/refund), not sign. Rationale: [ADR 0004](./decisions/0004-money-integer-minor-units.md). A single value caps at ~21.4M major units, enough for personal finance; widening to `BigInt` later is a mechanical migration.
 - **Dates**: date-only business values use `@db.Date`; real moments use `DateTime` (UTC). Rationale: [ADR 0005](./decisions/0005-calendar-dates-and-timezones.md).
 - **Timestamps**: `createdAt @default(now())`, `updatedAt @updatedAt` on every domain table.
-- **Deletion**: no hard deletes of financial history. Payment methods, categories, and subscriptions are **archived** (`archivedAt`). Foreign keys between domain entities use `onDelete: Restrict`. Only the `User` relation uses `onDelete: Cascade` (account deletion removes everything the user owns).
+- **Deletion**: no hard deletes of financial history. Payment methods, categories, and subscriptions are **archived** (`archivedAt`). Foreign keys between domain entities use `onDelete: NoAction` (Prisma's name for `ON DELETE NO ACTION`): deleting a referenced row on its own is blocked like `Restrict`, but the check runs at statement end, so deleting a `User` can cascade through both tables. A true `RESTRICT` is checked immediately and would make account deletion fail depending on cascade order. Only the `User` relation uses `onDelete: Cascade` (account deletion removes everything the user owns).
 - **Naming**: Prisma models PascalCase, table/column mapping via `@@map`/`@map` to `snake_case`; enums for closed sets.
 - **Sensitive data**: no PAN, CVV, PIN, or credentials anywhere. `PaymentMethod.last4` only.
 
@@ -186,8 +186,8 @@ model NotificationLog {
 ## 4. Key relationships and constraints
 
 - `User 1—* ` every domain table (cascade from user only).
-- `PaymentMethod 1—* Subscription | Transaction | CardStatement` (restrict; archive instead of delete).
-- `Category 1—* Transaction` (restrict; archive instead of delete).
+- `PaymentMethod 1—* Subscription | Transaction | CardStatement` (no action; archive instead of delete).
+- `Category 1—* Transaction` (no action; archive instead of delete).
 - `Subscription 1—* Transaction` (optional; a transaction links to a subscription only when the user records an actual charge).
 - `Transaction 1—* Transaction` (refund → original expense).
 - `CardStatement 1—* StatementPayment`.

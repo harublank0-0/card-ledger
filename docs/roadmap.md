@@ -19,6 +19,22 @@ Global requirements for every feature ticket:
 - No sensitive data (amounts, notes, descriptions) in logs; no secrets or real financial data committed.
 - No telemetry or calls to external services other than operator-configured SMTP.
 
+## Progress
+
+| Done | Ticket | Notes |
+|---|---|---|
+| yes | F-01 Tooling and environment | Vitest, typecheck script, T3Env schema (`src/env.schema.ts`), Biome baseline, `src/generated` ignored. Integration tests use a separate `<db>_test` database created on demand. Dev DB: `compose.dev.yaml`. |
+| partial | F-02 Starter demos / MCP | Todo model, seed content and `mcp-todos` removed; `/mcp` is 404 unless `MCP_ENABLED`, then requires a session. Placeholder home replaced by redirect. |
+| yes | F-03 Better Auth persistence | Prisma adapter, `SIGNUP_MODE`, 12-character minimum password. |
+| yes | F-04 Auth UI and middleware | Sign-in/up pages, `_authed` layout, `authMiddleware`. |
+| yes | F-05 Core libraries | `money.ts`, `calendar-date.ts` with tests. |
+| no | F-06 LICENSE | Still to do. |
+| yes | M-02 Payment methods | CRUD UI, archive, last4 only. Categories (M-01) not needed yet. |
+| yes | M-03 Recurrence engine | `subscriptions.logic.ts`. |
+| yes | M-04 / M-05 Subscriptions | CRUD, cancel, reactivate, archive, next renewal, state, monthly equivalent per currency. Expiry and cancel-by dates are stored and shown; **reminder emails are not built yet (M-11 to M-13)**. |
+
+Not started: M-01, M-06 to M-16, all of Phase 2 and Phase 3.
+
 Ticket format: **ID — Title** · Objective · Scope · Acceptance criteria (AC) · Dependencies · Tests.
 
 ---

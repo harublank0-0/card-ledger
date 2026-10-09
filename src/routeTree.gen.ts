@@ -9,19 +9,74 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedCardsIndexRouteImport } from './routes/_authed/cards/index'
+import { Route as AuthedCardsCardIdRouteImport } from './routes/_authed/cards/$cardId'
+import { Route as AuthedCardsNewRouteImport } from './routes/_authed/cards/new'
+import { Route as AuthedSubscriptionsIndexRouteImport } from './routes/_authed/subscriptions/index'
+import { Route as AuthedSubscriptionsSubscriptionIdRouteImport } from './routes/_authed/subscriptions/$subscriptionId'
+import { Route as AuthedSubscriptionsNewRouteImport } from './routes/_authed/subscriptions/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedIndexRoute = AuthedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCardsIndexRoute = AuthedCardsIndexRouteImport.update({
+  id: '/cards/',
+  path: '/cards/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCardsCardIdRoute = AuthedCardsCardIdRouteImport.update({
+  id: '/cards/$cardId',
+  path: '/cards/$cardId',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCardsNewRoute = AuthedCardsNewRouteImport.update({
+  id: '/cards/new',
+  path: '/cards/new',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSubscriptionsIndexRoute =
+  AuthedSubscriptionsIndexRouteImport.update({
+    id: '/subscriptions/',
+    path: '/subscriptions/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedSubscriptionsSubscriptionIdRoute =
+  AuthedSubscriptionsSubscriptionIdRouteImport.update({
+    id: '/subscriptions/$subscriptionId',
+    path: '/subscriptions/$subscriptionId',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedSubscriptionsNewRoute = AuthedSubscriptionsNewRouteImport.update({
+  id: '/subscriptions/new',
+  path: '/subscriptions/new',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -30,42 +85,104 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthedIndexRoute
   '/mcp': typeof McpRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/cards/$cardId': typeof AuthedCardsCardIdRoute
+  '/cards/new': typeof AuthedCardsNewRoute
+  '/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
+  '/subscriptions/new': typeof AuthedSubscriptionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/cards/': typeof AuthedCardsIndexRoute
+  '/subscriptions/': typeof AuthedSubscriptionsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/mcp': typeof McpRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/': typeof AuthedIndexRoute
+  '/cards/$cardId': typeof AuthedCardsCardIdRoute
+  '/cards/new': typeof AuthedCardsNewRoute
+  '/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
+  '/subscriptions/new': typeof AuthedSubscriptionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/cards': typeof AuthedCardsIndexRoute
+  '/subscriptions': typeof AuthedSubscriptionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/mcp': typeof McpRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/_authed/': typeof AuthedIndexRoute
+  '/_authed/cards/$cardId': typeof AuthedCardsCardIdRoute
+  '/_authed/cards/new': typeof AuthedCardsNewRoute
+  '/_authed/subscriptions/$subscriptionId': typeof AuthedSubscriptionsSubscriptionIdRoute
+  '/_authed/subscriptions/new': typeof AuthedSubscriptionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_authed/cards/': typeof AuthedCardsIndexRoute
+  '/_authed/subscriptions/': typeof AuthedSubscriptionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/mcp' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/mcp'
+    | '/sign-in'
+    | '/sign-up'
+    | '/cards/$cardId'
+    | '/cards/new'
+    | '/subscriptions/$subscriptionId'
+    | '/subscriptions/new'
+    | '/api/auth/$'
+    | '/cards/'
+    | '/subscriptions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/mcp' | '/api/auth/$'
-  id: '__root__' | '/' | '/mcp' | '/api/auth/$'
+  to:
+    | '/mcp'
+    | '/sign-in'
+    | '/sign-up'
+    | '/'
+    | '/cards/$cardId'
+    | '/cards/new'
+    | '/subscriptions/$subscriptionId'
+    | '/subscriptions/new'
+    | '/api/auth/$'
+    | '/cards'
+    | '/subscriptions'
+  id:
+    | '__root__'
+    | '/_authed'
+    | '/mcp'
+    | '/sign-in'
+    | '/sign-up'
+    | '/_authed/'
+    | '/_authed/cards/$cardId'
+    | '/_authed/cards/new'
+    | '/_authed/subscriptions/$subscriptionId'
+    | '/_authed/subscriptions/new'
+    | '/api/auth/$'
+    | '/_authed/cards/'
+    | '/_authed/subscriptions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   McpRoute: typeof McpRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_authed': {
+      id: '/_authed'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -74,6 +191,69 @@ declare module '@tanstack/react-router' {
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/': {
+      id: '/_authed/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/cards/': {
+      id: '/_authed/cards/'
+      path: '/cards'
+      fullPath: '/cards/'
+      preLoaderRoute: typeof AuthedCardsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/cards/$cardId': {
+      id: '/_authed/cards/$cardId'
+      path: '/cards/$cardId'
+      fullPath: '/cards/$cardId'
+      preLoaderRoute: typeof AuthedCardsCardIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/cards/new': {
+      id: '/_authed/cards/new'
+      path: '/cards/new'
+      fullPath: '/cards/new'
+      preLoaderRoute: typeof AuthedCardsNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/subscriptions/': {
+      id: '/_authed/subscriptions/'
+      path: '/subscriptions'
+      fullPath: '/subscriptions/'
+      preLoaderRoute: typeof AuthedSubscriptionsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/subscriptions/$subscriptionId': {
+      id: '/_authed/subscriptions/$subscriptionId'
+      path: '/subscriptions/$subscriptionId'
+      fullPath: '/subscriptions/$subscriptionId'
+      preLoaderRoute: typeof AuthedSubscriptionsSubscriptionIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/subscriptions/new': {
+      id: '/_authed/subscriptions/new'
+      path: '/subscriptions/new'
+      fullPath: '/subscriptions/new'
+      preLoaderRoute: typeof AuthedSubscriptionsNewRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -85,9 +265,35 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedCardsCardIdRoute: typeof AuthedCardsCardIdRoute
+  AuthedCardsNewRoute: typeof AuthedCardsNewRoute
+  AuthedSubscriptionsSubscriptionIdRoute: typeof AuthedSubscriptionsSubscriptionIdRoute
+  AuthedSubscriptionsNewRoute: typeof AuthedSubscriptionsNewRoute
+  AuthedCardsIndexRoute: typeof AuthedCardsIndexRoute
+  AuthedSubscriptionsIndexRoute: typeof AuthedSubscriptionsIndexRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedIndexRoute: AuthedIndexRoute,
+  AuthedCardsCardIdRoute: AuthedCardsCardIdRoute,
+  AuthedCardsNewRoute: AuthedCardsNewRoute,
+  AuthedSubscriptionsSubscriptionIdRoute:
+    AuthedSubscriptionsSubscriptionIdRoute,
+  AuthedSubscriptionsNewRoute: AuthedSubscriptionsNewRoute,
+  AuthedCardsIndexRoute: AuthedCardsIndexRoute,
+  AuthedSubscriptionsIndexRoute: AuthedSubscriptionsIndexRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   McpRoute: McpRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

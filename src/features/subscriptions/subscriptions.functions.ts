@@ -18,12 +18,14 @@ const today = () => todayIn(env.DEFAULT_TIMEZONE);
 export const listSubscriptionsFn = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.validator(z.object({ includeArchived: z.boolean().optional() }).optional())
-	.handler(async ({ context, data }) =>
-		(await service()).listSubscriptions(context.user.id, {
-			today: today(),
-			includeArchived: data?.includeArchived,
-		}),
-	);
+	.handler(async ({ context, data }) => {
+		const now = today();
+		const subscriptions = await (await service()).listSubscriptions(
+			context.user.id,
+			{ today: now, includeArchived: data?.includeArchived },
+		);
+		return { today: now, subscriptions };
+	});
 
 export const getSubscriptionFn = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])

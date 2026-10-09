@@ -1,6 +1,6 @@
 # card-ledger
 
-Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Early-stage scaffold (TanStack Start CLI template); no product features yet. Only the Todo demo model, an MCP todo tool, and the Better Auth endpoint exist.
+Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Early MVP: sign-in, credit cards (last4 only) and subscription tracking work. Transactions, statements, dashboard and email reminders are not built yet (see `docs/roadmap.md` Progress).
 
 Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/database.md`, `docs/roadmap.md`, `docs/decisions/`. Work one roadmap ticket at a time; read the relevant doc sections first and update docs when a decision changes.
 
@@ -13,11 +13,12 @@ Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/dat
 - Validate input on the server with `.validator()` + Zod. Keep financial logic in pure modules (no React/Prisma).
 
 ## Stack
-- TanStack Start + Router (file-based routes in `src/routes`, generated `src/routeTree.gen.ts` — never edit by hand), React 19 with React Compiler, Vite 8, Nitro server (`npm run build` → `node dist/server/index.mjs`).
+- TanStack Start + Router (file-based routes in `src/routes`, generated `src/routeTree.gen.ts` — never edit by hand), React 19 with React Compiler, Vite 8, Nitro server (`npm run build` → `node .output/server/index.mjs`).
 - TanStack Query (SSR-integrated in `src/router.tsx`), TanStack Form.
-- Prisma 7 + Postgres via `@prisma/adapter-pg`; client generated to `src/generated/prisma` (run `npm run db:generate`; not yet gitignored). Schema: `prisma/schema.prisma`.
-- Better Auth (email/password, stateless until a database is wired in): `src/lib/auth.ts`, `src/lib/auth-client.ts`, route `src/routes/api/auth/$.ts`.
-- MCP server endpoint at `/mcp` (`src/routes/mcp.ts`, `src/utils/mcp-handler.ts`, `src/mcp-todos.ts`).
+- Prisma 7 + Postgres via `@prisma/adapter-pg`; client generated to `src/generated/prisma` (gitignored; run `npm run db:generate`). Schema: `prisma/schema.prisma`.
+- Better Auth (email/password, persisted via the Prisma adapter, `SIGNUP_MODE` policy): `src/lib/auth.ts`, `src/lib/auth-client.ts`, route `src/routes/api/auth/$.ts`.
+- MCP endpoint `/mcp` is disabled (404) unless `MCP_ENABLED=true` and then requires a session; no tools registered yet.
+- Features live in `src/features/<name>/` (`*.schemas.ts` Zod, `*.service.server.ts` user-scoped Prisma, `*.functions.ts` `createServerFn` + `authMiddleware`, `*.logic.ts` pure). Routes in `src/routes/_authed/` are guarded for UX only.
 - Tailwind CSS 4, shadcn/ui (new-york, zinc, lucide) in `src/components/ui`, Biome for lint/format (tabs, double quotes).
 - Typed env via `@t3-oss/env-core` in `src/env.ts` (client vars need `VITE_` prefix).
 
@@ -25,7 +26,8 @@ Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/dat
 - Package manager is **npm** (ignore `pnpm dlx` in README/.cursorrules; use `npx shadcn@latest add <component>`).
 - Import alias `#/*` → `src/*` (also `@/*` in tsconfig). TypeScript is strict with no unused locals/params.
 - DB scripts load `.env.local` (`DATABASE_URL` required; Better Auth needs `BETTER_AUTH_SECRET`).
-- Commands: `npm run dev` (port 3100, strict), `npm run check` (Biome), `npm run build`, `npm run db:migrate|push|studio|seed`.
+- Local DB: `docker compose -f compose.dev.yaml up -d` (Postgres on 127.0.0.1:5434). `.env.local` needs `DATABASE_URL`, `BETTER_AUTH_URL=http://localhost:3100`, `BETTER_AUTH_SECRET` (32+ chars).
+- Commands: `npm run dev` (port 3100, strict), `npm run check` (Biome), `npm run typecheck`, `npm test` (Vitest; integration tests auto-create `<db>_test`), `npm run build`, `npm run db:migrate|studio|seed`.
 - Biome ignores `src/routeTree.gen.ts` and `src/styles.css`.
 
 <!-- intent-skills:start -->
