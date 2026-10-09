@@ -29,6 +29,9 @@ model User {
   notificationPreference NotificationPreference?
   notificationLogs       NotificationLog[]
 
+  categories   Category[]
+  transactions Transaction[]
+
   @@map("user")
 }
 
@@ -116,6 +119,7 @@ model PaymentMethod {
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptions Subscription[]
+  transactions  Transaction[]
 
   @@index([userId, archivedAt])
   @@map("payment_method")
@@ -145,6 +149,7 @@ model Subscription {
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: NoAction)
+  transactions  Transaction[]
 
   @@index([userId, status])
   @@index([userId, paymentMethodId])
@@ -211,4 +216,62 @@ model NotificationLog {
   @@unique([userId, kind, entityId, eventDate, offsetDays, channel])
   @@index([status, nextAttemptAt])
   @@map("notification_log")
+}
+
+enum TransactionType {
+  EXPENSE
+  REFUND
+}
+
+model Category {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String
+  name       String
+  /// Archived categories stay on historical transactions but are hidden from pickers.
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@map("category")
+}
+
+/// Money that was actually spent (EXPENSE) or given back (REFUND). A refund always points at
+/// the expense it reverses. An expected subscription renewal is never stored here; it only
+/// becomes a transaction when the user records the real charge.
+model Transaction {
+  id              String          @id @default(uuid(7)) @db.Uuid
+  userId          String
+  type            TransactionType
+  /// Always positive; direction comes from `type`.
+  amountMinor     Int
+  /// Currency of the charge itself (may differ from the card's currency).
+  currency        String          @db.Char(3)
+  occurredOn      DateTime        @db.Date
+  description     String
+  notes           String?
+  categoryId      String?         @db.Uuid
+  paymentMethodId String?         @db.Uuid
+  /// Set when the user records the real charge of a tracked subscription.
+  subscriptionId  String?         @db.Uuid
+  /// REFUND -> the EXPENSE it reverses (enforced by a CHECK constraint and the service).
+  refundOfId      String?         @db.Uuid
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: NoAction)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: NoAction)
+  subscription  Subscription?  @relation(fields: [subscriptionId], references: [id], onDelete: NoAction)
+  refundOf      Transaction?   @relation("Refunds", fields: [refundOfId], references: [id], onDelete: NoAction)
+  refunds       Transaction[]  @relation("Refunds")
+
+  @@index([userId, occurredOn])
+  @@index([userId, paymentMethodId, occurredOn])
+  @@index([userId, categoryId, occurredOn])
+  @@index([refundOfId])
+  @@map("transaction")
 }

@@ -45,3 +45,10 @@ export function optionalCalendarDate(label: string) {
 			return v;
 		});
 }
+
+/** An optional id from a form: "" becomes null, anything else must be a UUID. */
+export const optionalUuid = z
+	.string()
+	.trim()
+	.transform((v) => (v === "" ? null : v))
+	.pipe(z.uuid().nullable());
