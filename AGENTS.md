@@ -25,7 +25,7 @@ Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/dat
 - Package manager is **npm** (ignore `pnpm dlx` in README/.cursorrules; use `npx shadcn@latest add <component>`).
 - Import alias `#/*` → `src/*` (also `@/*` in tsconfig). TypeScript is strict with no unused locals/params.
 - DB scripts load `.env.local` (`DATABASE_URL` required; Better Auth needs `BETTER_AUTH_SECRET`).
-- Commands: `npm run dev` (port 3000), `npm run check` (Biome), `npm run build`, `npm run db:migrate|push|studio|seed`.
+- Commands: `npm run dev` (port 3100, strict), `npm run check` (Biome), `npm run build`, `npm run db:migrate|push|studio|seed`.
 - Biome ignores `src/routeTree.gen.ts` and `src/styles.css`.
 
 <!-- intent-skills:start -->

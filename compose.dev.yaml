@@ -1,0 +1,23 @@
+# Development database only. Production/self-hosting compose comes with ticket S-01.
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: card-ledger-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cardledger
+      POSTGRES_PASSWORD: cardledger_dev
+      POSTGRES_DB: cardledger
+    ports:
+      # Bound to localhost only; never publish Postgres on a public interface.
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - card_ledger_dev_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cardledger -d cardledger"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  card_ledger_dev_db:

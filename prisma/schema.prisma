@@ -7,8 +7,143 @@ datasource db {
   provider = "postgresql"
 }
 
-model Todo {
-  id        Int      @id @default(autoincrement())
-  title     String
+// ---------------------------------------------------------------------------
+// Better Auth models (shape required by better-auth's Prisma adapter).
+// Do not hand-edit columns; keep in sync when upgrading better-auth.
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  paymentMethods PaymentMethod[]
+  subscriptions  Subscription[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// Domain models. See docs/database.md for conventions:
+// - money = Int minor units + ISO 4217 currency (never floats)
+// - date-only business values use @db.Date
+// - financial history is archived, never hard-deleted (onDelete: Restrict)
+// ---------------------------------------------------------------------------
+
+enum BillingUnit {
+  WEEK
+  MONTH
+  YEAR
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model PaymentMethod {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  userId           String
+  name             String
+  issuer           String?
+  /// Last four digits only. Full card numbers, CVV and PIN are never stored.
+  last4            String    @db.Char(4)
+  currency         String    @db.Char(3)
+  creditLimitMinor Int?
+  /// Day of month the statement is generated (1-31, clamped to month length).
+  statementDay     Int?
+  /// Day of month the payment is due (1-31, clamped to month length).
+  paymentDueDay    Int?
+  archivedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+
+  @@index([userId, archivedAt])
+  @@map("payment_method")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid(7)) @db.Uuid
+  userId               String
+  paymentMethodId      String?            @db.Uuid
+  name                 String
+  amountMinor          Int
+  currency             String             @db.Char(3)
+  /// Billing every `intervalCount` x `intervalUnit` (quarterly = 3 MONTH).
+  intervalCount        Int                @default(1)
+  intervalUnit         BillingUnit
+  /// A known billing date; every renewal is derived from it (never chained).
+  anchorDate           DateTime           @db.Date
+  status               SubscriptionStatus @default(ACTIVE)
+  autoRenew            Boolean            @default(true)
+  expiresOn            DateTime?          @db.Date
+  cancellationDeadline DateTime?          @db.Date
+  cancelledOn          DateTime?          @db.Date
+  notes                String?
+  archivedAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([userId, paymentMethodId])
+  @@map("subscription")
 }
