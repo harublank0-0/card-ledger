@@ -303,3 +303,58 @@ export function upcomingEvents(input: {
 		);
 	});
 }
+
+// ---------------------------------------------------------------------------
+// Presentation helpers (pure, so wording and bar widths are tested)
+// ---------------------------------------------------------------------------
+
+const daysPhrase = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
+
+function whenPhrase(daysUntil: number) {
+	return daysUntil === 0
+		? "today"
+		: daysUntil === 1
+			? "tomorrow"
+			: `in ${daysPhrase(daysUntil)}`;
+}
+
+/** One line of text and a tone for an upcoming event. Amounts are shown separately. */
+export function describeUpcoming(event: UpcomingEvent): {
+	text: string;
+	tone: "danger" | "neutral";
+} {
+	const card = event.last4 ? `${event.label} •••• ${event.last4}` : event.label;
+	const when = whenPhrase(event.daysUntil);
+	switch (event.kind) {
+		case "STATEMENT_OVERDUE":
+			return {
+				text: `${card}: payment overdue by ${daysPhrase(-event.daysUntil)}`,
+				tone: "danger",
+			};
+		case "STATEMENT_DUE":
+			return { text: `${card}: payment due ${when}`, tone: "neutral" };
+		case "CARD_DUE_DAY":
+			return {
+				text: `${card}: payment due ${when} (monthly due day)`,
+				tone: "neutral",
+			};
+		case "RENEWAL":
+			return { text: `${event.label} renews ${when}`, tone: "neutral" };
+		case "EXPIRY":
+			return { text: `${event.label} expires ${when}`, tone: "neutral" };
+		case "CANCEL_BY":
+			return {
+				text: `Cancel ${event.label} by ${event.date} (${when})`,
+				tone: "neutral",
+			};
+	}
+}
+
+/**
+ * Width of a category's bar as a whole percentage of the largest positive net. Categories with
+ * no positive spending get no bar; a tiny but positive one still gets a visible sliver.
+ */
+export function barPercent(netMinor: number, maxNetMinor: number) {
+	if (netMinor <= 0 || maxNetMinor <= 0) return 0;
+	return Math.max(2, Math.min(100, Math.round((netMinor / maxNetMinor) * 100)));
+}

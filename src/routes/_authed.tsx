@@ -32,11 +32,19 @@ function AuthedLayout() {
 	return (
 		<div className="mx-auto max-w-5xl p-4 sm:p-6">
 			<header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-				<div className="flex items-center gap-4">
-					<Link to="/subscriptions" className="text-lg font-semibold">
+				<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+					<Link to="/" className="whitespace-nowrap text-lg font-semibold">
 						Card Ledger
 					</Link>
-					<nav className="flex gap-1" aria-label="Main">
+					<nav className="flex flex-wrap gap-1" aria-label="Main">
+						<Link
+							to="/"
+							className={navClass}
+							activeProps={{ className: "bg-secondary text-foreground" }}
+							activeOptions={{ exact: true }}
+						>
+							Dashboard
+						</Link>
 						<Link
 							to="/subscriptions"
 							className={navClass}

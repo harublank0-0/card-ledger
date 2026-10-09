@@ -3,13 +3,16 @@ import { describe, expect, it } from "vitest";
 import { todayIn } from "#/lib/calendar-date";
 
 import {
+	barPercent,
 	type CategoryGroup,
+	describeUpcoming,
 	formatMonthLabel,
 	isValidMonth,
 	monthBounds,
 	monthOf,
 	shiftMonth,
 	spendingByCategory,
+	type UpcomingEvent,
 	type UpcomingSubscription,
 	upcomingEvents,
 } from "./dashboard.logic";
@@ -313,5 +316,77 @@ describe("upcomingEvents", () => {
 		expect(
 			run({ statements: [{ ...statement, outstandingMinor: 0 }] }),
 		).toEqual([]);
+	});
+});
+
+describe("describeUpcoming", () => {
+	const base = {
+		date: "2025-03-15",
+		label: "Streaming",
+		target: { type: "subscription", id: "s" },
+	} as const;
+	const ev = (over: Partial<UpcomingEvent>): UpcomingEvent => ({
+		kind: "RENEWAL",
+		daysUntil: 5,
+		...base,
+		...over,
+	});
+
+	it("words subscription events", () => {
+		expect(describeUpcoming(ev({ kind: "RENEWAL", daysUntil: 0 })).text).toBe(
+			"Streaming renews today",
+		);
+		expect(describeUpcoming(ev({ kind: "RENEWAL", daysUntil: 1 })).text).toBe(
+			"Streaming renews tomorrow",
+		);
+		expect(describeUpcoming(ev({ kind: "EXPIRY", daysUntil: 9 })).text).toBe(
+			"Streaming expires in 9 days",
+		);
+		expect(describeUpcoming(ev({ kind: "CANCEL_BY", daysUntil: 2 })).text).toBe(
+			"Cancel Streaming by 2025-03-15 (in 2 days)",
+		);
+	});
+	it("words card payments, marking overdue ones as danger", () => {
+		const card = {
+			label: "Daily",
+			last4: "0000",
+			target: { type: "statement", id: "st" },
+		} as const;
+		expect(
+			describeUpcoming(
+				ev({ ...card, kind: "STATEMENT_OVERDUE", daysUntil: -1 }),
+			),
+		).toEqual({
+			text: "Daily •••• 0000: payment overdue by 1 day",
+			tone: "danger",
+		});
+		expect(
+			describeUpcoming(
+				ev({ ...card, kind: "STATEMENT_OVERDUE", daysUntil: -19 }),
+			).text,
+		).toBe("Daily •••• 0000: payment overdue by 19 days");
+		expect(
+			describeUpcoming(ev({ ...card, kind: "STATEMENT_DUE", daysUntil: 11 })),
+		).toEqual({
+			text: "Daily •••• 0000: payment due in 11 days",
+			tone: "neutral",
+		});
+		expect(
+			describeUpcoming(ev({ ...card, kind: "CARD_DUE_DAY", daysUntil: 1 }))
+				.text,
+		).toBe("Daily •••• 0000: payment due tomorrow (monthly due day)");
+	});
+});
+
+describe("barPercent", () => {
+	it("scales to the largest positive amount", () => {
+		expect(barPercent(900, 900)).toBe(100);
+		expect(barPercent(450, 900)).toBe(50);
+		expect(barPercent(1, 100_000)).toBe(2);
+	});
+	it("draws nothing for zero, negative or when nothing is positive", () => {
+		expect(barPercent(0, 900)).toBe(0);
+		expect(barPercent(-300, 900)).toBe(0);
+		expect(barPercent(500, 0)).toBe(0);
 	});
 });

@@ -1,6 +1,6 @@
 # card-ledger
 
-Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Early MVP: sign-in, credit cards (last4 only) and subscription tracking work. Transactions, statements, dashboard and email reminders are not built yet (see `docs/roadmap.md` Progress).
+Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Working MVP: sign-in, cards (last4 only), subscriptions, email reminders, transactions with refunds, card statements and payments, and a dashboard home page. Export, account deletion, demo data and deployment are not built yet (see `docs/roadmap.md` Progress).
 
 Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/database.md`, `docs/roadmap.md`, `docs/decisions/`. Work one roadmap ticket at a time; read the relevant doc sections first and update docs when a decision changes.
 
@@ -18,7 +18,7 @@ Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/dat
 - Prisma 7 + Postgres via `@prisma/adapter-pg`; client generated to `src/generated/prisma` (gitignored; run `npm run db:generate`). Schema: `prisma/schema.prisma`.
 - Better Auth (email/password, persisted via the Prisma adapter, `SIGNUP_MODE` policy): `src/lib/auth.ts`, `src/lib/auth-client.ts`, route `src/routes/api/auth/$.ts`.
 - MCP endpoint `/mcp` is disabled (404) unless `MCP_ENABLED=true` and then requires a session; no tools registered yet.
-- Features live in `src/features/<name>/` (`*.schemas.ts` Zod, `*.service.server.ts` user-scoped Prisma, `*.functions.ts` `createServerFn` + `authMiddleware`, `*.logic.ts` pure). Routes in `src/routes/_authed/` are guarded for UX only.
+- Features live in `src/features/<name>/` (`*.schemas.ts` Zod, `*.service.server.ts` user-scoped Prisma, `*.functions.ts` `createServerFn` + `authMiddleware`, `*.logic.ts` pure). Routes in `src/routes/_authed/` are guarded for UX only; `/` is the dashboard. Component render tests use `src/test/render.tsx` (in-memory router, static HTML, no DOM library).
 - Tailwind CSS 4, shadcn/ui (new-york, zinc, lucide) in `src/components/ui`, Biome for lint/format (tabs, double quotes).
 - Typed env via `@t3-oss/env-core` in `src/env.ts` (client vars need `VITE_` prefix).
 

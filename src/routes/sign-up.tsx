@@ -16,7 +16,7 @@ import { getSessionFn, getSignupAllowedFn } from "#/lib/session.functions";
 
 export const Route = createFileRoute("/sign-up")({
 	beforeLoad: async () => {
-		if (await getSessionFn()) throw redirect({ to: "/subscriptions" });
+		if (await getSessionFn()) throw redirect({ to: "/" });
 	},
 	loader: async () => ({ signupAllowed: await getSignupAllowedFn() }),
 	component: SignUp,
@@ -44,7 +44,7 @@ function SignUp() {
 				return;
 			}
 			await router.invalidate();
-			await router.navigate({ to: "/subscriptions" });
+			await router.navigate({ to: "/" });
 		},
 	});
 
