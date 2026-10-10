@@ -4,7 +4,12 @@
 #   docker compose up -d
 #
 # For development use compose.dev.yaml (database and mail catcher only) with `npm run dev`.
-name: card-ledger
+#
+# The project name is fixed and differs from the checkout directory's name on purpose:
+# compose.dev.yaml has no name, so Compose would call that project "card-ledger", and both
+# files define a `db` service. Sharing a project would let one stack recreate the other's
+# database container.
+name: card-ledger-selfhost
 
 x-app-env: &app-env
   # Built from the same POSTGRES_PASSWORD as the database; use a password without

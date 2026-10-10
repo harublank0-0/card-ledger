@@ -13,6 +13,7 @@ Self-hosting must work from a fresh clone with `docker compose up`, without publ
 - **No secrets in the image.** Everything comes from the environment at runtime. `.dockerignore` excludes `.env*`, `.git` and generated output. The only build-time value is a placeholder `DATABASE_URL`, needed because `prisma.config.ts` requires one even for `prisma generate`; nothing connects to it.
 - **No telemetry from tooling.** `CHECKPOINT_DISABLE=1` and `PRISMA_HIDE_UPDATE_MESSAGE=1` stop the Prisma CLI's update checks at runtime. Network access is needed only at build time (base image, npm packages, Prisma engines).
 - **Private by default.** The `db` service has no `ports:`; the app is published on `127.0.0.1` only (`APP_PORT`, default 3000). Exposure beyond the host is the operator's explicit step (reverse proxy with HTTPS, or Tailscale). `no-new-privileges` is set and all capabilities are dropped for the three app-image services; containers run as the non-root `node` user.
+- **Its own compose project name** (`card-ledger-selfhost`). `compose.dev.yaml` has no name, so Compose calls that project after the checkout directory (`card-ledger`); both files define a `db` service, and sharing a project would let one stack recreate the other's database container. A test enforces the difference.
 - **Required settings fail loudly.** `POSTGRES_PASSWORD` and `BETTER_AUTH_SECRET` use `${VAR:?message}`, so `docker compose up` without them stops and names the variable. No default secret exists.
 
 ## Alternatives
