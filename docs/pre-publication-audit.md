@@ -2,7 +2,7 @@
 
 Completed 2026-10-10 against commit `a16e2df` (28 commits, 221 tracked files). It checks that the repository is safe to publish and private by default. Re-run it before pushing to a new remote and before each release; the commands are below.
 
-**Scope.** The committed state (`git archive HEAD`) and the full history. **Not covered:** uncommitted working-tree changes (at the time, the maintainer's own dashboard and navigation work in `docs/database.md`, `src/features/dashboard/*`, `src/routes/_authed.tsx`, `src/test/render.tsx` and `src/components/main-nav*`), and an independent code or security review, which has not been done (see [Known gaps](#known-gaps)).
+**Scope.** The committed state (`git archive HEAD`) and the full history. **Not covered:** uncommitted working-tree changes (at the time, the maintainer's own dashboard and navigation work in `docs/database.md`, `src/features/dashboard/*`, `src/routes/_authed.tsx`, `src/test/render.tsx` and `src/components/main-nav*`), and an independent human audit, which has not been done. A model-assisted code and security review was run afterwards against `ef7ff57` and is recorded in [section 8](#8-code-and-security-review) together with what it fixed and what is still open.
 
 ## Summary
 
@@ -17,6 +17,7 @@ Completed 2026-10-10 against commit `a16e2df` (28 commits, 221 tracked files). I
 | `LICENSE` is the unmodified official AGPL-3.0 text | yes |
 | Known vulnerabilities in production dependencies | 4 high advisories, not exploitable here, awaiting an upstream Prisma release |
 | Starter leftovers | removed or corrected |
+| Code and security review (model-assisted, not an independent audit) | done: 18 findings fixed, remaining items listed in section 8 |
 
 ## 1. Secrets and real data
 
@@ -97,9 +98,52 @@ Removed or corrected: the starter README, the `post-cta-init` script (it ran `np
 - 28 commits, all authored by one identity. `Signed-off-by` is present on every commit except the first (`c926759`, the generated scaffold), which predates the DCO policy. CI checks pull request ranges only, so it is unaffected; rewriting the root commit was judged not worth it.
 - The author email is public in the history and in `CODE_OF_CONDUCT.md`.
 
+## 8. Code and security review
+
+Four reviewers read the committed code on 2026-10-10 (security and data isolation, domain correctness, infrastructure and supply chain, client code), and every finding that mattered was verified by reproducing it or by reading the code path before it was fixed. Each fix has a test (or, for browser and Docker behaviour, a script check) that failed first and a mutation check that proves it can fail again. This is a model-assisted review, **not an independent human audit**.
+
+**Fixed:**
+
+| Finding | Commit |
+|---|---|
+| The delete-account password guard could be bypassed with `Content-Type: x/application/json` (reproduced: the account was deleted) | `91981a3` |
+| A decimal comma was silently deleted, so `150,00` became 15,000.00 (reproduced) | `1decc5c` |
+| The devtools Vite plugin ran an unauthenticated localhost endpoint that ended in a shell command during `npm run dev` | `5b52fa6` |
+| The manual restore-test procedure could delete the live database volume or email real users from a restored copy | `99b4cd9` |
+| An invalid `DEFAULT_TIMEZONE` aborted the reminder run for every later user and broke pages | `8dbaacc` |
+| Reactivating a cancelled subscription kept the cancel end date, so it expired and dropped out of reminders | `cd0b497` |
+| The Prisma CLI contacted `checkpoint.prisma.io` at build time, in CI and in dev scripts | `55fdab8` |
+| Backup read-back accepted a truncated archive (verified: 1 byte, 100 bytes, 1% short) | `b557a64` |
+| `BACKUP_KEEP=00` deleted every backup and still exited 0 | `4f97c91` |
+| The DCO check passed a commit with an empty author email | `2f49f96` |
+| `.dockerignore` patterns matched only at the root, so nested `.env`, dumps and `backups/` entered the image (reproduced) | `1190b03` |
+| The database health check could pass during PostgreSQL's init phase (measured ~0.35 s early) | `061aa69` |
+| `restore.sh` took its safety backup before stopping the writers, and a restore interrupted after the drop could not be re-run | `ce759d8` |
+| SMTP STARTTLS was opportunistic, so credentials could be downgraded to plaintext | `bf15217` |
+| The development console mailer logged recipients and amounts | `1cb14fa` |
+| Server functions returned raw internal error messages (hosts, ports, constraint names) to the browser | `e307133` |
+| After sign-out and sign-in in one tab, the previous user's cached data rendered for the next user (reproduced) | `b458a1a` |
+| Picking a card silently replaced a currency the user had chosen | `e94c715` |
+
+**Checked, no findings:** every server function uses the auth middleware and every query is scoped by `userId`; foreign ids are ownership-checked; refund, statement-overlap and payment races are locked correctly; no float arithmetic on money, and recurrence matched a brute-force reference over 20,000 random cases; no XSS vectors, open redirects, SQL injection or secrets in the client bundle; CSRF protection for server functions is enforced (cross-site, forged-Origin and origin-less requests get 403, verified on a built server); the CI workflows, action pins, lockfile and licence parser.
+
+**Open (reviewed, not fixed yet):**
+
+- Reminders are sent to unverified email addresses when `SIGNUP_MODE=open` and SMTP is configured, so an instance could be used to send reminder-shaped email to a stranger. Single-user (`first-user`) instances are not affected. Needs an email-verification flow.
+- Sign-up responses reveal whether an email address is registered, even when sign-up is closed (rate limited).
+- Login rate limiting trusts a client-supplied `X-Forwarded-For`; configure trusted proxy headers and document it per proxy.
+- There is no request body size limit before parsing; set one in the reverse proxy.
+- An unpaid statement on an archived card is shown by the dashboard but not reminded about (a product decision).
+- Cancelling a subscription with an end date and then pressing "Save changes" on the same edit page erases that end date.
+- Smaller UI items: the transaction date filters are hard to type with a keyboard, there are no custom error or not-found pages, some buttons can be double-clicked, and form errors are not linked to their inputs with `aria-describedby`.
+- The default first-billing date of a new subscription uses the runtime's time zone, not the user's.
+- A cancel end date before the first billing date reports a database constraint message instead of a clear one.
+- A card's currency can change while a statement is being created for it (narrow race).
+- Dead starter code: `src/integrations/better-auth/header-user.tsx`, `src/lib/utils.ts` and the `TanstackQueryProvider` stub.
+
 ## Known gaps
 
-- **No independent code or security review.** Places to look at first: list reads without a limit (the statements list returns every statement; only the transaction list is paginated, and the dashboard and reminder runner read whole sets); `z.NEVER` early exits in the subscription, transaction, payment-method and statement schemas; two simultaneous first sign-ups can both pass the `first-user` count check (acknowledged in `src/lib/auth.ts`); the `/mcp` handler returns `error.message` in its JSON-RPC internal error (the endpoint is off by default and has no tools).
+- **No independent human audit.** The review in section 8 was model-assisted; the open items there remain, and unbounded list reads (the statements list returns every statement; only the transaction list is paginated) and the first-user sign-up race (two simultaneous first sign-ups can both pass the count check, acknowledged in `src/lib/auth.ts`) are known and accepted for single-operator installs.
 - The application image is about 1.2 GB.
 - The CI workflows have never run on GitHub; they were validated with `actionlint` and by running their steps locally.
 - The issue forms and README have not been rendered on GitHub.
