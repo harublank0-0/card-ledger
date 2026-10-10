@@ -80,6 +80,7 @@ Built with TanStack Start (React 19), PostgreSQL through Prisma, Better Auth, Ta
 | [Data format](./docs/data-format.md) | the JSON and CSV export |
 | [Decision records](./docs/decisions/README.md) | why things are the way they are |
 | [Roadmap](./docs/roadmap.md) | what is built and what is next |
+| [Pre-publication audit](./docs/pre-publication-audit.md) | what was checked before publishing, and what was not |
 
 ## Security and privacy
 
@@ -93,4 +94,4 @@ Contributions are welcome: start with [CONTRIBUTING.md](./CONTRIBUTING.md). Ever
 
 ## Roadmap
 
-The MVP and self-hosting (Docker, backups, health checks) are done. Candidates for later, to be prioritised from real feedback: CSV import of bank exports, recurring-transaction templates, user-provided exchange rates, more reminder channels, budgets and translations. See [docs/roadmap.md](./docs/roadmap.md).
+The MVP, self-hosting (Docker, backups, health checks) and the public-repository work (CI, security policy, templates, audit) are done. Candidates for later, to be prioritised from real feedback: CSV import of bank exports, recurring-transaction templates, user-provided exchange rates, more reminder channels, budgets and translations. See [docs/roadmap.md](./docs/roadmap.md).
