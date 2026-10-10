@@ -1,6 +1,6 @@
 # card-ledger
 
-Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Working MVP: sign-in, cards (last4 only), subscriptions, email reminders, transactions with refunds, card statements and payments, and a dashboard home page. Data export, account deletion, demo data, the Docker/compose stack, the self-hosting guide (`docs/self-hosting.md`) and backup/restore (`docs/backup-restore.md`) are built; CI and the public-GitHub documents are not (see `docs/roadmap.md` Progress).
+Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Working MVP: sign-in, cards (last4 only), subscriptions, email reminders, transactions with refunds, card statements and payments, and a dashboard home page. Data export, account deletion, demo data, the Docker/compose stack, the self-hosting guide (`docs/self-hosting.md`) and backup/restore (`docs/backup-restore.md`) are built, as are `CONTRIBUTING.md`, `SECURITY.md` and `CODE_OF_CONDUCT.md`; the README rewrite, CI, templates and the pre-publication audit are not (see `docs/roadmap.md` Progress).
 
 Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/database.md`, `docs/roadmap.md`, `docs/decisions/`. Work one roadmap ticket at a time; read the relevant doc sections first and update docs when a decision changes.
 
