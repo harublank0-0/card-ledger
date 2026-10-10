@@ -184,9 +184,19 @@ export async function cancelSubscription(
 	await prisma.$transaction(async (tx) => {
 		const existing = await tx.subscription.findFirst({
 			where: { id, userId },
-			select: { status: true, expiresOn: true },
+			select: { status: true, expiresOn: true, anchorDate: true },
 		});
 		if (!existing) throw new Error("Subscription not found");
+		// The database enforces this too (subscription_expiry_after_anchor); say it plainly
+		// instead of letting a constraint violation reach the person as a generic failure.
+		if (
+			options.expiresOn &&
+			options.expiresOn < fromDbDate(existing.anchorDate)
+		) {
+			throw new Error(
+				`The end date cannot be before the first billing date (${fromDbDate(existing.anchorDate)})`,
+			);
+		}
 		await tx.subscription.updateMany({
 			where: { id, userId },
 			data: {

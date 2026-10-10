@@ -171,6 +171,38 @@ describe("lifecycle", () => {
 		});
 	});
 
+	describe("an end date before the first billing date", () => {
+		// The database CHECK subscription_expiry_after_anchor rejects it. Reaching it surfaced as
+		// a generic failure; the service says what is wrong and changes nothing.
+		it("is refused with a clear message and leaves the plan untouched", async () => {
+			const sub = await createSubscription(
+				alice.id,
+				subscriptionData({ name: "Starts later", anchorDate: "2025-06-01" }),
+			);
+			await expect(
+				cancelSubscription(alice.id, sub.id, {
+					today,
+					expiresOn: "2025-05-01",
+				}),
+			).rejects.toThrow(/before the first billing date \(2025-06-01\)/);
+			const view = await viewOf(alice.id, sub.id);
+			expect(view?.status).toBe("ACTIVE");
+			expect(view?.cancelledOn).toBeNull();
+		});
+
+		it("accepts an end date on the first billing date itself", async () => {
+			const sub = await createSubscription(
+				alice.id,
+				subscriptionData({ name: "Same day", anchorDate: "2025-06-01" }),
+			);
+			await cancelSubscription(alice.id, sub.id, {
+				today,
+				expiresOn: "2025-06-01",
+			});
+			expect((await viewOf(alice.id, sub.id))?.expiresOn).toBe("2025-06-01");
+		});
+	});
+
 	it("archives and hides from the default list", async () => {
 		const sub = await createSubscription(
 			alice.id,
