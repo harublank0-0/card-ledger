@@ -25,7 +25,7 @@ Design background: [ADR 0008](./decisions/0008-container-image-and-compose-topol
 ## Install
 
 ```sh
-git clone <repository-url> card-ledger
+git clone https://github.com/haruBlank0-0/card-ledger.git
 cd card-ledger
 cp .env.example .env
 ```

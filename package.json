@@ -1,7 +1,23 @@
 {
   "name": "card-ledger",
+  "description": "Self-hostable personal finance and subscription tracker: credit cards, subscriptions, spending, card statements and email reminders.",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haruBlank0-0/card-ledger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/haruBlank0-0/card-ledger/issues"
+  },
+  "homepage": "https://github.com/haruBlank0-0/card-ledger#readme",
+  "keywords": [
+    "personal-finance",
+    "subscription-tracker",
+    "self-hosted",
+    "credit-card",
+    "budgeting"
+  ],
   "imports": {
     "#/*": "./src/*"
   },
@@ -13,7 +29,6 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "post-cta-init": "npx -y create-db@latest --user-agent tanstack/tsrouter",
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",

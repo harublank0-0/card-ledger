@@ -1,269 +1,96 @@
-Welcome to your new TanStack Start app!
+# Card Ledger
 
-# Getting Started
+A self-hostable personal finance and subscription tracker. Keep your credit cards, subscriptions, spending, card statements and payment due dates in one place, get email reminders before money is due, and keep the data on a server you control.
 
-To run this application:
+> **Status: pre-1.0.** The core is built and tested, but Card Ledger has not had an independent security audit. Run it for yourself, keep it private, and read [SECURITY.md](./SECURITY.md) before exposing it to the internet.
 
-```bash
-npm install
-npm run dev
-```
+![The dashboard: spending this month per currency, active subscriptions, amounts owed on cards, upcoming payments and spending by category](docs/screenshots/dashboard.png)
 
-# Building For Production
+*Screenshots show the synthetic demo account created by `npm run db:seed`. Nothing in them is real.*
 
-To build this application for production:
+## Principles
 
-```bash
-npm run build
-```
+- **Self-hosted and complete.** One codebase, no editions, no feature locks, no licence keys.
+- **No telemetry.** The only outbound connection at runtime is the SMTP server you configure, if any.
+- **Minimal sensitive data.** Only the last four digits of a card are stored; never a full number, CVV, PIN or banking credential. There are no bank connections: you enter what you want to track.
+- **Per-user isolation.** Every row belongs to a user and every query is scoped to the signed-in user.
+- **Correct money.** Amounts are integer minor units with a currency code. Different currencies are never added together.
 
-## Styling
+## What it does
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+- **Cards** (last four digits, currency, credit limit, statement and due days; archive instead of delete).
+- **Subscriptions** that renew weekly, monthly, quarterly, yearly or every N units, with month-end-safe renewal dates, cancel and reactivate, expiry and cancel-by deadlines, and the monthly commitment per currency.
+- **Transactions** with categories, partial or full refunds, filters you can share as a link, and totals per currency.
+- **Card statements and payments**: what you owe the bank, due dates, overdue state and overpayment credit. Payments are not counted as spending.
+- **Dashboard** for the current or any earlier month: spent per currency, subscription commitment, amounts owed, a 30-day "coming up" list and spending by category.
+- **Email reminders** (optional SMTP) for renewals, expiries, cancel-by dates and card payments, as one digest per person per run, with no duplicates.
+- **Your data stays yours**: export everything as JSON or CSV, delete your account, and back up the database.
 
-### Removing Tailwind CSS
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/subscriptions.png" alt="The subscriptions list with renewal dates, cancel-by warnings and the monthly commitment per currency"></td>
+    <td width="50%"><img src="docs/screenshots/statements.png" alt="Card statements with overdue and due-soon badges and the amount still owed per currency"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/transactions.png" alt="The transaction list with filters, per-currency totals and a refund"></td>
+    <td width="50%"><img src="docs/screenshots/dashboard-phone.png" alt="The dashboard on a phone-width screen"></td>
+  </tr>
+</table>
 
-If you prefer not to use Tailwind CSS:
+## Quick start (self-hosting)
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-npm run lint
-npm run format
-npm run check
-```
-
-
-## Deploy with Nitro
-
-This project uses Nitro as a generic server adapter, so it can run on any Node-compatible host.
+You need Docker with Docker Compose v2.
 
 ```bash
-npm run build
-node dist/server/index.mjs
+git clone https://github.com/haruBlank0-0/card-ledger.git
+cd card-ledger
+cp .env.example .env
 ```
 
-The build output is a self-contained Node server. To deploy, push the `dist/` directory to your host (Render, Fly.io, your own VPS, etc.) and run the server command above.
-
-For host-specific presets (Vercel, Netlify, Cloudflare, AWS Lambda, etc.) and tuning, see https://v3.nitro.build/deploy.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+Edit `.env` and set the two required secrets (`openssl rand -hex 24` for `POSTGRES_PASSWORD`, `openssl rand -base64 48` for `BETTER_AUTH_SECRET`), then:
 
 ```bash
-pnpm dlx shadcn@latest add button
+docker compose up -d --build
 ```
 
+Open <http://localhost:3000>. The first account you create becomes the owner and registration then closes. The app listens on `127.0.0.1` only; to use it from other devices put HTTPS in front of it, as described in the [self-hosting guide](./docs/self-hosting.md), which also covers email reminders, upgrades and troubleshooting. Set up [backups](./docs/backup-restore.md) before you rely on it.
 
-## T3Env
-
-- You can use T3Env to add type safety to your environment variables.
-- Add Environment variables to the `src/env.mjs` file.
-- Use the environment variables in your code.
-
-### Usage
-
-```ts
-import { env } from "#/env";
-
-console.log(env.VITE_APP_TITLE);
-```
-
-
-
-
-
-## Setting up Better Auth
-
-1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
-
-   ```bash
-   npx -y @better-auth/cli secret
-   ```
-
-2. Visit the [Better Auth documentation](https://www.better-auth.com) to unlock the full potential of authentication in your app.
-
-### Adding a Database (Optional)
-
-Better Auth can work in stateless mode, but to persist user data, add a database:
-
-```typescript
-// src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-  // ... rest of config
-});
-```
-
-Then run migrations:
+## Development
 
 ```bash
-npx -y @better-auth/cli migrate
+npm ci
+docker compose -f compose.dev.yaml up -d    # PostgreSQL and a mail catcher
+# create .env.local (see CONTRIBUTING.md), then:
+npm run db:generate && npm run db:migrate && npm run db:seed
+npm run dev                                  # http://localhost:3100
 ```
 
+Quality gates: `npm run check`, `npm run typecheck`, `npm test`, `npm run build`. Full setup and workflow: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+Built with TanStack Start (React 19), PostgreSQL through Prisma, Better Auth, Tailwind CSS with shadcn/ui, Vitest and Biome.
 
-## Routing
+## Documentation
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+| | |
+|---|---|
+| [Self-hosting guide](./docs/self-hosting.md) | install, first user, email, HTTPS and Tailscale access, upgrades, troubleshooting |
+| [Backup and restore](./docs/backup-restore.md) | scheduled backups, restore, and the restore drill |
+| [Architecture](./docs/architecture.md) | components, data isolation, security model, reminders |
+| [Database](./docs/database.md) | tables and constraints |
+| [Data format](./docs/data-format.md) | the JSON and CSV export |
+| [Decision records](./docs/decisions/README.md) | why things are the way they are |
+| [Roadmap](./docs/roadmap.md) | what is built and what is next |
 
-### Adding A Route
+## Security and privacy
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+Please report vulnerabilities privately; the process, scope and response targets are in [SECURITY.md](./SECURITY.md). A database backup contains every user's financial data: treat it like the live database and encrypt copies that leave your machine.
 
-TanStack will automatically generate the content of the route file for you.
+## Licence and contributing
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+Card Ledger is licensed under the [GNU Affero General Public License v3.0 only](./LICENSE) (`AGPL-3.0-only`). Contributions are accepted under the same licence with a Developer Certificate of Origin sign-off (`git commit -s`) and **no CLA**, so the code cannot later be relicensed without every contributor's consent. If you run a modified version as a network service, AGPL section 13 requires you to offer its source to your users.
 
-### Adding Links
+Contributions are welcome: start with [CONTRIBUTING.md](./CONTRIBUTING.md). Everyone taking part is expected to follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+## Roadmap
 
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+The MVP and self-hosting (Docker, backups, health checks) are done. Candidates for later, to be prioritised from real feedback: CSV import of bank exports, recurring-transaction templates, user-provided exchange rates, more reminder channels, budgets and translations. See [docs/roadmap.md](./docs/roadmap.md).
