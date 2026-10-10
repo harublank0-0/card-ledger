@@ -16,6 +16,7 @@ import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedCategoriesRouteImport } from './routes/_authed/categories'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthedCardsIndexRouteImport } from './routes/_authed/cards/index'
 import { Route as AuthedCardsCardIdRouteImport } from './routes/_authed/cards/$cardId'
 import { Route as AuthedCardsNewRouteImport } from './routes/_authed/cards/new'
@@ -65,6 +66,11 @@ const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthedRoute,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedCardsIndexRoute = AuthedCardsIndexRouteImport.update({
   id: '/cards/',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/categories': typeof AuthedCategoriesRoute
   '/settings': typeof AuthedSettingsRoute
+  '/api/health': typeof ApiHealthRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
   '/statements/$statementId': typeof AuthedStatementsStatementIdRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/categories': typeof AuthedCategoriesRoute
   '/settings': typeof AuthedSettingsRoute
+  '/api/health': typeof ApiHealthRoute
   '/': typeof AuthedIndexRoute
   '/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/cards/new': typeof AuthedCardsNewRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/_authed/categories': typeof AuthedCategoriesRoute
   '/_authed/settings': typeof AuthedSettingsRoute
+  '/api/health': typeof ApiHealthRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/cards/$cardId': typeof AuthedCardsCardIdRoute
   '/_authed/cards/new': typeof AuthedCardsNewRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/categories'
     | '/settings'
+    | '/api/health'
     | '/cards/$cardId'
     | '/cards/new'
     | '/statements/$statementId'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/categories'
     | '/settings'
+    | '/api/health'
     | '/'
     | '/cards/$cardId'
     | '/cards/new'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/_authed/categories'
     | '/_authed/settings'
+    | '/api/health'
     | '/_authed/'
     | '/_authed/cards/$cardId'
     | '/_authed/cards/new'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiExportJsonRoute: typeof ApiExportJsonRoute
   ApiExportCsvEntityRoute: typeof ApiExportCsvEntityRoute
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings'
       preLoaderRoute: typeof AuthedSettingsRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/cards/': {
       id: '/_authed/cards/'
@@ -504,6 +524,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiExportJsonRoute: ApiExportJsonRoute,
   ApiExportCsvEntityRoute: ApiExportCsvEntityRoute,

@@ -21,3 +21,35 @@ export const serverEnvSchema = {
 
 export const signupModeSchema = serverEnvSchema.SIGNUP_MODE;
 export type SignupMode = z.infer<typeof signupModeSchema>;
+
+export type EnvProblem = { name: string; problem: string };
+export type ServerEnv = z.infer<z.ZodObject<typeof serverEnvSchema>>;
+
+/** Parse a set of variables the way `env.ts` does: an empty string counts as unset. */
+export function parseServerEnv(source: Record<string, string | undefined>) {
+	const cleaned: Record<string, string | undefined> = {};
+	for (const [key, value] of Object.entries(source)) {
+		cleaned[key] = value === "" ? undefined : value;
+	}
+	return z.object(serverEnvSchema).safeParse(cleaned);
+}
+
+/**
+ * Explain what is wrong with a set of environment variables without ever repeating a value
+ * (a rejected secret or connection string must not end up in a log).
+ */
+export function describeEnvProblems(
+	source: Record<string, string | undefined>,
+): EnvProblem[] {
+	const result = parseServerEnv(source);
+	if (result.success) return [];
+
+	const byName = new Map<string, string>();
+	for (const issue of result.error.issues) {
+		const name = String(issue.path[0] ?? "environment");
+		if (!byName.has(name)) byName.set(name, issue.message);
+	}
+	return [...byName.entries()]
+		.map(([name, problem]) => ({ name, problem }))
+		.sort((a, b) => a.name.localeCompare(b.name));
+}

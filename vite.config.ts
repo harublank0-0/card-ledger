@@ -20,7 +20,11 @@ const baseConfig = {
 	resolve: { tsconfigPaths: true },
 	plugins: [
 		devtools(),
-		nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+		nitro({
+			rollupConfig: { external: [/^@sentry\//] },
+			// Validates the environment at boot and logs which variables are wrong.
+			plugins: ["./src/server/startup.ts"],
+		}),
 		tailwindcss(),
 		tanstackStart(),
 		viteReact(),

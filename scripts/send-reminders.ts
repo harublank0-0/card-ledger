@@ -10,6 +10,7 @@
 import { prisma } from "#/db";
 import { env } from "#/env";
 import { runReminders } from "#/features/notifications/notifications.service.server";
+import { errorClass, logger } from "#/lib/logger.server";
 import { createMailer } from "#/lib/mailer.server";
 
 async function main() {
@@ -24,7 +25,7 @@ async function main() {
 	});
 
 	if (!mailer) {
-		console.log("Reminders are disabled: SMTP_HOST is not configured.");
+		logger.info("reminders disabled: SMTP_HOST is not configured");
 		return;
 	}
 
@@ -32,18 +33,13 @@ async function main() {
 		mailer,
 		settingsUrl: new URL("/settings", env.BETTER_AUTH_URL).toString(),
 	});
-	console.log(
-		`[reminders] transport=${mailer.kind} ${JSON.stringify(summary)}`,
-	);
+	logger.info("reminder run finished", { transport: mailer.kind, ...summary });
 	if (summary.failed > 0) process.exitCode = 1;
 }
 
 main()
 	.catch((error) => {
-		console.error(
-			"[reminders] run failed:",
-			error instanceof Error ? error.message : error,
-		);
+		logger.error("reminder run failed", { error: errorClass(error) });
 		process.exitCode = 1;
 	})
 	.finally(() => prisma.$disconnect());
