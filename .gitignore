@@ -13,3 +13,6 @@ __unconfig*
 todos.json
 mcp-todos.json
 src/generated
+
+# Database backups (scripts/backup.sh) contain real financial data.
+backups

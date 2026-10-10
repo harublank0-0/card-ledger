@@ -112,7 +112,7 @@ The proxy, Tailscale and tunnel examples above are standard configurations, not 
 ## Upgrade
 
 ```sh
-# 1. back up first (see backup-restore.md)
+sh scripts/backup.sh               # 1. back up first (docs/backup-restore.md)
 git pull
 docker compose up -d --build
 docker compose logs migrate        # shows the migrations that were applied

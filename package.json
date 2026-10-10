@@ -23,7 +23,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "reminders:send": "dotenv -e .env.local -- tsx scripts/send-reminders.ts",
-    "docker:smoke": "sh scripts/docker-smoke.sh"
+    "docker:smoke": "sh scripts/docker-smoke.sh",
+    "backup": "sh scripts/backup.sh",
+    "backup:drill": "sh scripts/restore-drill.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
