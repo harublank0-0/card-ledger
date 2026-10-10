@@ -62,9 +62,11 @@ export function createMailer(config: MailerConfig): Mailer | null {
 		return {
 			kind,
 			async send(message) {
-				// Subject only: bodies can contain financial details.
+				// Neither the recipient, the subject nor the body: subjects carry the amount of a
+				// single reminder. Set SMTP_HOST (a local Mailpit) to read what would be sent.
+				const lines = message.text.split("\n").length;
 				console.log(
-					`[mail:console] to=${message.to} subject="${message.subject}"`,
+					`[mail:console] a message of ${lines} lines was not sent (SMTP_HOST is not set)`,
 				);
 			},
 		};

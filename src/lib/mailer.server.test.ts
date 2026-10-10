@@ -1,5 +1,5 @@
 import net from "node:net";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createMailer, shouldRequireTls } from "./mailer.server";
 
@@ -149,5 +149,30 @@ describe("SMTP transport and STARTTLS", () => {
 		const verbs = smtp.commands.map((c) => c.split(" ")[0].toUpperCase());
 		expect(verbs).toContain("AUTH");
 		expect(verbs).toContain("MAIL");
+	});
+});
+
+describe("the development console mailer", () => {
+	it("logs neither the recipient, nor the subject, nor the amount in it", async () => {
+		const lines: string[] = [];
+		const spy = vi.spyOn(console, "log").mockImplementation((...args) => {
+			lines.push(args.map(String).join(" "));
+		});
+		try {
+			const mailer = createMailer({ production: false });
+			expect(mailer?.kind).toBe("console");
+			await mailer?.send({
+				to: "maya.sharma@example.test",
+				subject: "Sample Streaming renews tomorrow (NPR 649.00)",
+				text: "Sample Streaming renews on 2026-10-11 for NPR 649.00",
+			});
+		} finally {
+			spy.mockRestore();
+		}
+		const output = lines.join("\n");
+		expect(output.length).toBeGreaterThan(0);
+		expect(output).not.toContain("maya.sharma");
+		expect(output).not.toContain("649");
+		expect(output).not.toContain("Sample Streaming");
 	});
 });
