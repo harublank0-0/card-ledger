@@ -21,6 +21,7 @@ async function main() {
 		password: env.SMTP_PASSWORD,
 		from: env.SMTP_FROM,
 		secure: env.SMTP_SECURE,
+		requireTls: env.SMTP_REQUIRE_TLS,
 		production: process.env.NODE_ENV === "production",
 	});
 

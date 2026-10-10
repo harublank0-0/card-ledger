@@ -27,6 +27,8 @@ export const serverEnvSchema = {
 	SMTP_PASSWORD: z.string().min(1).optional(),
 	SMTP_FROM: z.string().min(1).optional(),
 	SMTP_SECURE: z.stringbool().default(false),
+	/** Require STARTTLS (default: yes, except for localhost). false allows a plaintext relay. */
+	SMTP_REQUIRE_TLS: z.stringbool().optional(),
 };
 
 export const signupModeSchema = serverEnvSchema.SIGNUP_MODE;

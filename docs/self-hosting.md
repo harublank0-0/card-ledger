@@ -75,6 +75,8 @@ SMTP_FROM="Card Ledger <ledger@example.com>"
 SMTP_SECURE=false   # true for implicit TLS, usually port 465
 ```
 
+Card Ledger **requires STARTTLS** for any relay that is not on the same machine, so your SMTP password and the reminder text are never sent in the clear; with a relay that offers no encryption the reminder job fails with an error instead of sending. Only if you really use a plaintext relay on a network you trust, set `SMTP_REQUIRE_TLS=false`. A mail catcher on `localhost` needs nothing extra.
+
 Apply it with `docker compose up -d`. The job runs when the stack starts and then every `REMINDER_INTERVAL_SECONDS` (default 3600); each reminder is claimed in the database before it is sent, so repeated runs never send duplicates. Each user chooses their own reminder days and time zone in Settings. Check the job with:
 
 ```sh

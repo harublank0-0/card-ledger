@@ -28,6 +28,8 @@ x-app-env: &app-env
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   SMTP_FROM: ${SMTP_FROM:-}
   SMTP_SECURE: ${SMTP_SECURE:-false}
+  # Empty means the default: STARTTLS is required for any relay that is not localhost.
+  SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-}
 
 x-app-service: &app-service
   build: .
