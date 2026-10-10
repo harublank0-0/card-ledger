@@ -97,3 +97,20 @@ export function netByCurrency(rows: readonly TotalsRow[]): CurrencyTotals[] {
 export function signedAmount(type: TransactionType, amountMinor: number) {
 	return type === "REFUND" ? -amountMinor : amountMinor;
 }
+
+/**
+ * The currency a new expense should show after the card field changed. It follows the card's
+ * currency only until the user has chosen one themselves; an explicit choice is never
+ * overwritten, and forms that do not follow the card (edits, refunds) are left alone.
+ */
+export function currencyAfterCardChange(input: {
+	followCard: boolean;
+	chosenByUser: boolean;
+	cardCurrency: string | null;
+	current: string;
+}): string {
+	if (!input.followCard || input.chosenByUser || !input.cardCurrency) {
+		return input.current;
+	}
+	return input.cardCurrency;
+}

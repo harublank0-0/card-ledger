@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	currencyAfterCardChange,
 	netByCurrency,
 	refundableRemaining,
 	signedAmount,
@@ -165,5 +166,37 @@ describe("signedAmount", () => {
 	it("makes refunds negative", () => {
 		expect(signedAmount("EXPENSE", 500)).toBe(500);
 		expect(signedAmount("REFUND", 500)).toBe(-500);
+	});
+});
+
+// A new expense follows the chosen card's currency "until edited". Without remembering the
+// edit, picking a card after choosing a currency silently replaced it: 15.49 USD became
+// 15.49 NPR on save, and the currency field sits above the card field so it is easy to miss.
+describe("currencyAfterCardChange", () => {
+	const base = {
+		followCard: true,
+		chosenByUser: false,
+		cardCurrency: "NPR",
+		current: "USD",
+	};
+
+	it("follows the card's currency while the user has not chosen one", () => {
+		expect(currencyAfterCardChange(base)).toBe("NPR");
+	});
+
+	it("keeps a currency the user chose, whatever card is picked afterwards", () => {
+		expect(currencyAfterCardChange({ ...base, chosenByUser: true })).toBe(
+			"USD",
+		);
+	});
+
+	it("does nothing for forms that do not follow the card (edits, refunds)", () => {
+		expect(currencyAfterCardChange({ ...base, followCard: false })).toBe("USD");
+	});
+
+	it("keeps the current currency when no card is chosen", () => {
+		expect(currencyAfterCardChange({ ...base, cardCurrency: null })).toBe(
+			"USD",
+		);
 	});
 });

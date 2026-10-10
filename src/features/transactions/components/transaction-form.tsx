@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { FormField } from "#/components/form-field";
 import { Button } from "#/components/ui/button";
@@ -15,6 +15,7 @@ import {
 import { Textarea } from "#/components/ui/textarea";
 import { CURRENCY_CODES } from "#/lib/money";
 
+import { currencyAfterCardChange } from "../transactions.logic";
 import {
 	type TransactionFormValues,
 	transactionInputSchema,
@@ -56,6 +57,8 @@ export function TransactionForm({
 	onCancel: () => void;
 }) {
 	const [error, setError] = useState<string | null>(null);
+	// Set once the user picks a currency themselves; from then on the card never overrides it.
+	const currencyChosen = useRef(false);
 	const form = useForm({
 		defaultValues: initialValues,
 		validators: { onSubmit: transactionInputSchema },
@@ -134,9 +137,10 @@ export function TransactionForm({
 							<Select
 								value={field.state.value}
 								disabled={isRefund}
-								onValueChange={(v) =>
-									field.handleChange(v as TransactionFormValues["currency"])
-								}
+								onValueChange={(v) => {
+									currencyChosen.current = true;
+									field.handleChange(v as TransactionFormValues["currency"]);
+								}}
 							>
 								<SelectTrigger id="currency" className="w-full">
 									<SelectValue />
@@ -210,11 +214,18 @@ export function TransactionForm({
 								value={field.state.value === "" ? NONE : field.state.value}
 								onValueChange={(v) => {
 									field.handleChange(v === NONE ? "" : v);
-									const card = cards.find((c) => c.id === v);
-									if (autoCurrencyFromCard && card) {
+									const current = form.getFieldValue("currency");
+									const next = currencyAfterCardChange({
+										followCard: autoCurrencyFromCard,
+										chosenByUser: currencyChosen.current,
+										cardCurrency:
+											cards.find((c) => c.id === v)?.currency ?? null,
+										current,
+									});
+									if (next !== current) {
 										form.setFieldValue(
 											"currency",
-											card.currency as TransactionFormValues["currency"],
+											next as TransactionFormValues["currency"],
 										);
 									}
 								}}
