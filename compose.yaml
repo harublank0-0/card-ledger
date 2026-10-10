@@ -51,7 +51,10 @@ services:
     volumes:
       - card_ledger_db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cardledger -d cardledger"]
+      # Over TCP (-h), which is how migrate and app connect. Without -h the check uses the
+      # Unix socket, which the image's temporary init server also serves before the real
+      # server is listening, so `db` could report healthy a moment too early on first start.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U cardledger -d cardledger"]
       interval: 5s
       timeout: 3s
       retries: 10

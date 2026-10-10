@@ -21,3 +21,22 @@ describe("compose project names", () => {
 		expect(selfHost).not.toBe("card-ledger");
 	});
 });
+
+describe("the database health check", () => {
+	// Without -h, pg_isready asks over the Unix socket, which the official image's temporary
+	// initialisation server also serves before the real server (the only one listening on
+	// TCP) is up. Measured on a fresh volume: ready over the socket ~0.35s before TCP worked.
+	// `migrate` connects over TCP, so a socket-only check can send it into a refused
+	// connection on first start.
+	for (const file of ["compose.yaml", "compose.dev.yaml"]) {
+		it(`${file} checks readiness over TCP, as dependants connect`, () => {
+			const check = read(file)
+				.split("\n")
+				.find((line) => line.includes("pg_isready"));
+			expect(check, file).toBeDefined();
+			expect(check, file).toMatch(
+				/pg_isready\s+-h\s+(127\.0\.0\.1|localhost)\b/,
+			);
+		});
+	}
+});

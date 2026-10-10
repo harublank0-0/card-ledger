@@ -15,7 +15,7 @@ services:
     volumes:
       - card_ledger_dev_db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cardledger -d cardledger"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U cardledger -d cardledger"]
       interval: 5s
       timeout: 3s
       retries: 10
