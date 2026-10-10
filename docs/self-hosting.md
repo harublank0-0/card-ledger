@@ -109,6 +109,17 @@ and run `docker compose up -d`. `BETTER_AUTH_URL` must equal the address in the 
 
 **SSH tunnel** (single user, nothing to install): `ssh -L 3000:127.0.0.1:3000 your-server`, then browse to <http://localhost:3000> on your own machine.
 
+**Sign-in rate limiting and the client address.** In production Better Auth limits sign-in attempts per client address, and it reads that address from the `X-Forwarded-For` header. It trusts the header only when it holds a single address, so the proxy must *set* it to the address that connected to the proxy, not append to whatever the client sent:
+
+- Caddy's `reverse_proxy` does this by default (it replaces the header for clients it does not trust), so the example above needs nothing more.
+- nginx: `proxy_set_header X-Forwarded-For $remote_addr;`. Do not use `$proxy_add_x_forwarded_for`, which appends.
+- A header with several addresses is not trusted at all: every such request then shares one budget per endpoint, so rotating a claimed address cannot buy more attempts, but anyone who can reach the app can use up everyone's budget. With no header at all (a tunnel, `docker compose` on one machine) the same shared budget applies, and Better Auth logs a warning saying so. For one person that is the right trade.
+- Never publish the app's own port (`3000`) to the internet, because a client could then send any single address it likes and get a fresh budget each time. The compose file binds it to `127.0.0.1` for this reason.
+
+This is checked by `src/lib/rate-limit.integration.test.ts` against the real handler; how your proxy builds the header is not.
+
+**Request size.** The application does not cap request bodies itself. Put a limit at the proxy, for example in Caddy `request_body { max_size 1MB }` inside the site block, or nginx `client_max_body_size 1m;`. Nothing in this application needs more than a few kilobytes per request.
+
 The proxy, Tailscale and tunnel examples above are standard configurations, not something this repository tests.
 
 ## Upgrade
