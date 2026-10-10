@@ -27,6 +27,53 @@ describe("guardAccountDeletion", () => {
 		}
 	});
 
+	it("only accepts a body Better Auth will parse the same way: exactly application/json", async () => {
+		// Better Auth picks its parser from the Content-Type. A type that merely *contains*
+		// "application/json" is not parsed as JSON by it, so a password the guard saw would
+		// never reach the password check. Refuse anything but application/json.
+		for (const contentType of [
+			"x/application/json",
+			"text/x-application/json",
+			"text/plain",
+			"application/x-www-form-urlencoded",
+			"multipart/form-data; boundary=x",
+			"application/vnd.api+json",
+			"",
+		]) {
+			const request = new Request(
+				"http://localhost:3100/api/auth/delete-user",
+				{
+					method: "POST",
+					headers: contentType ? { "content-type": contentType } : {},
+					body: JSON.stringify({ password: "correct-horse" }),
+				},
+			);
+			const response = await guardAccountDeletion(request);
+			expect(response?.status, contentType || "(none)").toBe(415);
+			expect(await response?.json()).toMatchObject({
+				code: "UNSUPPORTED_MEDIA_TYPE",
+			});
+		}
+	});
+
+	it("accepts application/json however it is cased or parameterised", async () => {
+		for (const contentType of [
+			"application/json",
+			"application/json; charset=utf-8",
+			"Application/JSON",
+		]) {
+			const request = new Request(
+				"http://localhost:3100/api/auth/delete-user",
+				{
+					method: "POST",
+					headers: { "content-type": contentType },
+					body: JSON.stringify({ password: "correct-horse" }),
+				},
+			);
+			expect(await guardAccountDeletion(request), contentType).toBeNull();
+		}
+	});
+
 	it("blocks path variants that Better Auth might still route", async () => {
 		for (const path of [
 			"/api/auth/delete-user/",

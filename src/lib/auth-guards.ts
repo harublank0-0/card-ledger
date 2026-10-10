@@ -22,6 +22,24 @@ export async function guardAccountDeletion(
 	if (request.method !== "POST") return null;
 	if (normalisedPath(request) !== DELETE_USER_PATH) return null;
 
+	// Better Auth chooses how to read the body from the Content-Type, and only parses JSON for
+	// application/json-shaped types. A type that merely contains "application/json" (for
+	// example "x/application/json") makes it pass the raw stream through, so the password this
+	// guard sees below would never be checked. Accept only the one type the app itself sends.
+	const mediaType = (request.headers.get("content-type") ?? "")
+		.split(";")[0]
+		.trim()
+		.toLowerCase();
+	if (mediaType !== "application/json") {
+		return Response.json(
+			{
+				code: "UNSUPPORTED_MEDIA_TYPE",
+				message: "Send the request as application/json.",
+			},
+			{ status: 415, headers: { "Cache-Control": "no-store" } },
+		);
+	}
+
 	let password: unknown;
 	try {
 		password = ((await request.clone().json()) as { password?: unknown })
