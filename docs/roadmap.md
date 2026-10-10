@@ -184,7 +184,7 @@ Ticket format: **ID — Title** · Objective · Scope · Acceptance criteria (AC
 
 ### M-12 — Reminder planner (pure)
 - **Objective:** Decide which reminders are due.
-- **Scope:** `computeReminders(now, prefs, subscriptions, statements)` returning `{kind, entityId, eventDate, offsetDays}`; covers renewals, expiry, cancellation deadlines, card payment due; excludes cancelled/archived/paid-in-full items.
+- **Scope:** `computeReminders(now, prefs, subscriptions, statements)` returning `{kind, entityId, eventDate, offsetDays}`; covers renewals, expiry, cancellation deadlines, card payment due; excludes cancelled and archived subscriptions and paid-in-full statements. An unpaid statement on an archived card is still reminded about (archiving a card is not paying it); the due-day fallback skips archived cards.
 - **AC:** Day arithmetic in the user's timezone; an item due in exactly 7/3/1 days yields one reminder per offset; settings toggles respected.
 - **Dependencies:** M-03, M-05, M-08, M-11.
 - **Tests:** table-driven tests incl. timezone day boundary (Kathmandu vs UTC), month-end, skipped days (job outage catch-up policy documented and tested).

@@ -142,15 +142,15 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 | Every tab was titled "Card Ledger" | `87b972c` |
 | Unused starter code: `header-user.tsx` and the `TanstackQueryProvider` stub | `1130c5b` |
 | Proxy and rate-limit guidance: the client address must be a single `X-Forwarded-For` the proxy sets; request size is capped at the proxy (documented, pinned by a production-mode test; the proxy's behaviour is the operator's) | `a025894` |
+| An unpaid statement on an archived card was shown by the dashboard but skipped by reminders (a product decision: remind) | `ed0b483` |
+| With the database down the browser showed Better Auth's "Failed to get session"; it now says the service is temporarily unavailable (checked in a browser) | `5f94b5d` |
 
 **Checked, no findings:** every server function uses the auth middleware and every query is scoped by `userId`; foreign ids are ownership-checked; refund, statement-overlap and payment races are locked correctly; no float arithmetic on money, and recurrence matched a brute-force reference over 20,000 random cases; no XSS vectors, open redirects, SQL injection or secrets in the client bundle; CSRF protection for server functions is enforced (cross-site, forged-Origin and origin-less requests get 403, verified on a built server); the CI workflows, action pins, lockfile and licence parser.
 
 **Open (reviewed, not fixed):**
 
 - Reminders are sent to unverified email addresses when `SIGNUP_MODE=open` and SMTP is configured, so an instance could be used to send reminder-shaped email to a stranger. Single-user (`first-user`) instances are not affected. Needs an email-verification flow (a product decision).
-- An unpaid statement on an archived card is shown by the dashboard but not reminded about (a product decision).
 - The application does not cap request body size itself; this is documented as a proxy setting, not enforced.
-- With the database down, the browser shows Better Auth's own "Failed to get session" text. It contains nothing internal, but it is not helpful.
 
 **Looked at and left as is:**
 
