@@ -12,6 +12,7 @@ on:
       - scripts/backup.sh
       - scripts/restore.sh
       - scripts/restore-drill.sh
+      - scripts/restore-test.sh
       - compose.yaml
       - Dockerfile
       - .github/workflows/backup-drill.yml

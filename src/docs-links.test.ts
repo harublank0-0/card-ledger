@@ -145,3 +145,54 @@ describe("package.json", () => {
 		}
 	});
 });
+
+describe("destructive commands in the operator guides", () => {
+	const guide = readFileSync(
+		path.join(root, "docs", "backup-restore.md"),
+		"utf8",
+	);
+
+	it("never remove volumes without naming the compose project", () => {
+		// An exported COMPOSE_PROJECT_NAME is lost in a new terminal or under sudo, and
+		// `name:` in compose.yaml then points at the live stack. `down -v` must say -p.
+		const risky = guide
+			.split("\n")
+			.filter((line) => /\bdown\b.*(-v\b|--volumes)/.test(line))
+			.filter((line) => !/\s(-p|--project-name)[\s=]/.test(line));
+		expect(risky).toEqual([]);
+	});
+
+	it("does not tell the reader to try a restored copy with the live SMTP settings", () => {
+		// Starting the whole stack from a restored backup would email real users from it.
+		expect(guide).not.toMatch(/restore\.sh[^\n]*\n[^\n]*localhost:3199/);
+		expect(guide).toContain("scripts/restore-test.sh");
+	});
+});
+
+describe("scripts/restore-test.sh", () => {
+	const script = readFileSync(
+		path.join(root, "scripts", "restore-test.sh"),
+		"utf8",
+	);
+
+	it("names its compose project on every compose command", () => {
+		expect(script).toMatch(/compose\(\) \{ docker compose -p "\$PROJECT"/);
+		const bare = script
+			.split("\n")
+			.filter((line) => /^\s*docker compose\b/.test(line))
+			.filter(
+				(line) => !/^\s*docker compose\s+(-p|--project-name)\b/.test(line),
+			);
+		expect(bare).toEqual([]);
+	});
+
+	it("uses a unique project name so it cannot collide with the live stack", () => {
+		expect(script).toMatch(/PROJECT="card-ledger-restore-test-/);
+		expect(script).not.toContain("card-ledger-selfhost");
+	});
+
+	it("switches reminder emails off and verifies it", () => {
+		expect(script).toMatch(/SMTP_HOST=""/);
+		expect(script).toContain("reminders disabled");
+	});
+});

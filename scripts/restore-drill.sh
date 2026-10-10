@@ -78,6 +78,12 @@ cat >"$ENV_FILE" <<EOF
 POSTGRES_PASSWORD=$(openssl rand -hex 16)
 BETTER_AUTH_SECRET=$(openssl rand -hex 32)
 APP_PORT=$PORT
+# An SMTP server that is configured but unreachable (the discard port): the live drill stack
+# looks like a real one with reminders on, so step 9 can prove restore-test.sh switches them
+# off in its copy. The demo account has reminders disabled, so nothing is ever sent.
+SMTP_HOST=127.0.0.1
+SMTP_PORT=9
+SMTP_FROM=drill@example.test
 EOF
 
 # 1. Start the stack and load the synthetic demo account.
@@ -161,6 +167,21 @@ status="$(curl -s -o /dev/null -w '%{http_code}' \
 	"http://127.0.0.1:$PORT/api/auth/sign-in/email")"
 [ "$status" = "200" ] || fail "demo user could not sign in after restore (HTTP $status)"
 pass "the restored instance accepts the original credentials"
+
+# 9. restore-test.sh proves a real backup restores into a separate, safe copy: it leaves the
+#    running stack and its data alone, switches reminders off in the copy (the live stack here
+#    has SMTP configured) and cleans up after itself.
+live_before="$(row_counts)"
+if ! env RESTORE_TEST_PORT=$((PORT + 1)) sh scripts/restore-test.sh "$(newest_backup)" >"$LOG" 2>&1; then
+	fail "restore-test.sh failed"
+fi
+grep -q "restore-test: OK" "$LOG" || fail "restore-test.sh did not report success"
+grep -q "reminder emails are off" "$LOG" || fail "restore-test.sh did not check that reminders are off"
+[ "$(row_counts)" = "$live_before" ] || fail "restore-test.sh changed the live database"
+curl -fsS "http://127.0.0.1:$PORT/api/health" -o /dev/null || fail "restore-test.sh disturbed the running app"
+[ -z "$(docker ps -a --filter 'name=card-ledger-restore-test' -q)" ] || fail "restore-test.sh left containers behind"
+[ -z "$(docker volume ls -q --filter 'name=card-ledger-restore-test')" ] || fail "restore-test.sh left a volume behind"
+pass "restore-test.sh restores into a separate copy, switches reminders off and cleans up"
 
 FAILED=0
 echo "restore drill passed"

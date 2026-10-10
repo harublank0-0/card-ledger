@@ -102,16 +102,20 @@ A backup you have never restored is a hope, not a backup.
 
 **Automated, synthetic data.** `npm run backup:drill` builds a throwaway stack, loads the demo data, backs it up, destroys the database volume, restores onto the empty database, and checks that every table has the same number of rows, the app is healthy and the demo user can sign in with the original password. It also checks retention, private file permissions, that a failed backup leaves nothing behind, and that restore refuses a non-empty database without `--force`. It never touches your running instance. Run it after changing anything under `scripts/` or upgrading Docker, and as the first thing to check if a restore ever surprises you.
 
-**Manual, your real backup.** To prove your own latest backup restores, use a separate project and port so your live stack is untouched:
+**Your real backup.** To prove your own latest backup restores into a working copy, without touching the running instance:
 
 ```sh
-export COMPOSE_PROJECT_NAME=card-ledger-restore-test APP_PORT=3199 BETTER_AUTH_URL=http://localhost:3199
-docker compose up -d --wait db
-sh scripts/restore.sh backups/<your newest dump>
-# open http://localhost:3199, sign in, check recent data
-docker compose down -v          # removes only the test project and its volume
-unset COMPOSE_PROJECT_NAME APP_PORT BETTER_AUTH_URL
+sh scripts/restore-test.sh backups/<your newest dump>
 ```
+
+It starts a separate throwaway compose project (a unique name, its own database volume and port 3199), restores the backup into it, waits for `/api/health`, prints the row count of every table, and removes everything again. Add `--keep` to leave the copy running so you can sign in at `http://localhost:3199` and look around; the command to remove it is printed.
+
+Two things make this safe where hand-typed commands were not:
+
+- every compose command names its project with `-p`, so nothing can resolve to your live stack, even from a new terminal or under `sudo`;
+- reminder emails are switched off in the copy and the script checks that, because a restored copy of real data would otherwise email your real users.
+
+Do not try a restored copy by exporting `COMPOSE_PROJECT_NAME` and running `docker compose up` yourself: the stack reads your live `.env`, SMTP settings included.
 
 Do this when you set up backups, then every few months.
 
