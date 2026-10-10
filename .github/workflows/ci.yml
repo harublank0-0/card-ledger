@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+# No Prisma CLI usage ping from CI (see docs/decisions/0008).
+env:
+  CHECKPOINT_DISABLE: "1"
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

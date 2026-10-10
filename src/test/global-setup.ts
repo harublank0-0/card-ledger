@@ -30,7 +30,7 @@ export default async function setup() {
 	const testUrl = url.toString();
 
 	execFileSync("npx", ["prisma", "migrate", "deploy"], {
-		env: { ...process.env, DATABASE_URL: testUrl },
+		env: { ...process.env, DATABASE_URL: testUrl, CHECKPOINT_DISABLE: "1" },
 		stdio: "pipe",
 	});
 

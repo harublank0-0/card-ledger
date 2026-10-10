@@ -51,7 +51,7 @@ The audit found that `.env.production` and stray `*.dump` files were **not** ign
 | No bootable default secret | `src/env-example.test.ts`; the smoke test rejects an unedited `.env.example` |
 | The health endpoint reveals only pass/fail | `src/features/health/health.handler.server.test.ts` |
 | Logs carry no amounts, notes or error messages | `src/lib/logger.server.test.ts`; startup check never logs a value (`src/lib/startup-env.server.test.ts`) |
-| No telemetry | no outbound URLs in application source; the Prisma CLI's update check is disabled in the image ([ADR 0008](./decisions/0008-container-image-and-compose-topology.md)); the only runtime connection is an operator-configured SMTP server |
+| No telemetry | no outbound URLs in application source; the Prisma CLI's usage ping is disabled in every image stage, in CI and in the npm scripts (`src/telemetry.test.ts`; [ADR 0008](./decisions/0008-container-image-and-compose-topology.md)); the code review found it had been left on in the build stage and CI, which is now fixed; the only runtime connection is an operator-configured SMTP server |
 | Session cookies are `Secure` when the public URL is `https://` | verified against the production container (recorded in the roadmap, S-01) |
 | Auth secret and server-only code are absent from the client bundle | CI `verify` job step; checked locally on every build |
 

@@ -38,6 +38,8 @@ BETTER_AUTH_SECRET=<at least 32 random characters, for example: openssl rand -ba
 # Optional: send reminder emails to the local Mailpit inbox (http://localhost:8025)
 SMTP_HOST=127.0.0.1
 SMTP_PORT=1025
+# Stops the Prisma CLI's usage ping when you run `npx prisma ...` directly (the npm scripts set it)
+CHECKPOINT_DISABLE=1
 ```
 
 Then:

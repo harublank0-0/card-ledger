@@ -126,6 +126,12 @@ docker run --rm --entrypoint sh "$IMAGE" -c 'test ! -e /app/.env && test ! -e /a
 	fail "the image contains env files or git history"
 pass "the image contains no secrets or env files"
 
+# No usage ping from the Prisma CLI in the image (it also covers the build stage, which
+# inherits the same variable).
+docker run --rm --entrypoint env "$IMAGE" | grep -q '^CHECKPOINT_DISABLE=1$' ||
+	fail "the image does not disable the Prisma CLI's usage ping"
+pass "the Prisma CLI's usage ping is disabled in the image"
+
 # 7. The reminder job runs and reports (SMTP is not configured, so it is a no-op).
 i=0
 until compose logs reminders 2>/dev/null | grep -Eq 'reminders disabled|reminder run finished'; do

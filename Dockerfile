@@ -9,6 +9,12 @@ ARG NODE_VERSION=24
 
 FROM node:${NODE_VERSION}-bookworm-slim AS base
 WORKDIR /app
+# No update checks or usage pings from the Prisma CLI or npm (no telemetry, no external calls
+# at build or run time). Set here so every stage inherits it, including `build`, which runs
+# `prisma generate`: the CLI otherwise contacts checkpoint.prisma.io.
+ENV CHECKPOINT_DISABLE=1 \
+	PRISMA_HIDE_UPDATE_MESSAGE=1 \
+	NPM_CONFIG_UPDATE_NOTIFIER=false
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends openssl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
@@ -33,10 +39,7 @@ RUN npm run build
 FROM base AS runtime
 ENV NODE_ENV=production \
 	HOST=0.0.0.0 \
-	PORT=3000 \
-	# No update checks or usage pings from the Prisma CLI (no telemetry, no external calls).
-	CHECKPOINT_DISABLE=1 \
-	PRISMA_HIDE_UPDATE_MESSAGE=1
+	PORT=3000
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/.output ./.output
 # The reminder job runs from source under tsx and imports the generated Prisma client.
