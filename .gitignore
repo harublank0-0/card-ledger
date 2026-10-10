@@ -3,7 +3,12 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# Environment files hold secrets; only the example is tracked.
 .env
+.env.*
+!.env.example
+
 .nitro
 .tanstack
 .wrangler
@@ -14,5 +19,7 @@ todos.json
 mcp-todos.json
 src/generated
 
-# Database backups (scripts/backup.sh) contain real financial data.
+# Database backups (scripts/backup.sh) contain real financial data, wherever they end up.
 backups
+*.dump
+*.dump.*

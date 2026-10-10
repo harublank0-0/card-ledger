@@ -98,7 +98,7 @@ git commit -s -m "feat: add something"
 
 Do not add a dependency without saying why in the pull request. A new dependency must:
 
-- have a licence compatible with `AGPL-3.0-only` (permissive licences such as MIT, ISC, BSD and Apache-2.0 are fine; GPL-2.0-only, SSPL and non-commercial licences are not);
+- have a licence compatible with `AGPL-3.0-only` (permissive licences such as MIT, ISC, BSD and Apache-2.0 are fine; GPL-2.0-only, SSPL and non-commercial licences are not). `npm run licenses:check` enforces an allowlist and the test suite runs it, so an unreviewed licence fails the build;
 - not send telemetry or call external services;
 - be maintained and proportionate to the problem it solves (we ship it to every self-hoster).
 
