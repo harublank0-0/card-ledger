@@ -33,7 +33,9 @@ for commit in $commits; do
 			sed -n 's/.*<\([^>]*\)>.*/\1/p' |
 			tr '[:upper:]' '[:lower:]'
 	)"
-	if ! printf '%s\n' "$signoff_emails" | grep -Fxq -- "$author"; then
+	# A commit with no author email cannot be attributed, so it can never be signed off. (Without
+	# this, an empty author "matches" the empty line printed when there are no sign-offs.)
+	if [ -z "$author" ] || ! printf '%s\n' "$signoff_emails" | grep -Fxq -- "$author"; then
 		bad=$((bad + 1))
 		report="${report}  $(git show -s --format='%h %s' "$commit")  (author: $author)
 "

@@ -162,6 +162,44 @@ describe("scripts/check-dco.sh", () => {
 		expect(check(repo, `${base}..HEAD`).status).toBe(0);
 	});
 
+	it("does not let a commit with no author email through unsigned", () => {
+		// Empty author and no trailers both reduce to "", and `grep -Fx ""` matches an empty
+		// line. Git itself accepts `-c user.email=` and `fsck --strict` passes such a commit.
+		const repo = makeRepo();
+		const base = commit(repo, "chore: base", "Dev Eloper <dev@example.com>");
+		writeFileSync(path.join(repo, "file.txt"), "no email\n");
+		git(repo, "add", "file.txt");
+		git(
+			repo,
+			"-c",
+			"user.email=",
+			"commit",
+			"-q",
+			"-m",
+			"feat: anonymous and unsigned",
+		);
+		const result = check(repo, `${base}..HEAD`);
+		expect(result.status).toBe(1);
+		expect(result.output).toContain("feat: anonymous and unsigned");
+	});
+
+	it("does not accept an empty sign-off email as a match", () => {
+		const repo = makeRepo();
+		const base = commit(repo, "chore: base", "Dev Eloper <dev@example.com>");
+		writeFileSync(path.join(repo, "file.txt"), "empty signoff\n");
+		git(repo, "add", "file.txt");
+		git(
+			repo,
+			"-c",
+			"user.email=",
+			"commit",
+			"-q",
+			"-m",
+			"feat: empty sign-off\n\nSigned-off-by: Someone <>",
+		);
+		expect(check(repo, `${base}..HEAD`).status).toBe(1);
+	});
+
 	it("passes for an empty range", () => {
 		const repo = makeRepo();
 		commit(repo, "chore: base", "Dev Eloper <dev@example.com>");
