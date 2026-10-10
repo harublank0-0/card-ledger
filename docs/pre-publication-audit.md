@@ -124,22 +124,38 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 | Server functions returned raw internal error messages (hosts, ports, constraint names) to the browser | `e307133` |
 | After sign-out and sign-in in one tab, the previous user's cached data rendered for the next user (reproduced) | `b458a1a` |
 | Picking a card silently replaced a currency the user had chosen | `e94c715` |
+| Cancelling with an end date and then pressing "Save changes" on the same edit page erased the end date (reproduced in a browser) | `520b750` |
+| A cancel end date before the first billing date reported a database constraint message | `a22b434` |
+| The default first-billing date of a new subscription used the runtime's time zone, not the user's | `7a0ded1` |
+| Every already-sent reminder made PostgreSQL log a unique-violation ERROR on every hourly run (14 lines from the tests alone, 0 after) | `a195ab7` |
+| Sign-up answered differently for a registered and an unregistered address even when closed (422 vs 403, reproduced) | `94b9b5e` |
+| `safeRedirect` allowed `/\evil.example` and `/<tab>/evil.example`, which browsers resolve to `//evil.example` (an open redirect through the `Location` header) | `7cfead2` |
+| A card's currency and its statements could disagree under concurrency (both interleavings reproduced with a held row lock) | `43a6c95` |
+| A failed card lookup on new-statement read as "That card could not be found" (any error became not-found) | `96027a0` |
+| A malformed id in a detail URL surfaced as a validation error instead of not found | `286cd17` |
+| Double click or Enter sent a mutation twice (a second "already exists" alert, reproduced); the cards archive/restore swallowed failures | `71c92ab` |
+| Malformed `?archived=` and `?redirect=` search parameters failed route validation | `6c4f535` |
+| There were no custom error or not-found screens; the framework's unstyled ones printed raw messages | `2eb9904` |
+| Form errors were not linked to their inputs (`aria-describedby`, `aria-invalid`) | `df3cefe` |
+| The transaction date filters wiped themselves while the year was being typed (reproduced in a browser) | `ef10e4f` |
+| Pasting a full card number into "last 4 digits" kept the first four digits | `cd9b0d9` |
+| Every tab was titled "Card Ledger" | `87b972c` |
+| Unused starter code: `header-user.tsx` and the `TanstackQueryProvider` stub | `1130c5b` |
+| Proxy and rate-limit guidance: the client address must be a single `X-Forwarded-For` the proxy sets; request size is capped at the proxy (documented, pinned by a production-mode test; the proxy's behaviour is the operator's) | `a025894` |
 
 **Checked, no findings:** every server function uses the auth middleware and every query is scoped by `userId`; foreign ids are ownership-checked; refund, statement-overlap and payment races are locked correctly; no float arithmetic on money, and recurrence matched a brute-force reference over 20,000 random cases; no XSS vectors, open redirects, SQL injection or secrets in the client bundle; CSRF protection for server functions is enforced (cross-site, forged-Origin and origin-less requests get 403, verified on a built server); the CI workflows, action pins, lockfile and licence parser.
 
-**Open (reviewed, not fixed yet):**
+**Open (reviewed, not fixed):**
 
-- Reminders are sent to unverified email addresses when `SIGNUP_MODE=open` and SMTP is configured, so an instance could be used to send reminder-shaped email to a stranger. Single-user (`first-user`) instances are not affected. Needs an email-verification flow.
-- Sign-up responses reveal whether an email address is registered, even when sign-up is closed (rate limited).
-- Login rate limiting trusts a client-supplied `X-Forwarded-For`; configure trusted proxy headers and document it per proxy.
-- There is no request body size limit before parsing; set one in the reverse proxy.
+- Reminders are sent to unverified email addresses when `SIGNUP_MODE=open` and SMTP is configured, so an instance could be used to send reminder-shaped email to a stranger. Single-user (`first-user`) instances are not affected. Needs an email-verification flow (a product decision).
 - An unpaid statement on an archived card is shown by the dashboard but not reminded about (a product decision).
-- Cancelling a subscription with an end date and then pressing "Save changes" on the same edit page erases that end date.
-- Smaller UI items: the transaction date filters are hard to type with a keyboard, there are no custom error or not-found pages, some buttons can be double-clicked, and form errors are not linked to their inputs with `aria-describedby`.
-- The default first-billing date of a new subscription uses the runtime's time zone, not the user's.
-- A cancel end date before the first billing date reports a database constraint message instead of a clear one.
-- A card's currency can change while a statement is being created for it (narrow race).
-- Dead starter code: `src/integrations/better-auth/header-user.tsx`, `src/lib/utils.ts` and the `TanstackQueryProvider` stub.
+- The application does not cap request body size itself; this is documented as a proxy setting, not enforced.
+- With the database down, the browser shows Better Auth's own "Failed to get session" text. It contains nothing internal, but it is not helpful.
+
+**Looked at and left as is:**
+
+- `src/lib/utils.ts` is not dead code: `components.json` points shadcn's `utils` alias at it, so `npx shadcn add` generates components that import `cn` from there. It is kept, with a comment and a test.
+- The seven components in `src/components/ui` import `cn` from the `cn` npm package rather than `src/lib/utils.ts`. Both claim to merge Tailwind classes, but with different engines, so swapping could change rendered class output for the sake of one fewer dependency. Not changed.
 
 ## Known gaps
 
