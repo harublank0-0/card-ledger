@@ -7,10 +7,8 @@ import { isSignupAllowed } from "#/lib/signup-policy";
 /** Current user, or null. Used by route guards for redirects (UX only, not the data boundary). */
 export const getSessionFn = createServerFn({ method: "GET" }).handler(
 	async () => {
-		const { auth } = await import("#/lib/auth");
-		const session = await auth.api.getSession({
-			headers: getRequest().headers,
-		});
+		const { readSession } = await import("#/lib/session.server");
+		const session = await readSession(getRequest().headers);
 		return session
 			? {
 					id: session.user.id,

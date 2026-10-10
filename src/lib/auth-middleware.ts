@@ -1,7 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 
-import { auth } from "#/lib/auth";
+import { readSession } from "#/lib/session.server";
 
 /**
  * Authorization boundary for server functions. Route guards are UX only; every server
@@ -10,9 +10,7 @@ import { auth } from "#/lib/auth";
  */
 export const authMiddleware = createMiddleware({ type: "function" }).server(
 	async ({ next }) => {
-		const session = await auth.api.getSession({
-			headers: getRequest().headers,
-		});
+		const session = await readSession(getRequest().headers);
 		if (!session) throw new Error("Unauthorized");
 		return next({ context: { user: session.user } });
 	},
