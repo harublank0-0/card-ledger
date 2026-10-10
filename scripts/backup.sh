@@ -23,11 +23,18 @@ BACKUP_DIR="${BACKUP_DIR:-backups}"
 BACKUP_KEEP="${BACKUP_KEEP:-14}"
 
 case "$BACKUP_KEEP" in
-	'' | *[!0-9]* | 0)
+	'' | *[!0-9]*)
 		echo "backup: BACKUP_KEEP must be a positive integer, got '$BACKUP_KEEP'" >&2
 		exit 2
 		;;
 esac
+# Strip leading zeros: shell arithmetic reads 010 as octal 8 and 00 as 0 (which would select
+# every backup, including the new one, for deletion).
+BACKUP_KEEP="${BACKUP_KEEP#"${BACKUP_KEEP%%[!0]*}"}"
+if [ -z "$BACKUP_KEEP" ]; then
+	echo "backup: BACKUP_KEEP must be at least 1; 0 would delete every backup" >&2
+	exit 2
+fi
 
 umask 077
 mkdir -p "$BACKUP_DIR"
@@ -75,7 +82,10 @@ trap - EXIT INT TERM
 total="$(ls -1 "$BACKUP_DIR"/card-ledger-*.dump 2>/dev/null | wc -l | tr -d ' ')"
 if [ "$total" -gt "$BACKUP_KEEP" ]; then
 	ls -1 "$BACKUP_DIR"/card-ledger-*.dump | sort | head -n "$((total - BACKUP_KEEP))" |
-		while IFS= read -r old; do rm -f -- "$old"; done
+		while IFS= read -r old; do
+			# Never remove what was just written, whatever the file names sort like.
+			if [ "$old" != "$final" ]; then rm -f -- "$old"; fi
+		done
 fi
 
 echo "backup written: $final ($(wc -c <"$final" | tr -d ' ') bytes)"
