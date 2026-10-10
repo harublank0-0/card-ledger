@@ -1,0 +1,36 @@
+# Proves that a backup can rebuild a working instance: destroys the database volume of a
+# throwaway stack and restores onto the empty database (scripts/restore-drill.sh).
+# Runs weekly, on demand, and whenever the backup tooling or the stack definition changes.
+name: Backup drill
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/backup.sh
+      - scripts/restore.sh
+      - scripts/restore-drill.sh
+      - compose.yaml
+      - Dockerfile
+      - .github/workflows/backup-drill.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-drill-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drill:
+    name: Restore drill
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Back up, destroy, restore, verify
+        run: sh scripts/restore-drill.sh

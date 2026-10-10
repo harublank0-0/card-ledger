@@ -177,4 +177,4 @@ Vitest (to be added in F-01). Priority order: money handling → calendar-date a
 
 ## 12. Open-source and CI
 
-Planned artifacts (roadmap Phase 2–3): README, LICENSE (AGPLv3), CONTRIBUTING (DCO), SECURITY, CODE_OF_CONDUCT, `.env.example`, Dockerfile, `compose.yaml`, self-hosting guide, GitHub Actions (Biome check, typecheck, tests, build, DCO check), issue and PR templates, synthetic demo-data seed. See [ADR 0001](./decisions/0001-license-agplv3-dco.md).
+Public-repository artifacts: README, LICENSE (AGPLv3), CONTRIBUTING (DCO), SECURITY, CODE_OF_CONDUCT, `.env.example`, Dockerfile, `compose.yaml`, self-hosting guide, synthetic demo-data seed, and GitHub Actions (`.github/workflows/ci.yml`: Biome check, typecheck, tests against PostgreSQL, build, DCO check, Docker smoke test, informational `npm audit`; `backup-drill.yml`: the restore drill). See [ADR 0001](./decisions/0001-license-agplv3-dco.md) for the licence and [ADR 0009](./decisions/0009-ci-minimal-pinned-secret-free.md) for CI.

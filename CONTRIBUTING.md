@@ -78,6 +78,8 @@ npm test            # needs the development database to be running
 npm run build
 ```
 
+Pull requests run the same checks in [CI](./.github/workflows/ci.yml), plus the DCO check, the Docker smoke test and an informational `npm audit`. CI needs no secrets, so it runs the same for forks. You can run the DCO check yourself: `sh scripts/check-dco.sh origin/main..HEAD`.
+
 ### Commit messages
 
 Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`. Keep the subject short and explain the why in the body.

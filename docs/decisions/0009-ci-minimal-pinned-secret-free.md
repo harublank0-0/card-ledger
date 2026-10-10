@@ -1,0 +1,24 @@
+# 0009 — CI: minimal, pinned and secret-free
+
+Status: Proposed
+
+## Context
+CI protects a project that handles financial data and is built by outside contributors, so the pipeline itself must not become the weakest link, and it must work identically for pull requests from forks.
+
+## Decision
+- **No secrets.** Nothing in the workflows reads a repository secret. The database password and auth secret used by the test job are throwaway constants for a container that exists only for that job, so fork pull requests run exactly the checks maintainers' do.
+- **Least privilege.** Workflows declare `permissions: contents: read`, and checkout uses `persist-credentials: false`.
+- **Only first-party actions, pinned by commit SHA** with the version in a comment (`actions/checkout`, `actions/setup-node`). A mutable tag can be moved; a SHA cannot. Updating them is a deliberate, reviewed change; a release is preferred to be at least a few weeks old when pinned.
+- **Untrusted values never go into `run:` scripts directly.** Event values are passed through `env:` (for example the pull request's base and head SHAs).
+- **DCO is enforced by a script in the repository** (`scripts/check-dco.sh`), not by a third-party GitHub App. A commit passes when it has a `Signed-off-by` trailer whose email equals the author's email (case-insensitive); merge commits are skipped. It checks pull request ranges only, so the unsigned scaffold commit at the root of history is out of scope.
+- **What runs:** `verify` (Biome, typecheck, tests against a PostgreSQL service container, build, and a check that the auth secret is absent from the client bundle), `dco`, `docker` (the same `scripts/docker-smoke.sh` operators can run), and `audit` (`npm audit` for production dependencies, informational and non-blocking). The restore drill runs in its own workflow weekly, on demand and when the backup tooling or stack definition changes, because it takes minutes.
+- **Validated before first use** with `actionlint`, plus running the steps' commands locally. A workflow cannot be proven green on GitHub before the first push.
+
+## Alternatives
+- A DCO GitHub App: less code, but a third party with repository access and a service the project would depend on.
+- Tag-pinned actions (`@v7`): easier to update, but not reproducible and open to tag movement.
+- Running the restore drill on every pull request: slower feedback for little gain; path filters plus a weekly schedule cover it.
+
+## Consequences
+- Maintainers update pinned SHAs by hand (or, later, with a dependency bot).
+- Branch protection should require `verify`, `dco` and `docker` once the repository is on GitHub; that setting is outside the repository.
