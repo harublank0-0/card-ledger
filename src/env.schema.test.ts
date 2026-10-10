@@ -23,6 +23,30 @@ describe("serverEnvSchema", () => {
 		expect(() => schema.parse({ ...valid, SIGNUP_MODE: "everyone" })).toThrow();
 	});
 
+	it("accepts real IANA time zones for DEFAULT_TIMEZONE", () => {
+		for (const zone of ["Asia/Kathmandu", "UTC", "America/New_York"]) {
+			expect(
+				schema.parse({ ...valid, DEFAULT_TIMEZONE: zone }).DEFAULT_TIMEZONE,
+			).toBe(zone);
+		}
+	});
+
+	it("rejects a DEFAULT_TIMEZONE that is not an IANA zone", () => {
+		// Each of these would be copied into new users' preferences and then crash `todayIn`.
+		for (const zone of ["Kathmandu", "UTC+05:45", "Asia/Nowhere", "NPT"]) {
+			expect(
+				() => schema.parse({ ...valid, DEFAULT_TIMEZONE: zone }),
+				zone,
+			).toThrow();
+			expect(
+				describeEnvProblems({ ...valid, DEFAULT_TIMEZONE: zone }).map(
+					(p) => p.name,
+				),
+				zone,
+			).toEqual(["DEFAULT_TIMEZONE"]);
+		}
+	});
+
 	it("rejects a short auth secret", () => {
 		expect(() =>
 			schema.parse({ ...valid, BETTER_AUTH_SECRET: "short" }),

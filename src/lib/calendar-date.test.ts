@@ -10,6 +10,7 @@ import {
 	isValidCalendarDate,
 	nextMonthlyOccurrence,
 	previousMonthlyOccurrence,
+	safeTimeZone,
 	todayIn,
 } from "./calendar-date";
 
@@ -134,5 +135,33 @@ describe("previousMonthlyOccurrence", () => {
 		expect(previousMonthlyOccurrence(31, "2024-03-15")).toBe("2024-02-29");
 		expect(previousMonthlyOccurrence(31, "2025-05-31")).toBe("2025-05-31");
 		expect(previousMonthlyOccurrence(30, "2025-03-10")).toBe("2025-02-28");
+	});
+});
+
+describe("safeTimeZone", () => {
+	it("keeps a valid IANA zone", () => {
+		expect(safeTimeZone("America/New_York", "Asia/Kathmandu")).toBe(
+			"America/New_York",
+		);
+		expect(safeTimeZone("UTC", "Asia/Kathmandu")).toBe("UTC");
+	});
+
+	it("falls back when the zone is missing or not a real zone", () => {
+		for (const bad of [
+			"Kathmandu",
+			"UTC+05:45",
+			"Asia/Nowhere",
+			"",
+			null,
+			undefined,
+		]) {
+			expect(safeTimeZone(bad, "Asia/Kathmandu"), String(bad)).toBe(
+				"Asia/Kathmandu",
+			);
+		}
+	});
+
+	it("never returns something todayIn would reject, even if the fallback is bad too", () => {
+		expect(safeTimeZone("nope", "also-nope")).toBe("UTC");
 	});
 });

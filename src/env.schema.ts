@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isValidTimeZone } from "./lib/calendar-date";
+
 /** Server-only variables. Kept separate from `env.ts` so it can be unit tested. */
 export const serverEnvSchema = {
 	DATABASE_URL: z.string().min(1),
@@ -9,7 +11,15 @@ export const serverEnvSchema = {
 		.min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
 	/** first-user: only the first account may register. open: anyone. closed: nobody. */
 	SIGNUP_MODE: z.enum(["first-user", "open", "closed"]).default("first-user"),
-	DEFAULT_TIMEZONE: z.string().min(1).default("Asia/Kathmandu"),
+	/** IANA zone given to new users' reminder preferences, e.g. Asia/Kathmandu or UTC. */
+	DEFAULT_TIMEZONE: z
+		.string()
+		.min(1)
+		.refine(isValidTimeZone, {
+			message:
+				"DEFAULT_TIMEZONE must be an IANA time zone such as Asia/Kathmandu or UTC",
+		})
+		.default("Asia/Kathmandu"),
 	MCP_ENABLED: z.stringbool().default(false),
 	SMTP_HOST: z.string().min(1).optional(),
 	SMTP_PORT: z.coerce.number().int().positive().optional(),

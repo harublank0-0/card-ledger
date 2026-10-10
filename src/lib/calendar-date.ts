@@ -119,6 +119,19 @@ export function isValidTimeZone(timeZone: string) {
 }
 
 /**
+ * A time zone that `todayIn` will accept: the candidate when it is a real IANA zone, else the
+ * fallback, else UTC. Use it wherever a stored or configured zone feeds date maths, so one bad
+ * value (an old row, a mistyped DEFAULT_TIMEZONE) degrades one page instead of throwing.
+ */
+export function safeTimeZone(
+	candidate: string | null | undefined,
+	fallback: string,
+): string {
+	if (candidate && isValidTimeZone(candidate)) return candidate;
+	return isValidTimeZone(fallback) ? fallback : "UTC";
+}
+
+/**
  * The next date on or after `from` that falls on `day` of the month, clamping short months
  * (day 31 -> Feb 28/29, Apr 30). Used for "due on the 20th of every month" style dates.
  */

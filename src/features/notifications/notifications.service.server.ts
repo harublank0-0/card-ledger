@@ -1,8 +1,9 @@
 import { prisma } from "#/db";
 import { env } from "#/env";
 import { outstandingMinor } from "#/features/statements/statements.logic";
-import { type CalendarDate, todayIn } from "#/lib/calendar-date";
+import { type CalendarDate, safeTimeZone, todayIn } from "#/lib/calendar-date";
 import { fromDbDate, toDbDate } from "#/lib/db-dates";
+import { errorClass, logger } from "#/lib/logger.server";
 import type { Mailer } from "#/lib/mailer.server";
 import { renderDigest } from "./notifications.email";
 import {
@@ -20,15 +21,24 @@ import type { NotificationPreferencesData } from "./notifications.schemas";
  * conflicts (ON CONFLICT DO NOTHING) and the row is read back afterwards.
  */
 export async function getPreferences(userId: string) {
-	const existing = await prisma.notificationPreference.findUnique({
+	let row = await prisma.notificationPreference.findUnique({
 		where: { userId },
 	});
-	if (existing) return existing;
-	await prisma.notificationPreference.createMany({
-		data: [{ userId, timezone: env.DEFAULT_TIMEZONE }],
-		skipDuplicates: true,
-	});
-	return prisma.notificationPreference.findUniqueOrThrow({ where: { userId } });
+	if (!row) {
+		await prisma.notificationPreference.createMany({
+			data: [{ userId, timezone: env.DEFAULT_TIMEZONE }],
+			skipDuplicates: true,
+		});
+		row = await prisma.notificationPreference.findUniqueOrThrow({
+			where: { userId },
+		});
+	}
+	// Rows written while DEFAULT_TIMEZONE was unvalidated can hold a zone `todayIn` rejects.
+	// Read them as the instance default instead of failing every page and the reminder run.
+	return {
+		...row,
+		timezone: safeTimeZone(row.timezone, env.DEFAULT_TIMEZONE),
+	};
 }
 
 export async function updatePreferences(
@@ -204,9 +214,9 @@ export async function runReminders(options: {
 		select: { id: true, email: true },
 	});
 
-	for (const user of users) {
+	const remindUser = async (user: { id: string; email: string }) => {
 		const prefs = await getPreferences(user.id);
-		if (!prefs.emailEnabled) continue;
+		if (!prefs.emailEnabled) return;
 		summary.users++;
 
 		const today: CalendarDate = todayIn(prefs.timezone, now);
@@ -221,7 +231,7 @@ export async function runReminders(options: {
 			const logId = await claim(user.id, reminder, now);
 			if (logId) owned.push({ reminder, logId });
 		}
-		if (owned.length === 0) continue;
+		if (owned.length === 0) return;
 		summary.reminders += owned.length;
 
 		const ids = owned.map((o) => o.logId);
@@ -268,6 +278,20 @@ export async function runReminders(options: {
 				});
 			}
 			summary.failed += owned.length;
+		}
+	};
+
+	for (const user of users) {
+		try {
+			await remindUser(user);
+		} catch (error) {
+			// One user's failure must not stop the run for everyone after them. Anything this
+			// user had claimed stays PENDING and is taken over by a later run. Class only: an
+			// error message can carry details we never log.
+			logger.error("reminder run failed for one user", {
+				error: errorClass(error),
+			});
+			summary.failed++;
 		}
 	}
 	return summary;

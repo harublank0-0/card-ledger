@@ -1,4 +1,4 @@
-import { todayIn } from "#/lib/calendar-date";
+import { safeTimeZone, todayIn } from "#/lib/calendar-date";
 
 import {
 	type CsvEntity,
@@ -45,7 +45,10 @@ export async function handleExportRequest(
 
 	const now = deps.now ?? new Date();
 	const document = await buildExport(userId, now);
-	const timezone = document.settings?.timezone ?? deps.defaultTimezone;
+	const timezone = safeTimeZone(
+		document.settings?.timezone,
+		deps.defaultTimezone,
+	);
 	const date = todayIn(timezone, now);
 
 	if (target.type === "json") {

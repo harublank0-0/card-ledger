@@ -550,3 +550,29 @@ describe("statement-driven card payment reminders", () => {
 		expect(b.text).not.toContain("Alice card");
 	});
 });
+
+describe("a stored time zone that is not valid (for example from a bad DEFAULT_TIMEZONE)", () => {
+	const poison = (userId: string) =>
+		prisma.notificationPreference.create({
+			data: { userId, timezone: "Kathmandu" },
+		});
+
+	it("is read back as a working zone instead of crashing 'today'", async () => {
+		await poison(alice.id);
+		expect((await getPreferences(alice.id)).timezone).toBe("Asia/Kathmandu");
+		expect(await getUserToday(alice.id, NOW)).toBe("2025-02-25");
+	});
+
+	it("does not stop the reminder run for that user or for the users after them", async () => {
+		await poison(alice.id);
+		await createSubscription(alice.id, dueSoon("Alice plan"));
+		await createSubscription(bob.id, dueSoon("Bob plan"));
+		const { mailer, sent } = fakeMailer();
+
+		const summary = await runReminders({ mailer, settingsUrl, now: NOW });
+
+		expect(summary.failed).toBe(0);
+		expect(mailsTo(sent, alice)).toHaveLength(1);
+		expect(mailsTo(sent, bob)).toHaveLength(1);
+	});
+});

@@ -191,3 +191,18 @@ describe("through the real Better Auth session", () => {
 		expect(forged.status).toBe(401);
 	});
 });
+
+describe("a stored time zone that is not valid", () => {
+	it("still exports, dating the file in the instance default zone", async () => {
+		await prisma.notificationPreference.create({
+			data: { userId: alice.id, timezone: "Kathmandu" },
+		});
+		const response = await handleExportRequest(
+			request("/api/export/json"),
+			{ type: "json" },
+			as(alice.id),
+		);
+		expect(response.status).toBe(200);
+		expect(response.headers.get("Content-Disposition")).toContain("2026-");
+	});
+});
