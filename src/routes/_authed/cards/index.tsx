@@ -12,7 +12,9 @@ import { formatMoney } from "#/lib/money";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/cards/")({
-	validateSearch: z.object({ archived: z.boolean().optional() }),
+	validateSearch: z.object({
+		archived: z.boolean().optional().catch(undefined),
+	}),
 	loaderDeps: ({ search }) => ({ archived: search.archived ?? false }),
 	loader: ({ deps }) =>
 		listPaymentMethodsFn({ data: { includeArchived: deps.archived } }),

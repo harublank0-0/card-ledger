@@ -13,7 +13,9 @@ import type { CurrencyCode } from "#/lib/money";
 import { formatMoney } from "#/lib/money";
 
 export const Route = createFileRoute("/_authed/subscriptions/")({
-	validateSearch: z.object({ archived: z.boolean().optional() }),
+	validateSearch: z.object({
+		archived: z.boolean().optional().catch(undefined),
+	}),
 	loaderDeps: ({ search }) => ({ archived: search.archived ?? false }),
 	loader: ({ deps }) =>
 		listSubscriptionsFn({ data: { includeArchived: deps.archived } }),

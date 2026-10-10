@@ -13,7 +13,7 @@ import { reloadTo } from "#/lib/session-change";
 
 export const Route = createFileRoute("/sign-in")({
 	validateSearch: z.object({
-		redirect: z.string().optional(),
+		redirect: z.string().optional().catch(undefined),
 		deleted: z.boolean().optional().catch(undefined),
 	}),
 	beforeLoad: async ({ search }) => {

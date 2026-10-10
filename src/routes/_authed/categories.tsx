@@ -15,7 +15,9 @@ import { MAX_CATEGORY_NAME_LENGTH } from "#/features/categories/categories.logic
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/categories")({
-	validateSearch: z.object({ archived: z.boolean().optional() }),
+	validateSearch: z.object({
+		archived: z.boolean().optional().catch(undefined),
+	}),
 	loaderDeps: ({ search }) => ({ archived: search.archived ?? false }),
 	loader: ({ deps }) =>
 		listCategoriesFn({ data: { includeArchived: deps.archived } }),
