@@ -13,8 +13,10 @@ import { listStatementsFn } from "#/features/statements/statements.functions";
 import { statusLabel } from "#/features/statements/statements.logic";
 import { statementFiltersSchema } from "#/features/statements/statements.schemas";
 import { type CurrencyCode, formatMoney } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/statements/")({
+	head: pageTitle("Statements"),
 	validateSearch: statementFiltersSchema,
 	loaderDeps: ({ search }) => search,
 	loader: async ({ deps }) => {

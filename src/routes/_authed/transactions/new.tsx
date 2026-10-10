@@ -13,8 +13,10 @@ import {
 import { buildNewTransactionValues } from "#/features/transactions/transactions.prefill";
 import type { CurrencyCode } from "#/lib/money";
 import { formatMoney } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/transactions/new")({
+	head: pageTitle("Add transaction"),
 	validateSearch: z.object({
 		subscriptionId: z.uuid().optional().catch(undefined),
 		refundOfId: z.uuid().optional().catch(undefined),

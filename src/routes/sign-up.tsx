@@ -7,10 +7,12 @@ import { FormField } from "#/components/form-field";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
+import { pageTitle } from "#/lib/page-title";
 import { getSessionFn, getSignupAllowedFn } from "#/lib/session.functions";
 import { reloadTo } from "#/lib/session-change";
 
 export const Route = createFileRoute("/sign-up")({
+	head: pageTitle("Create account"),
 	beforeLoad: async () => {
 		if (await getSessionFn()) throw redirect({ to: "/" });
 	},

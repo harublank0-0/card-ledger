@@ -11,8 +11,10 @@ import {
 import { diffInDays } from "#/lib/calendar-date";
 import type { CurrencyCode } from "#/lib/money";
 import { formatMoney } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/subscriptions/")({
+	head: pageTitle("Subscriptions"),
 	validateSearch: z.object({
 		archived: z.boolean().optional().catch(undefined),
 	}),

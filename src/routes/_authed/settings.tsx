@@ -16,9 +16,11 @@ import {
 } from "#/features/notifications/notifications.functions";
 import { ALLOWED_OFFSETS } from "#/features/notifications/notifications.logic";
 import { notificationPreferencesSchema } from "#/features/notifications/notifications.schemas";
+import { pageTitle } from "#/lib/page-title";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/settings")({
+	head: pageTitle("Settings"),
 	loader: async () => {
 		const [preferences, summary] = await Promise.all([
 			getNotificationPreferencesFn(),

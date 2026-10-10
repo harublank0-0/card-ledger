@@ -12,9 +12,11 @@ import {
 	setCategoryArchivedFn,
 } from "#/features/categories/categories.functions";
 import { MAX_CATEGORY_NAME_LENGTH } from "#/features/categories/categories.logic";
+import { pageTitle } from "#/lib/page-title";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/categories")({
+	head: pageTitle("Categories"),
 	validateSearch: z.object({
 		archived: z.boolean().optional().catch(undefined),
 	}),

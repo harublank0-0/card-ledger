@@ -24,9 +24,11 @@ import {
 	formatMoney,
 	minorToInputString,
 } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/statements/$statementId")({
+	head: pageTitle("Statement"),
 	loader: async ({ params }) => {
 		if (!isUuid(params.statementId)) throw notFound();
 		const result = await getStatementFn({ data: { id: params.statementId } });

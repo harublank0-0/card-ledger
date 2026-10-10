@@ -5,8 +5,10 @@ import {
 	dashboardSearchSchema,
 	getDashboardFn,
 } from "#/features/dashboard/dashboard.functions";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/")({
+	head: pageTitle("Dashboard"),
 	validateSearch: dashboardSearchSchema,
 	loaderDeps: ({ search }) => search,
 	loader: ({ deps }) => getDashboardFn({ data: deps }),

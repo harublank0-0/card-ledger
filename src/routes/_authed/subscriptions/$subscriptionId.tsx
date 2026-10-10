@@ -22,9 +22,11 @@ import {
 import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
 import { minorToInputString } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/subscriptions/$subscriptionId")({
+	head: pageTitle("Edit subscription"),
 	loader: async ({ params }) => {
 		if (!isUuid(params.subscriptionId)) throw notFound();
 		const [subscription, cards] = await Promise.all([

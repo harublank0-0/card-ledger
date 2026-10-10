@@ -5,8 +5,10 @@ import { getTodayFn } from "#/features/notifications/notifications.functions";
 import { listPaymentMethodsFn } from "#/features/payment-methods/payment-methods.functions";
 import { SubscriptionForm } from "#/features/subscriptions/components/subscription-form";
 import { createSubscriptionFn } from "#/features/subscriptions/subscriptions.functions";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/subscriptions/new")({
+	head: pageTitle("Add subscription"),
 	loader: async () => {
 		const [cards, today] = await Promise.all([
 			listPaymentMethodsFn(),

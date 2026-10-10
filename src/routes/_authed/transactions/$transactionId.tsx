@@ -23,9 +23,11 @@ import {
 	formatMoney,
 	minorToInputString,
 } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/transactions/$transactionId")({
+	head: pageTitle("Transaction"),
 	loader: async ({ params }) => {
 		if (!isUuid(params.transactionId)) throw notFound();
 		const [transaction, cards, categories, subs] = await Promise.all([

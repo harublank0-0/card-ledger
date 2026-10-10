@@ -9,8 +9,10 @@ import {
 import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
 import { minorToInputString } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/cards/$cardId")({
+	head: pageTitle("Edit card"),
 	loader: async ({ params }) => {
 		if (!isUuid(params.cardId)) throw notFound();
 		const card = await getPaymentMethodFn({ data: { id: params.cardId } });

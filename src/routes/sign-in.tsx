@@ -7,11 +7,13 @@ import { FormField } from "#/components/form-field";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
+import { pageTitle } from "#/lib/page-title";
 import { safeRedirect } from "#/lib/redirect";
 import { getSessionFn, getSignupAllowedFn } from "#/lib/session.functions";
 import { reloadTo } from "#/lib/session-change";
 
 export const Route = createFileRoute("/sign-in")({
+	head: pageTitle("Sign in"),
 	validateSearch: z.object({
 		redirect: z.string().optional().catch(undefined),
 		deleted: z.boolean().optional().catch(undefined),

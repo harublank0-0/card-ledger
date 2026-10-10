@@ -15,8 +15,10 @@ import { listTransactionsFn } from "#/features/transactions/transactions.functio
 import { signedAmount } from "#/features/transactions/transactions.logic";
 import { transactionFiltersSchema } from "#/features/transactions/transactions.schemas";
 import { type CurrencyCode, formatMoney } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/transactions/")({
+	head: pageTitle("Transactions"),
 	validateSearch: transactionFiltersSchema,
 	loaderDeps: ({ search }) => search,
 	loader: async ({ deps }) => {

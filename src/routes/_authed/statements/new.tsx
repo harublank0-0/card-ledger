@@ -14,8 +14,10 @@ import {
 	createStatementFn,
 	getStatementDefaultsFn,
 } from "#/features/statements/statements.functions";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/statements/new")({
+	head: pageTitle("Add statement"),
 	validateSearch: z.object({ cardId: z.uuid().optional().catch(undefined) }),
 	loaderDeps: ({ search }) => search,
 	loader: async ({ deps }) => {

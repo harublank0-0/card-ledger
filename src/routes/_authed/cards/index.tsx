@@ -9,9 +9,11 @@ import {
 } from "#/features/payment-methods/payment-methods.functions";
 import type { CurrencyCode } from "#/lib/money";
 import { formatMoney } from "#/lib/money";
+import { pageTitle } from "#/lib/page-title";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/cards/")({
+	head: pageTitle("Cards"),
 	validateSearch: z.object({
 		archived: z.boolean().optional().catch(undefined),
 	}),

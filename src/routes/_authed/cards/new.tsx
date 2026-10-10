@@ -3,8 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { CardForm } from "#/features/payment-methods/components/card-form";
 import { createPaymentMethodFn } from "#/features/payment-methods/payment-methods.functions";
+import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/cards/new")({
+	head: pageTitle("Add card"),
 	component: NewCard,
 });
 
