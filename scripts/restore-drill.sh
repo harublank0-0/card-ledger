@@ -135,6 +135,24 @@ fi
 curl -fsS "http://127.0.0.1:$PORT/api/health" -o /dev/null || fail "a refused restore stopped the app"
 pass "restore refuses a non-empty database without --force"
 
+# 5b. A truncated backup (an interrupted copy) is refused before anything is touched, even
+#     with --force. `pg_restore --list` reads only the table of contents and accepts a file
+#     that lost its last bytes, which would have dropped the database and then failed.
+good="$(newest_backup)"
+size="$(wc -c <"$good" | tr -d ' ')"
+head -c "$((size - 100))" "$good" >"$BACKUP_DIR/interrupted-copy.bin"
+counts_before="$(row_counts)"
+files_before="$(backup_count)"
+if sh scripts/restore.sh "$BACKUP_DIR/interrupted-copy.bin" --force >"$LOG" 2>&1; then
+	fail "restore accepted a truncated backup"
+fi
+grep -q "not a readable backup" "$LOG" || fail "restore did not explain that the backup is unreadable"
+[ "$(row_counts)" = "$counts_before" ] || fail "a refused truncated backup changed the database"
+[ "$(backup_count)" = "$files_before" ] || fail "a refused truncated backup still wrote a safety backup"
+curl -fsS "http://127.0.0.1:$PORT/api/health" -o /dev/null || fail "a refused truncated backup stopped the app"
+rm -f "$BACKUP_DIR/interrupted-copy.bin"
+pass "restore refuses a truncated backup before touching anything"
+
 # 6. --force restores the backup state and first saves what was there.
 before_files="$(backup_count)"
 run sh scripts/restore.sh "$LATEST" --force || fail "restore --force failed"

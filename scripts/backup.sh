@@ -14,7 +14,7 @@
 #
 # A backup contains every user's financial data: it is written readable by you only, and
 # off-host copies should be encrypted (docs/backup-restore.md). The file appears under its
-# final name only after pg_dump finished and the dump was read back successfully.
+# final name only after pg_dump finished and the whole archive was read back successfully.
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -60,9 +60,11 @@ if [ ! -s "$partial" ]; then
 	exit 1
 fi
 
-# Read the archive back: a truncated or corrupt dump fails here rather than at restore time.
-if ! docker compose exec -T db pg_restore --list <"$partial" >/dev/null; then
-	echo "backup: the dump could not be read back" >&2
+# Read the whole archive back, not just its table of contents (`pg_restore --list` accepts a
+# file that lost its last bytes): a truncated or unreadable dump fails here instead of at
+# restore time. This is not a checksum; it cannot prove a silent bit flip did not happen.
+if ! docker compose exec -T db pg_restore -f /dev/null <"$partial" >/dev/null 2>&1; then
+	echo "backup: the dump could not be read back in full" >&2
 	exit 1
 fi
 

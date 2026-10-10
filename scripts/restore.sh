@@ -39,14 +39,17 @@ fi
 
 psql_db() { docker compose exec -T db psql -U cardledger -v ON_ERROR_STOP=1 -tA "$@"; }
 
-echo "restore: checking the backup file"
-if ! docker compose exec -T db pg_restore --list <"$file" >/dev/null; then
-	echo "restore: '$file' is not a readable backup" >&2
-	exit 1
-fi
-
 echo "restore: starting the database"
 docker compose up -d --wait db >/dev/null
+
+# Read the whole archive, not just its table of contents: a copy that lost its last bytes
+# (an interrupted transfer) passes `pg_restore --list` and would fail only after the current
+# database had been dropped.
+echo "restore: checking the backup file"
+if ! docker compose exec -T db pg_restore -f /dev/null <"$file" >/dev/null 2>&1; then
+	echo "restore: '$file' is not a readable backup (truncated or damaged); nothing was changed" >&2
+	exit 1
+fi
 
 tables="$(psql_db -d cardledger -c "select count(*) from information_schema.tables where table_schema = 'public'")"
 if [ "$tables" != "0" ] && [ "$force" -ne 1 ]; then

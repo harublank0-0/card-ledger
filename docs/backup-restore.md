@@ -12,7 +12,7 @@ With the stack running, from the repository root:
 sh scripts/backup.sh        # or: npm run backup
 ```
 
-This runs `pg_dump` inside the `db` container (no PostgreSQL client needed on the host) and works while the app is running. It writes `backups/card-ledger-<UTC timestamp>-<NN>.dump`, reads the archive back to prove it is valid, and keeps the newest 14 files.
+This runs `pg_dump` inside the `db` container (no PostgreSQL client needed on the host) and works while the app is running. It writes `backups/card-ledger-<UTC timestamp>-<NN>.dump`, reads the whole archive back to catch a truncated or unreadable dump, and keeps the newest 14 files. That read-back is not a checksum: it cannot prove a silent bit flip did not happen, so verify off-host copies with a checksum of your own (for example `shasum -a 256`) and keep the restore drill in your routine.
 
 | Variable | Default | Meaning |
 |---|---|---|
