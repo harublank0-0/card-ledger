@@ -146,6 +146,9 @@ model Subscription {
   expiresOn            DateTime?          @db.Date
   cancellationDeadline DateTime?          @db.Date
   cancelledOn          DateTime?          @db.Date
+  /// The end date the plan had when it was cancelled. Cancelling with "access ends on"
+  /// overwrites `expiresOn`; reactivating restores this value.
+  expiresOnBeforeCancel DateTime?         @db.Date
   notes                String?
   archivedAt           DateTime?
   createdAt            DateTime           @default(now())

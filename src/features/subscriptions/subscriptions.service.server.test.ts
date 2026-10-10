@@ -94,6 +94,83 @@ describe("lifecycle", () => {
 		expect(view?.nextRenewal).toBeNull();
 	});
 
+	// Cancelling with an end date used to overwrite `expiresOn` and nothing remembered the
+	// earlier value, so a reactivated plan kept the cancel date: it showed as expiring, then
+	// expired, and dropped out of renewals, reminders and the monthly commitment.
+	describe("reactivating after a cancellation with an end date", () => {
+		it("restores the end date the plan had before it was cancelled", async () => {
+			const sub = await createSubscription(
+				alice.id,
+				subscriptionData({ name: "Fixed term", expiresOn: "2027-01-01" }),
+			);
+			await cancelSubscription(alice.id, sub.id, {
+				today,
+				expiresOn: "2025-02-28",
+			});
+			expect((await viewOf(alice.id, sub.id))?.expiresOn).toBe("2025-02-28");
+
+			await reactivateSubscription(alice.id, sub.id);
+			const back = await viewOf(alice.id, sub.id);
+			expect(back?.status).toBe("ACTIVE");
+			expect(back?.expiresOn).toBe("2027-01-01");
+			expect(back?.state).toBe("ACTIVE");
+			expect(back?.nextRenewal).toBe("2025-02-28");
+		});
+
+		it("clears the cancel date when the plan had no end date before", async () => {
+			const sub = await createSubscription(
+				alice.id,
+				subscriptionData({ name: "Open ended" }),
+			);
+			await cancelSubscription(alice.id, sub.id, {
+				today,
+				expiresOn: "2025-02-28",
+			});
+			await reactivateSubscription(alice.id, sub.id);
+			const back = await viewOf(alice.id, sub.id);
+			expect(back?.expiresOn).toBeNull();
+			expect(back?.state).toBe("ACTIVE");
+		});
+
+		it("leaves the end date alone when it was cancelled without a new one", async () => {
+			const sub = await createSubscription(
+				alice.id,
+				subscriptionData({ name: "Untouched", expiresOn: "2027-01-01" }),
+			);
+			await cancelSubscription(alice.id, sub.id, { today, expiresOn: null });
+			expect((await viewOf(alice.id, sub.id))?.expiresOn).toBe("2027-01-01");
+			await reactivateSubscription(alice.id, sub.id);
+			expect((await viewOf(alice.id, sub.id))?.expiresOn).toBe("2027-01-01");
+		});
+
+		it("is not confused by cancelling twice", async () => {
+			const sub = await createSubscription(
+				alice.id,
+				subscriptionData({ name: "Twice", expiresOn: "2027-01-01" }),
+			);
+			await cancelSubscription(alice.id, sub.id, {
+				today,
+				expiresOn: "2025-02-28",
+			});
+			await cancelSubscription(alice.id, sub.id, {
+				today,
+				expiresOn: "2025-03-15",
+			});
+			expect((await viewOf(alice.id, sub.id))?.expiresOn).toBe("2025-03-15");
+			await reactivateSubscription(alice.id, sub.id);
+			expect((await viewOf(alice.id, sub.id))?.expiresOn).toBe("2027-01-01");
+		});
+
+		it("does nothing to the end date of a plan that was never cancelled", async () => {
+			const sub = await createSubscription(
+				alice.id,
+				subscriptionData({ name: "Never cancelled", expiresOn: "2027-01-01" }),
+			);
+			await reactivateSubscription(alice.id, sub.id);
+			expect((await viewOf(alice.id, sub.id))?.expiresOn).toBe("2027-01-01");
+		});
+	});
+
 	it("archives and hides from the default list", async () => {
 		const sub = await createSubscription(
 			alice.id,

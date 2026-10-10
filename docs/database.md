@@ -75,6 +75,7 @@ model Subscription {
   expiresOn            DateTime?          @db.Date
   cancellationDeadline DateTime?          @db.Date
   cancelledOn          DateTime?          @db.Date
+  expiresOnBeforeCancel DateTime?         @db.Date   // end date before a cancel overwrote it; restored on reactivate
   notes                String?
   archivedAt           DateTime?
   createdAt            DateTime           @default(now())

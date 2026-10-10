@@ -171,29 +171,60 @@ export async function updateSubscription(
 	});
 }
 
-/** Cancel keeps the record. `expiresOn` marks the end of the paid period, if known. */
+/**
+ * Cancel keeps the record. `expiresOn` marks the end of the paid period, if known. That value
+ * replaces any earlier end date, so the earlier one is remembered (once) and put back by
+ * `reactivateSubscription`.
+ */
 export async function cancelSubscription(
 	userId: string,
 	id: string,
 	options: { today: CalendarDate; expiresOn: CalendarDate | null },
 ) {
-	const { count } = await prisma.subscription.updateMany({
-		where: { id, userId },
-		data: {
-			status: "CANCELLED",
-			cancelledOn: toDbDate(options.today),
-			...(options.expiresOn ? { expiresOn: toDbDate(options.expiresOn) } : {}),
-		},
+	await prisma.$transaction(async (tx) => {
+		const existing = await tx.subscription.findFirst({
+			where: { id, userId },
+			select: { status: true, expiresOn: true },
+		});
+		if (!existing) throw new Error("Subscription not found");
+		await tx.subscription.updateMany({
+			where: { id, userId },
+			data: {
+				status: "CANCELLED",
+				cancelledOn: toDbDate(options.today),
+				// Only on the first cancel: a second one must not record the end date the
+				// first one set as if it were the plan's own.
+				...(existing.status !== "CANCELLED"
+					? { expiresOnBeforeCancel: existing.expiresOn }
+					: {}),
+				...(options.expiresOn
+					? { expiresOn: toDbDate(options.expiresOn) }
+					: {}),
+			},
+		});
 	});
-	if (count === 0) throw new Error("Subscription not found");
 }
 
 export async function reactivateSubscription(userId: string, id: string) {
-	const { count } = await prisma.subscription.updateMany({
-		where: { id, userId },
-		data: { status: "ACTIVE", cancelledOn: null },
+	await prisma.$transaction(async (tx) => {
+		const existing = await tx.subscription.findFirst({
+			where: { id, userId },
+			select: { status: true, expiresOnBeforeCancel: true },
+		});
+		if (!existing) throw new Error("Subscription not found");
+		await tx.subscription.updateMany({
+			where: { id, userId },
+			data:
+				existing.status === "CANCELLED"
+					? {
+							status: "ACTIVE",
+							cancelledOn: null,
+							expiresOn: existing.expiresOnBeforeCancel,
+							expiresOnBeforeCancel: null,
+						}
+					: { status: "ACTIVE", cancelledOn: null },
+		});
 	});
-	if (count === 0) throw new Error("Subscription not found");
 }
 
 export async function setSubscriptionArchived(
