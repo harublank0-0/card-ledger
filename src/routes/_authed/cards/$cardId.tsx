@@ -6,11 +6,13 @@ import {
 	getPaymentMethodFn,
 	updatePaymentMethodFn,
 } from "#/features/payment-methods/payment-methods.functions";
+import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
 import { minorToInputString } from "#/lib/money";
 
 export const Route = createFileRoute("/_authed/cards/$cardId")({
 	loader: async ({ params }) => {
+		if (!isUuid(params.cardId)) throw notFound();
 		const card = await getPaymentMethodFn({ data: { id: params.cardId } });
 		if (!card) throw notFound();
 		return card;

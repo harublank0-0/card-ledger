@@ -17,6 +17,7 @@ import {
 	getTransactionFn,
 	updateTransactionFn,
 } from "#/features/transactions/transactions.functions";
+import { isUuid } from "#/lib/ids";
 import {
 	type CurrencyCode,
 	formatMoney,
@@ -25,6 +26,7 @@ import {
 
 export const Route = createFileRoute("/_authed/transactions/$transactionId")({
 	loader: async ({ params }) => {
+		if (!isUuid(params.transactionId)) throw notFound();
 		const [transaction, cards, categories, subs] = await Promise.all([
 			getTransactionFn({ data: { id: params.transactionId } }),
 			listPaymentMethodsFn(),

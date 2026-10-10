@@ -18,6 +18,7 @@ import {
 	updateStatementFn,
 } from "#/features/statements/statements.functions";
 import { statusLabel } from "#/features/statements/statements.logic";
+import { isUuid } from "#/lib/ids";
 import {
 	type CurrencyCode,
 	formatMoney,
@@ -26,6 +27,7 @@ import {
 
 export const Route = createFileRoute("/_authed/statements/$statementId")({
 	loader: async ({ params }) => {
+		if (!isUuid(params.statementId)) throw notFound();
 		const result = await getStatementFn({ data: { id: params.statementId } });
 		if (!result.statement) throw notFound();
 		return { statement: result.statement, today: result.today };

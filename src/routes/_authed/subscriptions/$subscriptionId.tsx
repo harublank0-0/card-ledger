@@ -19,11 +19,13 @@ import {
 	setSubscriptionArchivedFn,
 	updateSubscriptionFn,
 } from "#/features/subscriptions/subscriptions.functions";
+import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
 import { minorToInputString } from "#/lib/money";
 
 export const Route = createFileRoute("/_authed/subscriptions/$subscriptionId")({
 	loader: async ({ params }) => {
+		if (!isUuid(params.subscriptionId)) throw notFound();
 		const [subscription, cards] = await Promise.all([
 			getSubscriptionFn({ data: { id: params.subscriptionId } }),
 			listPaymentMethodsFn(),
