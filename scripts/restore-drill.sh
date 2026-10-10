@@ -201,5 +201,14 @@ curl -fsS "http://127.0.0.1:$PORT/api/health" -o /dev/null || fail "restore-test
 [ -z "$(docker volume ls -q --filter 'name=card-ledger-restore-test')" ] || fail "restore-test.sh left a volume behind"
 pass "restore-test.sh restores into a separate copy, switches reminders off and cleans up"
 
+# 10. A database that is missing altogether (a restore interrupted between DROP and CREATE,
+#     or removed by hand) is treated as empty: re-running the restore recovers it.
+docker compose exec -T db psql -U cardledger -d postgres -q \
+	-c 'DROP DATABASE cardledger WITH (FORCE)' >/dev/null 2>&1 || fail "could not drop the database for the drill"
+run sh scripts/restore.sh "$LATEST" || fail "restore could not recover from a missing database"
+wait_for_health || fail "app did not become healthy after restoring a missing database"
+[ "$(row_counts)" = "$BEFORE" ] || fail "row counts differ after restoring a missing database"
+pass "restore recovers when the database is missing"
+
 FAILED=0
 echo "restore drill passed"

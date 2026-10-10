@@ -94,7 +94,7 @@ age -d -i key.txt card-ledger-2026-10-10.dump.age > card-ledger.dump     # to us
 sh scripts/restore.sh backups/card-ledger-....dump --force
 ```
 
-This stops the app and reminder job, saves what is there as a new backup (and aborts if it cannot), recreates the database, restores, and starts everything again. The safety backup is never pruned by the restore itself.
+This stops the app and reminder job, saves what is there as a new backup (and aborts, starting them again, if it cannot), recreates the database, restores, and starts everything again. If the script is ever interrupted after the database was dropped it says so and prints the exact command that brings your previous data back; a database that is missing altogether is treated as empty, so running the restore again recovers it. The safety backup is never pruned by the restore itself.
 
 ## Restore drill
 

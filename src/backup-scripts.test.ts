@@ -139,3 +139,36 @@ exit 0
 		expect(existsSync(written), written).toBe(true);
 	});
 });
+
+describe("scripts/restore.sh ordering and recovery", () => {
+	const code = read("restore.sh")
+		.split("\n")
+		.filter((line) => !line.trim().startsWith("#"))
+		.join("\n");
+	const at = (needle: string) => code.indexOf(needle);
+
+	it("stops the app and reminders before it takes the safety backup", () => {
+		// Writes made between the dump and the stop would otherwise be in neither copy.
+		expect(at("docker compose stop app reminders")).toBeGreaterThan(-1);
+		expect(at("scripts/backup.sh")).toBeGreaterThan(-1);
+		expect(at("docker compose stop app reminders")).toBeLessThan(
+			at("scripts/backup.sh"),
+		);
+	});
+
+	it("only stops them after deciding to proceed, so a refusal leaves the app running", () => {
+		expect(at("already contains")).toBeGreaterThan(-1);
+		expect(at("already contains")).toBeLessThan(
+			at("docker compose stop app reminders"),
+		);
+	});
+
+	it("tells the operator how to recover if it dies after dropping the database", () => {
+		expect(code).toMatch(/trap\s+\S+\s+EXIT/);
+		expect(code).toMatch(/INTERRUPTED/);
+	});
+
+	it("treats a missing database as empty instead of failing to connect to it", () => {
+		expect(code).toMatch(/pg_database/);
+	});
+});
