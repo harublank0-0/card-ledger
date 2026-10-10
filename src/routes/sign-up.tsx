@@ -1,10 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import {
-	createFileRoute,
-	Link,
-	redirect,
-	useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -13,6 +8,7 @@ import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
 import { getSessionFn, getSignupAllowedFn } from "#/lib/session.functions";
+import { reloadTo } from "#/lib/session-change";
 
 export const Route = createFileRoute("/sign-up")({
 	beforeLoad: async () => {
@@ -29,7 +25,6 @@ const schema = z.object({
 });
 
 function SignUp() {
-	const router = useRouter();
 	const { signupAllowed } = Route.useLoaderData();
 	const [error, setError] = useState<string | null>(null);
 
@@ -43,8 +38,7 @@ function SignUp() {
 				setError(result.error.message ?? "Could not create the account");
 				return;
 			}
-			await router.invalidate();
-			await router.navigate({ to: "/" });
+			reloadTo("/");
 		},
 	});
 

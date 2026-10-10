@@ -1,10 +1,10 @@
-import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { FormField } from "#/components/form-field";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
+import { reloadTo } from "#/lib/session-change";
 
 export const DELETE_CONFIRMATION = "DELETE";
 
@@ -40,7 +40,6 @@ export function describeAccountContents(summary: AccountSummary) {
  * request without it); typing DELETE only prevents misclicks.
  */
 export function DeleteAccount({ summary }: { summary: AccountSummary }) {
-	const router = useRouter();
 	const [password, setPassword] = useState("");
 	const [confirmation, setConfirmation] = useState("");
 	const [error, setError] = useState<string | null>(null);
@@ -82,8 +81,7 @@ export function DeleteAccount({ summary }: { summary: AccountSummary }) {
 						setError(result.error.message ?? "Could not delete the account");
 						return;
 					}
-					await router.invalidate();
-					await router.navigate({ to: "/sign-in", search: { deleted: true } });
+					reloadTo("/sign-in?deleted=true");
 				}}
 			>
 				<FormField label="Your password" htmlFor="deletePassword" errors={[]}>

@@ -3,12 +3,12 @@ import {
 	Link,
 	Outlet,
 	redirect,
-	useRouter,
 } from "@tanstack/react-router";
 
 import { Button } from "#/components/ui/button";
 import { authClient } from "#/lib/auth-client";
 import { getSessionFn } from "#/lib/session.functions";
+import { reloadTo } from "#/lib/session-change";
 
 // Route guards are UX only. Every server function also enforces auth via authMiddleware.
 export const Route = createFileRoute("/_authed")({
@@ -26,7 +26,6 @@ const navClass =
 	"rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground";
 
 function AuthedLayout() {
-	const router = useRouter();
 	const { user } = Route.useRouteContext();
 
 	return (
@@ -94,8 +93,7 @@ function AuthedLayout() {
 						size="sm"
 						onClick={async () => {
 							await authClient.signOut();
-							await router.invalidate();
-							await router.navigate({ to: "/sign-in" });
+							reloadTo("/sign-in");
 						}}
 					>
 						Sign out

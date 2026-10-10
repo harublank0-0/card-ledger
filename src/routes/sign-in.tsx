@@ -1,10 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import {
-	createFileRoute,
-	Link,
-	redirect,
-	useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -14,6 +9,7 @@ import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
 import { safeRedirect } from "#/lib/redirect";
 import { getSessionFn, getSignupAllowedFn } from "#/lib/session.functions";
+import { reloadTo } from "#/lib/session-change";
 
 export const Route = createFileRoute("/sign-in")({
 	validateSearch: z.object({
@@ -29,7 +25,6 @@ export const Route = createFileRoute("/sign-in")({
 });
 
 function SignIn() {
-	const router = useRouter();
 	const search = Route.useSearch();
 	const { signupAllowed } = Route.useLoaderData();
 	const [error, setError] = useState<string | null>(null);
@@ -49,8 +44,7 @@ function SignIn() {
 				setError(result.error.message ?? "Could not sign in");
 				return;
 			}
-			await router.invalidate();
-			await router.navigate({ to: safeRedirect(search.redirect) });
+			reloadTo(safeRedirect(search.redirect));
 		},
 	});
 
