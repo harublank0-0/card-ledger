@@ -76,6 +76,12 @@ rm -f "$EMPTY_ENV"
 echo "$message" | grep -q "POSTGRES_PASSWORD" || fail "missing-variable error does not name POSTGRES_PASSWORD"
 pass "missing required variables are rejected with a readable message"
 
+# An unedited copy of .env.example must not be bootable (its secrets are empty).
+if CARD_LEDGER_IMAGE="$IMAGE" docker compose -p "$PROJECT-guard" --env-file .env.example config >/dev/null 2>&1; then
+	fail "compose accepted the unedited .env.example"
+fi
+pass "an unedited .env.example is rejected"
+
 # 2. Build and start.
 quiet compose up -d --build || fail "docker compose up failed"
 wait_for_health || fail "app did not become healthy within 180 seconds"
