@@ -50,12 +50,12 @@ export const getStatementDefaultsFn = createServerFn({ method: "GET" })
 	.validator(z.object({ cardId: z.uuid() }))
 	.handler(async ({ context, data }) => {
 		const today = await todayFor(context.user.id);
-		return {
+		const defaults = await (await service()).getStatementDefaults(
+			context.user.id,
+			data.cardId,
 			today,
-			...(await (
-				await service()
-			).getStatementDefaults(context.user.id, data.cardId, today)),
-		};
+		);
+		return defaults ? { today, ...defaults } : null;
 	});
 
 export const createStatementFn = createServerFn({ method: "POST" })

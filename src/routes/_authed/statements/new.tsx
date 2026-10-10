@@ -24,14 +24,10 @@ export const Route = createFileRoute("/_authed/statements/new")({
 		const cardId =
 			deps.cardId ?? (cards.length === 1 ? cards[0]?.id : undefined);
 		if (!cardId) return { cards, defaults: null };
-		try {
-			return {
-				cards,
-				defaults: await getStatementDefaultsFn({ data: { cardId } }),
-			};
-		} catch {
-			throw notFound();
-		}
+		const defaults = await getStatementDefaultsFn({ data: { cardId } });
+		// Null means no such card for this person; a real failure propagates as an error.
+		if (!defaults) throw notFound();
+		return { cards, defaults };
 	},
 	notFoundComponent: () => (
 		<p className="text-muted-foreground">That card could not be found.</p>

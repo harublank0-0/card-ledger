@@ -147,7 +147,9 @@ export async function getStatementDefaults(
 	const card = await prisma.paymentMethod.findFirst({
 		where: { id: cardId, userId, archivedAt: null },
 	});
-	if (!card) throw new Error("Payment method not found");
+	// Null, not a throw: a missing (or someone else's) card is an ordinary answer, and a
+	// route that treated every throw as "not found" would hide real failures.
+	if (!card) return null;
 	const latest = await prisma.cardStatement.findFirst({
 		where: { userId, paymentMethodId: cardId },
 		orderBy: { periodEnd: "desc" },

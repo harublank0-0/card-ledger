@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { Route as card } from "./_authed/cards/$cardId";
@@ -26,5 +28,28 @@ describe.each(cases)("%s loader", (_name, route, param) => {
 		await expect(loader({ params: { [param]: value } })).rejects.toMatchObject({
 			isNotFound: true,
 		});
+	});
+});
+
+function walk(dir: string): string[] {
+	return readdirSync(dir).flatMap((name) => {
+		const full = path.join(dir, name);
+		return statSync(full).isDirectory() ? walk(full) : [full];
+	});
+}
+
+// `catch { throw notFound(); }` turns a database outage into "That card could not be found".
+// A loader decides not-found from what the server returned (null), never from "something threw".
+describe("route loaders", () => {
+	it("do not rewrite every failure as not found", () => {
+		const files = walk(path.join(process.cwd(), "src", "routes")).filter(
+			(f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f),
+		);
+		const offenders = files.filter((file) =>
+			/catch\s*(\([^)]*\))?\s*\{\s*throw notFound\(/.test(
+				readFileSync(file, "utf8"),
+			),
+		);
+		expect(offenders.map((f) => path.relative(process.cwd(), f))).toEqual([]);
 	});
 });

@@ -450,7 +450,7 @@ describe("listing", () => {
 describe("defaults for a new statement", () => {
 	it("suggests the next period from the card's days and the latest statement", async () => {
 		expect(
-			(await getStatementDefaults(alice.id, card.id, today)).suggestion,
+			(await getStatementDefaults(alice.id, card.id, today))?.suggestion,
 		).toEqual({
 			periodStart: "2025-02-06",
 			periodEnd: "2025-03-05",
@@ -458,7 +458,7 @@ describe("defaults for a new statement", () => {
 		});
 		await createStatement(alice.id, stmt());
 		expect(
-			(await getStatementDefaults(alice.id, card.id, today)).suggestion,
+			(await getStatementDefaults(alice.id, card.id, today))?.suggestion,
 		).toEqual({
 			periodStart: "2025-03-06",
 			periodEnd: "2025-04-05",
@@ -467,9 +467,18 @@ describe("defaults for a new statement", () => {
 	});
 	it("only works for the caller's active cards", async () => {
 		const theirs = await createPaymentMethod(bob.id, cardData());
+		// "Not yours" and "does not exist" look the same, and neither is an error: the route
+		// turns null into not-found, so a real failure is not mistaken for a missing card.
 		await expect(
 			getStatementDefaults(alice.id, theirs.id, today),
-		).rejects.toThrow("Payment method not found");
+		).resolves.toBeNull();
+		await expect(
+			getStatementDefaults(
+				alice.id,
+				"01a1265d-0980-72ad-a375-fcae3345ef5a",
+				today,
+			),
+		).resolves.toBeNull();
 	});
 });
 
