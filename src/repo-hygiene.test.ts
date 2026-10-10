@@ -69,6 +69,46 @@ describe("scaffold leftovers", () => {
 		);
 	});
 
+	it("keeps no unused starter components or stubs", () => {
+		const root = process.cwd();
+		// A header widget that nothing renders, which also drew a user-supplied image URL.
+		expect(
+			existsSync(
+				path.join(
+					root,
+					"src",
+					"integrations",
+					"better-auth",
+					"header-user.tsx",
+				),
+			),
+		).toBe(false);
+		// The query client factory is used; the default-exported empty component was not.
+		const provider = readFileSync(
+			path.join(
+				root,
+				"src",
+				"integrations",
+				"tanstack-query",
+				"root-provider.tsx",
+			),
+			"utf8",
+		);
+		expect(provider).not.toMatch(/export default/);
+	});
+
+	it("keeps src/lib/utils.ts, which shadcn's utils alias points at", () => {
+		// Not dead code: `npx shadcn add` generates components that import `cn` from here
+		// (components.json: aliases.utils). Removing it would break the next added component.
+		const config = JSON.parse(
+			readFileSync(path.join(process.cwd(), "components.json"), "utf8"),
+		);
+		expect(config.aliases.utils).toBe("#/lib/utils");
+		expect(existsSync(path.join(process.cwd(), "src", "lib", "utils.ts"))).toBe(
+			true,
+		);
+	});
+
 	it("keeps no pnpm advice that contradicts the project's package manager", () => {
 		const rules = path.join(process.cwd(), ".cursorrules");
 		if (existsSync(rules)) {
