@@ -12,7 +12,7 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { CURRENCY_CODES } from "#/lib/money";
-
+import { last4FromPaste } from "../payment-methods.logic";
 import {
 	type PaymentMethodFormValues,
 	paymentMethodInputSchema,
@@ -117,6 +117,13 @@ export function CardForm({
 								onChange={(e) =>
 									field.handleChange(e.target.value.replace(/\D/g, ""))
 								}
+								onPaste={(e) => {
+									// Without this the browser keeps the FIRST four characters.
+									e.preventDefault();
+									field.handleChange(
+										last4FromPaste(e.clipboardData.getData("text")),
+									);
+								}}
 								onBlur={field.handleBlur}
 							/>
 						</FormField>
