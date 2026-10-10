@@ -90,7 +90,7 @@ Four **high** advisories remain, all in transitive packages of the `prisma` CLI:
 
 ## 6. Starter leftovers
 
-Removed or corrected: the starter README, the `post-cta-init` script (it ran `npx -y create-db@latest`, an external call), the unused `public/prisma.svg`, and pnpm advice in `.cursorrules`. Left in place on purpose: `.cta.json` (scaffold metadata, harmless). The TanStack devtools are in `dependencies` but their UI code is not in the production client bundle (checked: no devtools UI strings in `.output/public`).
+Removed or corrected: the starter README, the `post-cta-init` script (it ran `npx -y create-db@latest`, an external call), the unused `public/prisma.svg`, and pnpm advice in `.cursorrules`. Left in place on purpose: `.cta.json` (scaffold metadata, harmless). The TanStack devtools Vite plugin was **removed** after the code review found that, during `npm run dev`, it listens on `localhost:4206` for unauthenticated cross-origin requests that end in `exec("npm install -D <payload>")`. The router and query panels are now loaded only in development, by dynamic import, from `devDependencies` (see `src/integrations/devtools.tsx`); none of it is in the production bundle or image.
 
 ## 7. History and authorship
 

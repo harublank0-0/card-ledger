@@ -1,12 +1,10 @@
-import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
 	HeadContent,
 	Scripts,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
+import { type ComponentType, useEffect, useState } from "react";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -45,20 +43,21 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				{children}
-				<TanStackDevtools
-					config={{
-						position: "bottom-right",
-					}}
-					plugins={[
-						{
-							name: "Tanstack Router",
-							render: <TanStackRouterDevtoolsPanel />,
-						},
-						TanStackQueryDevtools,
-					]}
-				/>
+				<DevTools />
 				<Scripts />
 			</body>
 		</html>
 	);
+}
+
+/** Router and query inspectors, in development only and only in the browser. */
+function DevTools() {
+	const [Panels, setPanels] = useState<ComponentType | null>(null);
+	useEffect(() => {
+		if (!import.meta.env.DEV) return;
+		import("../integrations/devtools").then((module) =>
+			setPanels(() => module.default),
+		);
+	}, []);
+	return Panels ? <Panels /> : null;
 }

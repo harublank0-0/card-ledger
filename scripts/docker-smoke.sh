@@ -89,6 +89,12 @@ body="$(curl -fsS "http://127.0.0.1:$PORT/api/health")"
 [ "$body" = '{"status":"ok"}' ] || fail "unexpected health body: $body"
 pass "app is healthy at /api/health"
 
+# The server-rendered app must work too, not only the health endpoint: a missing runtime
+# dependency would surface here first.
+page="$(curl -fsS "http://127.0.0.1:$PORT/sign-in")" || fail "/sign-in did not render"
+echo "$page" | grep -q "Sign in to your ledger" || fail "/sign-in rendered without the sign-in form"
+pass "the app renders its sign-in page"
+
 # 3. One-shot migration finished cleanly.
 migrate_id="$(compose ps -a -q migrate)"
 [ -n "$migrate_id" ] || fail "migrate service not found"

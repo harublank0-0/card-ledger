@@ -49,7 +49,7 @@ npm run db:seed       # optional: synthetic demo account (prints a one-time pass
 npm run dev           # http://localhost:3100
 ```
 
-After changing `prisma/schema.prisma`, run `npm run db:migrate` and restart `npm run dev`. The test suite creates and migrates its own `<database>_test` database on the same server, so it never touches your development data.
+After changing `prisma/schema.prisma`, run `npm run db:migrate` and restart `npm run dev`. The development server shows the TanStack Router and Query panels (bottom corners). Do not add `@tanstack/devtools-vite` back: its dev event bus accepts unauthenticated requests from any web page and can run shell commands. The test suite creates and migrates its own `<database>_test` database on the same server, so it never touches your development data.
 
 The stack, directory layout and conventions are described in [AGENTS.md](./AGENTS.md) and [docs/architecture.md](./docs/architecture.md); the data model in [docs/database.md](./docs/database.md).
 
