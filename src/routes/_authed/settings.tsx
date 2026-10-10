@@ -7,6 +7,9 @@ import { FormField } from "#/components/form-field";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Switch } from "#/components/ui/switch";
+import { getAccountSummaryFn } from "#/features/account/account.functions";
+import { DeleteAccount } from "#/features/account/components/delete-account";
+import { YourData } from "#/features/account/components/your-data";
 import {
 	getNotificationPreferencesFn,
 	updateNotificationPreferencesFn,
@@ -15,7 +18,13 @@ import { ALLOWED_OFFSETS } from "#/features/notifications/notifications.logic";
 import { notificationPreferencesSchema } from "#/features/notifications/notifications.schemas";
 
 export const Route = createFileRoute("/_authed/settings")({
-	loader: () => getNotificationPreferencesFn(),
+	loader: async () => {
+		const [preferences, summary] = await Promise.all([
+			getNotificationPreferencesFn(),
+			getAccountSummaryFn(),
+		]);
+		return { preferences, summary };
+	},
 	component: Settings,
 });
 
@@ -58,7 +67,8 @@ const offsetLabel = (days: number) =>
 			: `${days} days before`;
 
 function Settings() {
-	const { mail, ...prefs } = Route.useLoaderData();
+	const { preferences, summary } = Route.useLoaderData();
+	const { mail, ...prefs } = preferences;
 	const router = useRouter();
 	const save = useServerFn(updateNotificationPreferencesFn);
 	const [status, setStatus] = useState<"idle" | "saved">("idle");
@@ -222,6 +232,9 @@ function Settings() {
 					</form.Subscribe>
 				</div>
 			</form>
+
+			<YourData />
+			<DeleteAccount summary={summary} />
 		</section>
 	);
 }

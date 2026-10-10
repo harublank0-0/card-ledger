@@ -15,6 +15,11 @@ export const auth = betterAuth({
 		enabled: true,
 		minPasswordLength: 12,
 	},
+	user: {
+		// Self-service account deletion (Settings). Every row the user owns cascades from the
+		// user record. A password is required: see `guardAccountDeletion` in the auth route.
+		deleteUser: { enabled: true },
+	},
 	databaseHooks: {
 		user: {
 			create: {

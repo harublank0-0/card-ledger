@@ -29,6 +29,8 @@ import { Route as AuthedTransactionsIndexRouteImport } from './routes/_authed/tr
 import { Route as AuthedTransactionsTransactionIdRouteImport } from './routes/_authed/transactions/$transactionId'
 import { Route as AuthedTransactionsNewRouteImport } from './routes/_authed/transactions/new'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiExportJsonRouteImport } from './routes/api/export/json'
+import { Route as ApiExportCsvEntityRouteImport } from './routes/api/export/csv.$entity'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -133,6 +135,16 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiExportJsonRoute = ApiExportJsonRouteImport.update({
+  id: '/api/export/json',
+  path: '/api/export/json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiExportCsvEntityRoute = ApiExportCsvEntityRouteImport.update({
+  id: '/api/export/csv/$entity',
+  path: '/api/export/csv/$entity',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -150,10 +162,12 @@ export interface FileRoutesByFullPath {
   '/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
   '/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/export/json': typeof ApiExportJsonRoute
   '/cards/': typeof AuthedCardsIndexRoute
   '/statements/': typeof AuthedStatementsIndexRoute
   '/subscriptions/': typeof AuthedSubscriptionsIndexRoute
   '/transactions/': typeof AuthedTransactionsIndexRoute
+  '/api/export/csv/$entity': typeof ApiExportCsvEntityRoute
 }
 export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
@@ -171,10 +185,12 @@ export interface FileRoutesByTo {
   '/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
   '/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/export/json': typeof ApiExportJsonRoute
   '/cards': typeof AuthedCardsIndexRoute
   '/statements': typeof AuthedStatementsIndexRoute
   '/subscriptions': typeof AuthedSubscriptionsIndexRoute
   '/transactions': typeof AuthedTransactionsIndexRoute
+  '/api/export/csv/$entity': typeof ApiExportCsvEntityRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -194,10 +210,12 @@ export interface FileRoutesById {
   '/_authed/transactions/$transactionId': typeof AuthedTransactionsTransactionIdRoute
   '/_authed/transactions/new': typeof AuthedTransactionsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/export/json': typeof ApiExportJsonRoute
   '/_authed/cards/': typeof AuthedCardsIndexRoute
   '/_authed/statements/': typeof AuthedStatementsIndexRoute
   '/_authed/subscriptions/': typeof AuthedSubscriptionsIndexRoute
   '/_authed/transactions/': typeof AuthedTransactionsIndexRoute
+  '/api/export/csv/$entity': typeof ApiExportCsvEntityRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -217,10 +235,12 @@ export interface FileRouteTypes {
     | '/transactions/$transactionId'
     | '/transactions/new'
     | '/api/auth/$'
+    | '/api/export/json'
     | '/cards/'
     | '/statements/'
     | '/subscriptions/'
     | '/transactions/'
+    | '/api/export/csv/$entity'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/mcp'
@@ -238,10 +258,12 @@ export interface FileRouteTypes {
     | '/transactions/$transactionId'
     | '/transactions/new'
     | '/api/auth/$'
+    | '/api/export/json'
     | '/cards'
     | '/statements'
     | '/subscriptions'
     | '/transactions'
+    | '/api/export/csv/$entity'
   id:
     | '__root__'
     | '/_authed'
@@ -260,10 +282,12 @@ export interface FileRouteTypes {
     | '/_authed/transactions/$transactionId'
     | '/_authed/transactions/new'
     | '/api/auth/$'
+    | '/api/export/json'
     | '/_authed/cards/'
     | '/_authed/statements/'
     | '/_authed/subscriptions/'
     | '/_authed/transactions/'
+    | '/api/export/csv/$entity'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -272,6 +296,8 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiExportJsonRoute: typeof ApiExportJsonRoute
+  ApiExportCsvEntityRoute: typeof ApiExportCsvEntityRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -416,6 +442,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/export/json': {
+      id: '/api/export/json'
+      path: '/api/export/json'
+      fullPath: '/api/export/json'
+      preLoaderRoute: typeof ApiExportJsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/export/csv/$entity': {
+      id: '/api/export/csv/$entity'
+      path: '/api/export/csv/$entity'
+      fullPath: '/api/export/csv/$entity'
+      preLoaderRoute: typeof ApiExportCsvEntityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -465,6 +505,8 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiExportJsonRoute: ApiExportJsonRoute,
+  ApiExportCsvEntityRoute: ApiExportCsvEntityRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

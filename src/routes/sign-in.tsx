@@ -16,7 +16,10 @@ import { safeRedirect } from "#/lib/redirect";
 import { getSessionFn, getSignupAllowedFn } from "#/lib/session.functions";
 
 export const Route = createFileRoute("/sign-in")({
-	validateSearch: z.object({ redirect: z.string().optional() }),
+	validateSearch: z.object({
+		redirect: z.string().optional(),
+		deleted: z.boolean().optional().catch(undefined),
+	}),
 	beforeLoad: async ({ search }) => {
 		if (await getSessionFn())
 			throw redirect({ to: safeRedirect(search.redirect) });
@@ -57,6 +60,11 @@ function SignIn() {
 				<h1 className="text-2xl font-semibold">Card Ledger</h1>
 				<p className="text-sm text-muted-foreground">Sign in to your ledger.</p>
 			</div>
+			{search.deleted && (
+				<output className="rounded-md bg-secondary p-3 text-sm">
+					Your account and all of its data were deleted.
+				</output>
+			)}
 			<form
 				className="grid gap-4 rounded-xl border bg-card p-5 shadow-sm"
 				onSubmit={(e) => {
