@@ -35,3 +35,17 @@ describe("flows that change the session", () => {
 		expect(code, file).not.toMatch(/router\.invalidate\(/);
 	});
 });
+
+// Cancel and Reactivate change `expiresOn` on the server while the edit form, once touched,
+// keeps its old values: "Save changes" afterwards erased the end date the person had just set
+// (reproduced in a real browser). The form is re-initialised when those fields change.
+describe("the subscription edit page", () => {
+	it("re-initialises its form when status or end date change on the server", () => {
+		const code = read("src/routes/_authed/subscriptions/$subscriptionId.tsx");
+		// The key is a template literal, so match up to its closing backtick.
+		const key =
+			code.match(/<SubscriptionForm[\s\S]*?key=\{(`[^`]*`)\}/)?.[1] ?? "";
+		expect(key).toContain("s.status");
+		expect(key).toContain("s.expiresOn");
+	});
+});

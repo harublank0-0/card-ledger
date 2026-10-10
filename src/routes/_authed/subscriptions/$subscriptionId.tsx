@@ -139,6 +139,10 @@ function EditSubscription() {
 			</div>
 
 			<SubscriptionForm
+				// Cancel and Reactivate change `expiresOn` on the server. A form the user has
+				// already touched keeps its old values, so pressing "Save changes" afterwards
+				// would write the stale end date back. Re-initialise it when they change.
+				key={`${s.status}|${s.expiresOn ?? ""}|${s.cancelledOn ?? ""}`}
 				cards={cards}
 				submitLabel="Save changes"
 				initialValues={{
