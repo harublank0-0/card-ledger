@@ -24,6 +24,7 @@ import {
 	formatMoney,
 	minorToInputString,
 } from "#/lib/money";
+import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/statements/$statementId")({
 	loader: async ({ params }) => {
@@ -55,20 +56,10 @@ function StatementDetail() {
 		null,
 	);
 	const [confirmingDelete, setConfirmingDelete] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const { run, pending, error } = useAction();
 	const money = (minor: number) =>
 		formatMoney(minor, s.currency as CurrencyCode);
 	const label = statusLabel(s);
-
-	const run = async (action: () => Promise<unknown>) => {
-		setError(null);
-		try {
-			await action();
-			await router.invalidate();
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "Something went wrong");
-		}
-	};
 
 	return (
 		<section className="grid gap-6">
@@ -141,6 +132,7 @@ function StatementDetail() {
 											<Button
 												size="sm"
 												variant="destructive"
+												disabled={pending}
 												onClick={() =>
 													run(async () => {
 														await removePayment({ data: { id: p.id } });
@@ -249,6 +241,7 @@ function StatementDetail() {
 					<div className="flex gap-2">
 						<Button
 							variant="destructive"
+							disabled={pending}
 							onClick={() =>
 								run(async () => {
 									await remove({ data: { id: s.id } });

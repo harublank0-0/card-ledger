@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -9,6 +9,7 @@ import {
 } from "#/features/payment-methods/payment-methods.functions";
 import type { CurrencyCode } from "#/lib/money";
 import { formatMoney } from "#/lib/money";
+import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/cards/")({
 	validateSearch: z.object({ archived: z.boolean().optional() }),
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/_authed/cards/")({
 function Cards() {
 	const cards = Route.useLoaderData();
 	const { archived = false } = Route.useSearch();
-	const router = useRouter();
+	const { run, pending, error } = useAction();
 	const setArchived = useServerFn(setPaymentMethodArchivedFn);
 
 	return (
@@ -42,6 +43,12 @@ function Cards() {
 					</Button>
 				</div>
 			</div>
+
+			{error && (
+				<p role="alert" className="mb-3 text-sm text-destructive">
+					{error}
+				</p>
+			)}
 
 			{cards.length === 0 ? (
 				<div className="rounded-xl border bg-card p-8 text-center">
@@ -115,12 +122,14 @@ function Cards() {
 								<Button
 									variant="ghost"
 									size="sm"
-									onClick={async () => {
-										await setArchived({
-											data: { id: card.id, archived: !card.archivedAt },
-										});
-										await router.invalidate();
-									}}
+									disabled={pending}
+									onClick={() =>
+										run(() =>
+											setArchived({
+												data: { id: card.id, archived: !card.archivedAt },
+											}),
+										)
+									}
 								>
 									{card.archivedAt ? "Restore" : "Archive"}
 								</Button>

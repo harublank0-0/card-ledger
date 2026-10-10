@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import {
 	setCategoryArchivedFn,
 } from "#/features/categories/categories.functions";
 import { MAX_CATEGORY_NAME_LENGTH } from "#/features/categories/categories.logic";
+import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/categories")({
 	validateSearch: z.object({ archived: z.boolean().optional() }),
@@ -26,20 +27,9 @@ type CategoryRow = { id: string; name: string; archived: boolean };
 function Categories() {
 	const categories = Route.useLoaderData();
 	const { archived = false } = Route.useSearch();
-	const router = useRouter();
 	const create = useServerFn(createCategoryFn);
 	const [name, setName] = useState("");
-	const [error, setError] = useState<string | null>(null);
-
-	const run = async (action: () => Promise<unknown>) => {
-		setError(null);
-		try {
-			await action();
-			await router.invalidate();
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "Something went wrong");
-		}
-	};
+	const { run, pending, error } = useAction();
 
 	return (
 		<section className="grid max-w-xl gap-4">
@@ -77,7 +67,7 @@ function Categories() {
 					value={name}
 					onChange={(e) => setName(e.target.value)}
 				/>
-				<Button type="submit" disabled={name.trim() === ""}>
+				<Button type="submit" disabled={pending || name.trim() === ""}>
 					Add
 				</Button>
 			</form>
@@ -89,7 +79,12 @@ function Categories() {
 
 			<ul className="grid gap-2">
 				{categories.map((category) => (
-					<CategoryItem key={category.id} category={category} run={run} />
+					<CategoryItem
+						key={category.id}
+						category={category}
+						run={run}
+						pending={pending}
+					/>
 				))}
 			</ul>
 		</section>
@@ -99,9 +94,11 @@ function Categories() {
 function CategoryItem({
 	category,
 	run,
+	pending,
 }: {
 	category: CategoryRow;
-	run: (action: () => Promise<unknown>) => Promise<void>;
+	run: (action: () => Promise<unknown>) => Promise<unknown>;
+	pending: boolean;
 }) {
 	const rename = useServerFn(renameCategoryFn);
 	const setArchived = useServerFn(setCategoryArchivedFn);
@@ -127,7 +124,7 @@ function CategoryItem({
 						value={draft}
 						onChange={(e) => setDraft(e.target.value)}
 					/>
-					<Button type="submit" size="sm">
+					<Button type="submit" size="sm" disabled={pending}>
 						Save
 					</Button>
 					<Button
@@ -163,6 +160,7 @@ function CategoryItem({
 						<Button
 							size="sm"
 							variant="ghost"
+							disabled={pending}
 							onClick={() =>
 								run(() =>
 									setArchived({

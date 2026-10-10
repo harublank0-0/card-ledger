@@ -23,6 +23,7 @@ import {
 	formatMoney,
 	minorToInputString,
 } from "#/lib/money";
+import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/transactions/$transactionId")({
 	loader: async ({ params }) => {
@@ -81,7 +82,7 @@ function EditTransaction() {
 	const update = useServerFn(updateTransactionFn);
 	const remove = useServerFn(deleteTransactionFn);
 	const [confirming, setConfirming] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const { run, pending, error } = useAction();
 	const isRefund = t.type === "REFUND";
 	const money = (minor: number, currency = t.currency) =>
 		formatMoney(minor, currency as CurrencyCode);
@@ -196,18 +197,13 @@ function EditTransaction() {
 					<div className="flex gap-2">
 						<Button
 							variant="destructive"
+							disabled={pending}
 							onClick={async () => {
-								setError(null);
-								try {
+								const outcome = await run(async () => {
 									await remove({ data: { id: t.id } });
-									await router.invalidate();
 									await router.navigate({ to: "/transactions" });
-								} catch (e) {
-									setError(
-										e instanceof Error ? e.message : "Something went wrong",
-									);
-									setConfirming(false);
-								}
+								});
+								if (outcome === "failed") setConfirming(false);
 							}}
 						>
 							Yes, delete it

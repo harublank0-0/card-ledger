@@ -22,6 +22,7 @@ import {
 import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
 import { minorToInputString } from "#/lib/money";
+import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/subscriptions/$subscriptionId")({
 	loader: async ({ params }) => {
@@ -53,18 +54,7 @@ function EditSubscription() {
 	const reactivate = useServerFn(reactivateSubscriptionFn);
 	const setArchived = useServerFn(setSubscriptionArchivedFn);
 	const [endDate, setEndDate] = useState("");
-	const [error, setError] = useState<string | null>(null);
-
-	const refresh = () => router.invalidate();
-	const run = async (action: () => Promise<unknown>) => {
-		setError(null);
-		try {
-			await action();
-			await refresh();
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "Something went wrong");
-		}
-	};
+	const { run, pending, error } = useAction();
 
 	return (
 		<section className="grid gap-6">
@@ -90,6 +80,7 @@ function EditSubscription() {
 						<div>
 							<Button
 								variant="destructive"
+								disabled={pending}
 								onClick={() =>
 									run(() => cancel({ data: { id: s.id, expiresOn: endDate } }))
 								}
@@ -106,6 +97,7 @@ function EditSubscription() {
 						<div>
 							<Button
 								variant="outline"
+								disabled={pending}
 								onClick={() => run(() => reactivate({ data: { id: s.id } }))}
 							>
 								Reactivate
@@ -124,6 +116,7 @@ function EditSubscription() {
 					<Button
 						variant="ghost"
 						size="sm"
+						disabled={pending}
 						onClick={() =>
 							run(() =>
 								setArchived({ data: { id: s.id, archived: !s.archived } }),

@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
@@ -16,6 +16,7 @@ import {
 } from "#/features/notifications/notifications.functions";
 import { ALLOWED_OFFSETS } from "#/features/notifications/notifications.logic";
 import { notificationPreferencesSchema } from "#/features/notifications/notifications.schemas";
+import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/settings")({
 	loader: async () => {
@@ -69,10 +70,9 @@ const offsetLabel = (days: number) =>
 function Settings() {
 	const { preferences, summary } = Route.useLoaderData();
 	const { mail, ...prefs } = preferences;
-	const router = useRouter();
 	const save = useServerFn(updateNotificationPreferencesFn);
 	const [status, setStatus] = useState<"idle" | "saved">("idle");
-	const [error, setError] = useState<string | null>(null);
+	const { run, error } = useAction();
 	const zones =
 		typeof Intl.supportedValuesOf === "function"
 			? Intl.supportedValuesOf("timeZone")
@@ -82,15 +82,9 @@ function Settings() {
 		defaultValues: prefs,
 		validators: { onSubmit: notificationPreferencesSchema },
 		onSubmit: async ({ value }) => {
-			setError(null);
 			setStatus("idle");
-			try {
-				await save({ data: value });
-				await router.invalidate();
-				setStatus("saved");
-			} catch (e) {
-				setError(e instanceof Error ? e.message : "Something went wrong");
-			}
+			const outcome = await run(() => save({ data: value }));
+			if (outcome === "done") setStatus("saved");
 		},
 	});
 
