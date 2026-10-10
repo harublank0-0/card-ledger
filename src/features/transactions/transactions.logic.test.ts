@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	currencyAfterCardChange,
+	dateFilterEntry,
 	netByCurrency,
 	refundableRemaining,
 	signedAmount,
@@ -198,5 +199,40 @@ describe("currencyAfterCardChange", () => {
 		expect(currencyAfterCardChange({ ...base, cardCurrency: null })).toBe(
 			"USD",
 		);
+	});
+});
+
+describe("dateFilterEntry", () => {
+	// A native date input reports a full yyyy-mm-dd string while the year is still being typed:
+	// "0002-01-01", "0020-01-01", "0202-01-01", then "2026-01-01". Acting on the early ones
+	// would put a meaningless filter in the URL and, because the page then renders "no filter",
+	// wipe the field under the person's fingers.
+	it("waits while the year is still being typed", () => {
+		for (const partial of ["0002-01-01", "0020-01-01", "0202-01-01"]) {
+			expect(dateFilterEntry(partial)).toEqual({ action: "wait" });
+		}
+	});
+
+	it("applies a complete valid date", () => {
+		expect(dateFilterEntry("2026-01-31")).toEqual({
+			action: "set",
+			value: "2026-01-31",
+		});
+	});
+
+	it("clears the filter when the field is emptied", () => {
+		expect(dateFilterEntry("")).toEqual({ action: "set", value: undefined });
+	});
+
+	it("waits on impossible or malformed entries", () => {
+		for (const bad of [
+			"2026-02-30",
+			"2026-13-01",
+			"1899-12-31",
+			"abc",
+			"2026-1-1",
+		]) {
+			expect(dateFilterEntry(bad)).toEqual({ action: "wait" });
+		}
 	});
 });

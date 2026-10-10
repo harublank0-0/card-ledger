@@ -1,3 +1,4 @@
+import { type CalendarDate, isValidCalendarDate } from "#/lib/calendar-date";
 import { type CurrencyCode, formatMoney } from "#/lib/money";
 
 export type TransactionType = "EXPENSE" | "REFUND";
@@ -113,4 +114,18 @@ export function currencyAfterCardChange(input: {
 		return input.current;
 	}
 	return input.cardCurrency;
+}
+
+/**
+ * What typing in a date filter should do. A native date input reports a complete
+ * `yyyy-mm-dd` string while the year is still being typed ("0002-01-01", "0020-01-01", ...),
+ * so only an empty field (clear the filter) or a real date (apply it) changes the filter;
+ * everything else waits for the person to finish.
+ */
+export function dateFilterEntry(
+	entry: string,
+): { action: "wait" } | { action: "set"; value: CalendarDate | undefined } {
+	if (entry === "") return { action: "set", value: undefined };
+	if (isValidCalendarDate(entry)) return { action: "set", value: entry };
+	return { action: "wait" };
 }

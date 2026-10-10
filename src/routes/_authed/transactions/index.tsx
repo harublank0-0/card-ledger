@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -11,6 +10,7 @@ import {
 } from "#/components/ui/select";
 import { listCategoriesFn } from "#/features/categories/categories.functions";
 import { listPaymentMethodsFn } from "#/features/payment-methods/payment-methods.functions";
+import { DateFilterInput } from "#/features/transactions/components/date-filter-input";
 import { listTransactionsFn } from "#/features/transactions/transactions.functions";
 import { signedAmount } from "#/features/transactions/transactions.logic";
 import { transactionFiltersSchema } from "#/features/transactions/transactions.schemas";
@@ -76,20 +76,18 @@ function Transactions() {
 			>
 				<div className="grid gap-1 text-xs text-muted-foreground">
 					<label htmlFor="filter-from">From</label>
-					<Input
+					<DateFilterInput
 						id="filter-from"
-						type="date"
-						value={search.from ?? ""}
-						onChange={(e) => setFilter({ from: e.target.value || undefined })}
+						value={search.from}
+						onChange={(from) => setFilter({ from })}
 					/>
 				</div>
 				<div className="grid gap-1 text-xs text-muted-foreground">
 					<label htmlFor="filter-to">To</label>
-					<Input
+					<DateFilterInput
 						id="filter-to"
-						type="date"
-						value={search.to ?? ""}
-						onChange={(e) => setFilter({ to: e.target.value || undefined })}
+						value={search.to}
+						onChange={(to) => setFilter({ to })}
 					/>
 				</div>
 				<div className="grid gap-1 text-xs text-muted-foreground">
