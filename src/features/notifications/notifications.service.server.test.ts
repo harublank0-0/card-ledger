@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 
 import { prisma } from "#/db";
 import { createPaymentMethod } from "#/features/payment-methods/payment-methods.service.server";
@@ -574,5 +582,32 @@ describe("a stored time zone that is not valid (for example from a bad DEFAULT_T
 		expect(summary.failed).toBe(0);
 		expect(mailsTo(sent, alice)).toHaveLength(1);
 		expect(mailsTo(sent, bob)).toHaveLength(1);
+	});
+});
+
+describe("claiming a reminder that was already claimed", () => {
+	// A plain INSERT that violates the unique key makes PostgreSQL log an ERROR for every
+	// reminder already sent, on every hourly run. The claim uses ON CONFLICT DO NOTHING.
+	it("is a quiet no-op, not a unique-violation error", async () => {
+		await createSubscription(alice.id, dueSoon("Quiet plan"));
+		const first = fakeMailer();
+		await runReminders({ mailer: first.mailer, settingsUrl, now: NOW });
+		expect(mailsTo(first.sent, alice)).toHaveLength(1);
+
+		const create = vi.spyOn(prisma.notificationLog, "create");
+		const createMany = vi.spyOn(prisma.notificationLog, "createMany");
+		try {
+			const second = fakeMailer();
+			await runReminders({ mailer: second.mailer, settingsUrl, now: NOW });
+			expect(mailsTo(second.sent, alice)).toHaveLength(0);
+			expect(create).not.toHaveBeenCalled();
+			expect(createMany).toHaveBeenCalled();
+			for (const [arguments_] of createMany.mock.calls) {
+				expect(arguments_).toMatchObject({ skipDuplicates: true });
+			}
+		} finally {
+			create.mockRestore();
+			createMany.mockRestore();
+		}
 	});
 });

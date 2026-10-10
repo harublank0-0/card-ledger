@@ -77,14 +77,6 @@ function backoffAfter(attempts: number) {
 	);
 }
 
-function isUniqueViolation(error: unknown) {
-	return (
-		typeof error === "object" &&
-		error !== null &&
-		(error as { code?: string }).code === "P2002"
-	);
-}
-
 /**
  * Claim the right to send one reminder. Returns the log id when this run owns it, or null
  * when it was already sent, is being sent by another run, or is not due for a retry yet.
@@ -99,17 +91,18 @@ async function claim(userId: string, reminder: Reminder, now: Date) {
 		offsetDays: reminder.offsetDays,
 		channel: "email",
 	};
-	try {
-		const created = await prisma.notificationLog.create({ data: key });
-		return created.id;
-	} catch (error) {
-		if (!isUniqueViolation(error)) throw error;
-	}
-
+	// INSERT ... ON CONFLICT DO NOTHING: still one atomic winner under concurrent runs, but a
+	// reminder that was already claimed is a quiet no-op instead of a unique-violation error
+	// (which PostgreSQL logs for every such attempt, hourly, for every sent reminder).
+	const { count: inserted } = await prisma.notificationLog.createMany({
+		data: [key],
+		skipDuplicates: true,
+	});
 	const existing = await prisma.notificationLog.findUnique({
 		where: { userId_kind_entityId_eventDate_offsetDays_channel: key },
 	});
 	if (!existing) return null;
+	if (inserted === 1) return existing.id;
 
 	const retryDue =
 		existing.status === "FAILED" &&
