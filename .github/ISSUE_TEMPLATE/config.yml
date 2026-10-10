@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability (private)
+    url: https://github.com/haruBlank0-0/card-ledger/security/advisories/new
+    about: Do not open a public issue for a vulnerability. Use GitHub's private reporting form instead.
+  - name: Install, upgrade or sign-in problem
+    url: https://github.com/haruBlank0-0/card-ledger/blob/main/docs/self-hosting.md#troubleshooting
+    about: The self-hosting guide's troubleshooting table covers the most common problems.
