@@ -50,3 +50,20 @@ describe("development tooling", () => {
 		expect(root_).toMatch(/import\(\s*["'][^"']*devtools[^"']*["']\s*\)/);
 	});
 });
+
+describe("global server function middleware (src/start.ts)", () => {
+	const start = read("src/start.ts");
+
+	it("keeps the CSRF protection that a start instance would otherwise remove", () => {
+		// With a start instance TanStack Start uses *your* requestMiddleware instead of its
+		// default [csrf]. Losing it would leave server functions open to cross-site requests.
+		expect(start).toMatch(/createCsrfMiddleware\(/);
+		expect(start).toMatch(/requestMiddleware:\s*\[\s*csrfMiddleware\s*\]/);
+		expect(start).toMatch(/handlerType === "serverFn"/);
+	});
+
+	it("sanitises the errors every server function returns to the browser", () => {
+		expect(start).toMatch(/functionMiddleware:\s*\[\s*sanitizeErrors\s*\]/);
+		expect(start).toContain("toClientError");
+	});
+});
