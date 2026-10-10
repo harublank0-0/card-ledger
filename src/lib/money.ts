@@ -44,10 +44,22 @@ export function exponentOf(currency: CurrencyCode) {
  */
 export function parseMoney(input: string, currency: CurrencyCode): number {
 	const exponent = exponentOf(currency);
-	const cleaned = input.trim().replace(/,/g, "");
-	const match = /^(\d+)(?:\.(\d+))?$/.exec(cleaned);
-	if (!match) throw new Error("Enter a valid amount, e.g. 499.00");
-	const whole = match[1];
+	const text = input.trim();
+	// A comma is only ever digit grouping: 1,299.50, or 12,34,567 in the South Asian style.
+	// It must never be silently dropped: "12,50" typed with a decimal comma would otherwise
+	// become 1250.00, a hundredfold error that no later check can notice.
+	const match =
+		/^(\d+|\d{1,3}(?:,\d{3})+|\d{1,2}(?:,\d{2})+,\d{3})(?:\.(\d+))?$/.exec(
+			text,
+		);
+	if (!match) {
+		throw new Error(
+			text.includes(",")
+				? "Use a dot for decimals, e.g. 499.50. A comma can only separate thousands, as in 1,299.50"
+				: "Enter a valid amount, e.g. 499.00",
+		);
+	}
+	const whole = match[1].replace(/,/g, "");
 	const fraction = match[2] ?? "";
 	if (fraction.length > exponent) {
 		throw new Error(
