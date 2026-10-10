@@ -1,0 +1,111 @@
+# Self-hosted Card Ledger: app + PostgreSQL + reminder job.
+#
+#   cp .env.example .env     # then fill in the secrets (see docs/self-hosting.md)
+#   docker compose up -d
+#
+# For development use compose.dev.yaml (database and mail catcher only) with `npm run dev`.
+name: card-ledger
+
+x-app-env: &app-env
+  # Built from the same POSTGRES_PASSWORD as the database; use a password without
+  # URL-reserved characters (`openssl rand -hex 24` is a good choice).
+  DATABASE_URL: postgresql://cardledger:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/cardledger
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env (at least 32 characters)}
+  # Must equal the address people type into the browser, including scheme and port.
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:${APP_PORT:-3000}}
+  SIGNUP_MODE: ${SIGNUP_MODE:-first-user}
+  DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Asia/Kathmandu}
+  MCP_ENABLED: ${MCP_ENABLED:-false}
+  # Optional. Without SMTP_HOST reminder emails are off.
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+
+x-app-service: &app-service
+  build: .
+  image: ${CARD_LEDGER_IMAGE:-card-ledger:local}
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  environment: *app-env
+
+services:
+  # No `ports:` on purpose: only the other services in this project can reach the database.
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cardledger
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: cardledger
+    volumes:
+      - card_ledger_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cardledger -d cardledger"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Applies pending migrations, then exits. A separate one-shot service means the app and the
+  # reminder job never race to migrate, and a failed migration is visible and stops them.
+  migrate:
+    <<: *app-service
+    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    <<: *app-service
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      # Loopback only. Put a reverse proxy with HTTPS (or Tailscale) in front to reach it
+      # from other machines; see docs/self-hosting.md.
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+  # Runs the reminder job every REMINDER_INTERVAL_SECONDS (default hourly). Safe to run as
+  # often as you like: each reminder is claimed in the database before it is sent.
+  reminders:
+    <<: *app-service
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    command:
+      - sh
+      - -c
+      - |
+        trap 'exit 0' TERM INT
+        while true; do
+          node_modules/.bin/tsx scripts/send-reminders.ts
+          sleep ${REMINDER_INTERVAL_SECONDS:-3600} &
+          wait $$!
+        done
+
+volumes:
+  card_ledger_db:

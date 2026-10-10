@@ -1,6 +1,6 @@
 # card-ledger
 
-Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Working MVP: sign-in, cards (last4 only), subscriptions, email reminders, transactions with refunds, card statements and payments, and a dashboard home page. Data export, account deletion and demo data are built; deployment (Docker, backups, CI) is not built yet (see `docs/roadmap.md` Progress).
+Open-source (AGPLv3), self-hostable personal finance and subscription tracker. Working MVP: sign-in, cards (last4 only), subscriptions, email reminders, transactions with refunds, card statements and payments, and a dashboard home page. Data export, account deletion, demo data and the Docker/compose stack are built; the self-hosting guide, backups and CI are not built yet (see `docs/roadmap.md` Progress).
 
 Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/database.md`, `docs/roadmap.md`, `docs/decisions/`. Work one roadmap ticket at a time; read the relevant doc sections first and update docs when a decision changes.
 
@@ -28,6 +28,7 @@ Planning docs (proposed, not yet implemented): `docs/architecture.md`, `docs/dat
 - Import alias `#/*` → `src/*` (also `@/*` in tsconfig). TypeScript is strict with no unused locals/params.
 - DB scripts load `.env.local` (`DATABASE_URL` required; Better Auth needs `BETTER_AUTH_SECRET`).
 - Local services: `docker compose -f compose.dev.yaml up -d` (Postgres on 127.0.0.1:5434; Mailpit SMTP 127.0.0.1:1025, inbox http://localhost:8025). Reminders: `npm run reminders:send`. After changing `prisma/schema.prisma`, run `npm run db:migrate` and **restart `npm run dev`** (it caches the old Prisma client). `.env.local` needs `DATABASE_URL`, `BETTER_AUTH_URL=http://localhost:3100`, `BETTER_AUTH_SECRET` (32+ chars).
+- Self-hosting: `compose.yaml` runs `db`, a one-shot `migrate`, `app` and `reminders` from one `Dockerfile` image ([ADR 0008](docs/decisions/0008-container-image-and-compose-topology.md)); it needs `POSTGRES_PASSWORD` and `BETTER_AUTH_SECRET` in `.env`, publishes the app on 127.0.0.1 only and never publishes the database. `npm run docker:smoke` builds it in a throwaway project and checks health, no DB port, loopback-only, non-root and restart persistence (needs Docker). `BETTER_AUTH_URL` must equal the public URL exactly; cookies are `Secure` only when it is `https://`.
 - Commands: `npm run dev` (port 3100, strict), `npm run check` (Biome), `npm run typecheck`, `npm test` (Vitest; integration tests auto-create `<db>_test`), `npm run build`, `npm run db:migrate|studio|seed`. `npm run db:seed` creates the synthetic demo account (prints a one-time password; refuses `NODE_ENV=production`). Exports are at `/api/export/json` and `/api/export/csv/<entity>` (format: `docs/data-format.md`).
 - Biome ignores `src/routeTree.gen.ts` and `src/styles.css`.
 

@@ -1,0 +1,21 @@
+# Never let local secrets, history or build output enter the build context.
+.git
+.env
+.env.*
+*.local
+
+node_modules
+.output
+.nitro
+.tanstack
+.vscode
+
+# Generated inside the image by `prisma generate`.
+src/generated
+
+# Operator data and docs are not part of the image.
+backups
+docs
+compose*.yaml
+Dockerfile
+.dockerignore

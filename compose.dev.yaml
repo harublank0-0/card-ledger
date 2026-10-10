@@ -1,4 +1,5 @@
-# Development database only. Production/self-hosting compose comes with ticket S-01.
+# Development services only (database and mail catcher, for `npm run dev`).
+# Self-hosting uses compose.yaml.
 services:
   db:
     image: postgres:17-alpine
