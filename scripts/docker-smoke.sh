@@ -124,6 +124,10 @@ if docker run --rm --entrypoint env "$IMAGE" | grep -Ei 'secret|password|databas
 fi
 docker run --rm --entrypoint sh "$IMAGE" -c 'test ! -e /app/.env && test ! -e /app/.env.local && test ! -d /app/.git' ||
 	fail "the image contains env files or git history"
+# ...at any depth (a nested prisma/.env or a stray dump), outside third-party packages.
+leaked="$(docker run --rm --entrypoint sh "$IMAGE" -c \
+	'find /app \( -name node_modules -prune \) -o \( -name ".env" -o -name ".env.*" -o -name "*.local" -o -name "*.dump" -o -name "*.dump.*" -o -name backups \) -print')"
+[ -z "$leaked" ] || fail "the image contains files that must never ship: $leaked"
 pass "the image contains no secrets or env files"
 
 # No usage ping from the Prisma CLI in the image (it also covers the build stage, which

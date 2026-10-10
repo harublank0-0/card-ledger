@@ -1,10 +1,13 @@
 # Never let local secrets, history or build output enter the build context.
-.git
-.env
-.env.*
-*.local
+#
+# A pattern without `**/` matches only at the root of the context, so anything that must be
+# excluded wherever it sits (a nested prisma/.env, src/.env.local, a stray dump) uses `**/`.
+**/.git
+**/.env
+**/.env.*
+**/*.local
 
-node_modules
+**/node_modules
 .output
 .nitro
 .tanstack
@@ -13,8 +16,12 @@ node_modules
 # Generated inside the image by `prisma generate`.
 src/generated
 
+# Database dumps and backups contain real financial data, wherever they end up.
+**/backups
+**/*.dump
+**/*.dump.*
+
 # Operator data and docs are not part of the image.
-backups
 docs
 compose*.yaml
 Dockerfile

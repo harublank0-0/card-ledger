@@ -10,17 +10,22 @@ const lines = (file: string) =>
 		.filter((line) => line && !line.startsWith("#"));
 
 describe("files that can hold real financial data or secrets", () => {
-	it("keeps database backups out of git and out of the image build context", () => {
-		// scripts/backup.sh writes full database dumps to ./backups by default.
+	// Docker matches a pattern without `**/` only at the root of the build context, so a
+	// nested `src/.env.local` or `prisma/.env` would be copied into the image.
+	it("keeps database backups out of git and, at any depth, out of the image build context", () => {
 		expect(lines(".gitignore")).toContain("backups");
-		expect(lines(".dockerignore")).toContain("backups");
+		expect(lines(".gitignore")).toContain("*.dump");
+		for (const pattern of ["**/backups", "**/*.dump", "**/*.dump.*"]) {
+			expect(lines(".dockerignore"), pattern).toContain(pattern);
+		}
 	});
 
-	it("keeps env files out of git and out of the image build context", () => {
+	it("keeps env files out of git and, at any depth, out of the image build context", () => {
 		expect(lines(".gitignore")).toContain(".env");
 		expect(lines(".gitignore")).toContain("*.local");
-		expect(lines(".dockerignore")).toContain(".env");
-		expect(lines(".dockerignore")).toContain(".env.*");
+		for (const pattern of ["**/.env", "**/.env.*", "**/*.local"]) {
+			expect(lines(".dockerignore"), pattern).toContain(pattern);
+		}
 	});
 });
 
