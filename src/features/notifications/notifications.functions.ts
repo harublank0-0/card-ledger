@@ -36,3 +36,10 @@ export const updateNotificationPreferencesFn = createServerFn({
 	.handler(async ({ context, data }) => {
 		await (await service()).updatePreferences(context.user.id, data);
 	});
+
+/** Today's calendar date in the signed-in user's own time zone, for form defaults. */
+export const getTodayFn = createServerFn({ method: "GET" })
+	.middleware([authMiddleware])
+	.handler(async ({ context }) => {
+		return (await service()).getUserToday(context.user.id);
+	});

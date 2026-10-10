@@ -1,18 +1,24 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
+import { getTodayFn } from "#/features/notifications/notifications.functions";
 import { listPaymentMethodsFn } from "#/features/payment-methods/payment-methods.functions";
 import { SubscriptionForm } from "#/features/subscriptions/components/subscription-form";
 import { createSubscriptionFn } from "#/features/subscriptions/subscriptions.functions";
-import { todayIn } from "#/lib/calendar-date";
 
 export const Route = createFileRoute("/_authed/subscriptions/new")({
-	loader: () => listPaymentMethodsFn(),
+	loader: async () => {
+		const [cards, today] = await Promise.all([
+			listPaymentMethodsFn(),
+			getTodayFn(),
+		]);
+		return { cards, today };
+	},
 	component: NewSubscription,
 });
 
 function NewSubscription() {
-	const cards = Route.useLoaderData();
+	const { cards, today } = Route.useLoaderData();
 	const router = useRouter();
 	const create = useServerFn(createSubscriptionFn);
 
@@ -28,7 +34,7 @@ function NewSubscription() {
 					currency: "NPR",
 					intervalCount: "1",
 					intervalUnit: "MONTH",
-					anchorDate: todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone),
+					anchorDate: today,
 					paymentMethodId: "",
 					autoRenew: true,
 					expiresOn: "",
