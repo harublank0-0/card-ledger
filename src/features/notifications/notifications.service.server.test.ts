@@ -522,12 +522,20 @@ describe("statement-driven card payment reminders", () => {
 		);
 	});
 
-	it("skips overdue and archived-card statements", async () => {
+	it("skips an overdue statement", async () => {
 		const overdue = await cardWithStatement(alice.id, {
 			due: "2025-02-24",
 			cardName: "Overdue card",
 		});
 		expect(overdue.statement.id).toBeDefined();
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		expect(mailsTo(sent, alice)).toHaveLength(0);
+	});
+
+	// Archiving a card means "I stopped using it", not "I paid it off". The statements list and
+	// the dashboard still show what is owed on it, so the reminder must not go quiet about it.
+	it("still reminds about an unpaid statement on an archived card", async () => {
 		const archived = await cardWithStatement(bob.id, {
 			cardName: "Archived card",
 		});
@@ -537,7 +545,43 @@ describe("statement-driven card payment reminders", () => {
 		});
 		const { mailer, sent } = fakeMailer();
 		await runReminders({ mailer, settingsUrl, now: NOW });
-		expect(mailsTo(sent, alice)).toHaveLength(0);
+		const mail = mailsTo(sent, bob);
+		expect(mail).toHaveLength(1);
+		expect(mail[0].text).toContain("Archived card");
+		const log = await prisma.notificationLog.findMany({
+			where: { userId: bob.id },
+		});
+		expect(log[0]).toMatchObject({
+			kind: "CARD_PAYMENT_DUE",
+			entityId: archived.statement.id,
+		});
+	});
+
+	it("goes quiet again once that statement is paid", async () => {
+		const archived = await cardWithStatement(bob.id, {
+			cardName: "Archived card",
+		});
+		await prisma.paymentMethod.update({
+			where: { id: archived.card.id },
+			data: { archivedAt: new Date() },
+		});
+		await addPayment(bob.id, payment(archived.statement.id, 1_200_000));
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
+		expect(mailsTo(sent, bob)).toHaveLength(0);
+	});
+
+	it("does not remind by due day for an archived card that has no statements", async () => {
+		const card = await createPaymentMethod(
+			bob.id,
+			cardData({ name: "Old card", last4: "1111", paymentDueDay: 28 }),
+		);
+		await prisma.paymentMethod.update({
+			where: { id: card.id },
+			data: { archivedAt: new Date() },
+		});
+		const { mailer, sent } = fakeMailer();
+		await runReminders({ mailer, settingsUrl, now: NOW });
 		expect(mailsTo(sent, bob)).toHaveLength(0);
 	});
 

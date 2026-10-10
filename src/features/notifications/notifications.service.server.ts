@@ -135,8 +135,12 @@ async function loadPlannerData(userId: string) {
 			where: { userId, archivedAt: null },
 			include: { _count: { select: { statements: true } } },
 		}),
+		// Archived cards are included on purpose: archiving a card says it is no longer used, not
+		// that what it owes has been paid, and the dashboard shows those statements too. (The
+		// due-day fallback above still skips archived cards, which have nothing to remind about
+		// until a statement exists.)
 		prisma.cardStatement.findMany({
-			where: { userId, paymentMethod: { archivedAt: null } },
+			where: { userId },
 			include: {
 				paymentMethod: { select: { name: true, last4: true } },
 				payments: { select: { amountMinor: true } },
