@@ -1,6 +1,7 @@
 import { prisma } from "#/db";
 import type { Prisma } from "#/generated/prisma/client.js";
 import type { CalendarDate } from "#/lib/calendar-date";
+import { lockCard } from "#/lib/card-lock.server";
 import { fromDbDate, toDbDate } from "#/lib/db-dates";
 import {
 	outstandingByCurrency,
@@ -179,15 +180,6 @@ export async function getStatementDefaults(
 
 type Tx = Prisma.TransactionClient;
 
-/** Serialise statement writes per card so two overlapping periods cannot both pass the check. */
-async function lockCard(tx: Tx, userId: string, cardId: string) {
-	const rows = await tx.$queryRaw<{ id: string }[]>`
-		SELECT id FROM payment_method
-		WHERE id = ${cardId}::uuid AND "userId" = ${userId}
-		FOR UPDATE`;
-	if (rows.length === 0) throw new Error("Payment method not found");
-}
-
 async function assertNoOverlap(
 	tx: Tx,
 	userId: string,
@@ -225,26 +217,25 @@ function isUniqueViolation(error: unknown) {
 }
 
 export async function createStatement(userId: string, data: StatementData) {
-	const card = await prisma.paymentMethod.findFirst({
-		where: { id: data.paymentMethodId, userId, archivedAt: null },
-	});
-	if (!card) throw new Error("Payment method not found");
-	if (card.currency !== data.currency) {
-		throw new Error(
-			`The statement must be in the card's currency (${card.currency})`,
-		);
-	}
 	try {
 		return await prisma.$transaction(async (tx) => {
-			await lockCard(tx, userId, card.id);
-			await assertNoOverlap(tx, userId, card.id, {
+			// The currency is read under the card's lock: a change that was in flight when the
+			// request arrived has committed by now, and the statement follows it.
+			const card = await lockCard(tx, userId, data.paymentMethodId);
+			if (card.archivedAt) throw new Error("Payment method not found");
+			if (card.currency !== data.currency) {
+				throw new Error(
+					`The statement must be in the card's currency (${card.currency})`,
+				);
+			}
+			await assertNoOverlap(tx, userId, data.paymentMethodId, {
 				start: data.periodStart,
 				end: data.periodEnd,
 			});
 			return tx.cardStatement.create({
 				data: {
 					userId,
-					paymentMethodId: card.id,
+					paymentMethodId: data.paymentMethodId,
 					currency: card.currency,
 					periodStart: toDbDate(data.periodStart),
 					periodEnd: toDbDate(data.periodEnd),

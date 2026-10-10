@@ -1,5 +1,5 @@
 import { prisma } from "#/db";
-
+import { lockCard } from "#/lib/card-lock.server";
 import type { PaymentMethodData } from "./payment-methods.schemas";
 
 /**
@@ -33,24 +33,23 @@ export async function updatePaymentMethod(
 	id: string,
 	data: PaymentMethodData,
 ) {
-	const existing = await getPaymentMethod(userId, id);
-	if (!existing) throw new Error("Payment method not found");
-	// Statements are in the card's currency, so it cannot change once any exist.
-	if (data.currency !== existing.currency) {
-		const statements = await prisma.cardStatement.count({
-			where: { userId, paymentMethodId: id },
-		});
-		if (statements > 0) {
-			throw new Error(
-				"The currency cannot change while this card has statements",
-			);
+	await prisma.$transaction(async (tx) => {
+		// Under the card's lock, so a statement being written right now is either already
+		// counted below or waits for this change and is then checked against the new currency.
+		const existing = await lockCard(tx, userId, id);
+		// Statements are in the card's currency, so it cannot change once any exist.
+		if (data.currency !== existing.currency) {
+			const statements = await tx.cardStatement.count({
+				where: { userId, paymentMethodId: id },
+			});
+			if (statements > 0) {
+				throw new Error(
+					"The currency cannot change while this card has statements",
+				);
+			}
 		}
-	}
-	const { count } = await prisma.paymentMethod.updateMany({
-		where: { id, userId },
-		data,
+		await tx.paymentMethod.updateMany({ where: { id, userId }, data });
 	});
-	if (count === 0) throw new Error("Payment method not found");
 	return getPaymentMethod(userId, id);
 }
 

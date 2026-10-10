@@ -502,6 +502,83 @@ describe("card currency guard", () => {
 	});
 });
 
+describe("card currency guard under concurrency", () => {
+	const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+	const lock = (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) =>
+		tx.$queryRaw`SELECT id FROM payment_method WHERE id = ${card.id}::uuid FOR UPDATE`;
+
+	// Both orderings must end with the invariant intact: a card's statements are in the card's
+	// currency. A held row lock stands in for the other request being mid-flight.
+	it("a currency change waits for a statement being written, then sees it", async () => {
+		let release: () => void = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const writing = prisma.$transaction(async (tx) => {
+			await lock(tx);
+			await tx.cardStatement.create({
+				data: {
+					userId: alice.id,
+					paymentMethodId: card.id,
+					currency: "NPR",
+					periodStart: new Date("2025-02-06"),
+					periodEnd: new Date("2025-03-05"),
+					dueDate: new Date("2025-03-20"),
+					statementBalanceMinor: 100_000,
+					minimumDueMinor: 10_000,
+				},
+			});
+			await gate;
+		});
+		await sleep(150);
+		const change = updatePaymentMethod(
+			alice.id,
+			card.id,
+			cardData({ currency: "USD" }),
+		);
+		const early = await Promise.race([
+			change.then(
+				() => "settled",
+				() => "settled",
+			),
+			sleep(400).then(() => "waiting"),
+		]);
+		expect(early).toBe("waiting");
+		release();
+		await writing;
+		await expect(change).rejects.toThrow("while this card has statements");
+		const after = await prisma.paymentMethod.findUnique({
+			where: { id: card.id },
+		});
+		expect(after?.currency).toBe("NPR");
+	});
+
+	it("a statement waits for a currency change, then uses the new currency", async () => {
+		let release: () => void = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const changing = prisma.$transaction(async (tx) => {
+			await lock(tx);
+			await tx.paymentMethod.update({
+				where: { id: card.id },
+				data: { currency: "USD" },
+			});
+			await gate;
+		});
+		await sleep(150);
+		// The caller still believes the card is in NPR, as it was when they loaded the form.
+		const creating = createStatement(alice.id, stmt({ currency: "NPR" }));
+		await sleep(300);
+		release();
+		await changing;
+		await expect(creating).rejects.toThrow("card's currency (USD)");
+		expect(
+			await prisma.cardStatement.count({ where: { paymentMethodId: card.id } }),
+		).toBe(0);
+	});
+});
+
 describe("database guards", () => {
 	const base = (userId: string, paymentMethodId: string) => ({
 		userId,
