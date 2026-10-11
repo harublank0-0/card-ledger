@@ -48,6 +48,14 @@ docker compose ps
 
 Open <http://localhost:3000>. If port 3000 is taken, set `APP_PORT` in `.env`; the default address follows it automatically.
 
+Check that what answers is Card Ledger:
+
+```sh
+curl -fsS http://localhost:3000/api/health    # use your APP_PORT if you set one
+```
+
+It must print exactly `{"status":"ok"}`. Anything else, or a page that is not Card Ledger, means another program answers on that port. Docker does not always report this: if the other program listens on an address Docker does not see as taken (IPv6, for example), `docker compose up` succeeds and `localhost` quietly reaches the other program. Set `APP_PORT` to a free port and run `docker compose up -d` again.
+
 `docker compose up` stops with a message naming the variable if `POSTGRES_PASSWORD` or `BETTER_AUTH_SECRET` is empty; there is no default secret.
 
 ## First user
@@ -133,7 +141,7 @@ sh scripts/backup.sh               # 1. back up first (docs/backup-restore.md)
 git pull
 docker compose up -d --build
 docker compose logs migrate        # shows the migrations that were applied
-curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS "http://$(docker compose port app 3000)/api/health"    # {"status":"ok"} from this stack, whatever APP_PORT is
 ```
 
 Migrations only move forward. To go back to an older version, restore the backup you took before upgrading.
@@ -160,6 +168,7 @@ docker compose down -v     # also DELETES the database volume; there is no undo
 | Sign-in fails with 403 / `INVALID_ORIGIN` | `BETTER_AUTH_URL` does not match the address in the browser. Match scheme, host and port exactly. |
 | "Sign-up is disabled on this instance" | An account already exists (`first-user`) or `SIGNUP_MODE=closed`. Sign in, or change the mode. |
 | `port is already allocated` | Another program uses the port. Set `APP_PORT` in `.env`. |
+| `http://localhost:3000` shows a different application, or `/api/health` prints something other than `{"status":"ok"}` | Another program answers on that port, on an address Docker did not treat as taken (IPv6, for example), so there was no error. Set `APP_PORT` in `.env` to a free port and run `docker compose up -d`; then check `/api/health` again. |
 | No reminder emails | `SMTP_HOST` is not set or the server rejects the login. Read `docker compose logs reminders`. |
 | `app` logs a warning about `SIGNUP_MODE=open` with an SMTP server | Open sign-up and email reminders are both on, and addresses are not verified, so anyone can have reminders sent to any address. Set `SIGNUP_MODE=first-user` or `closed`, or accept it for a trusted group (see [First user](#first-user)). The app still starts. |
 | Changed `POSTGRES_PASSWORD` and now nothing connects | PostgreSQL only reads that variable when the volume is first created. Either change it back, or set the database password to match: `docker compose exec db psql -U cardledger -c "ALTER USER cardledger PASSWORD 'new-value'"`. |
