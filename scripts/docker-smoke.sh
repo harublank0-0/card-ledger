@@ -67,14 +67,33 @@ REMINDER_INTERVAL_SECONDS=3600
 EOF
 
 # 1. A missing required variable must fail loudly and name the variable.
+#
+# Compose may report only the first missing variable, in an order that is not stable between
+# runs, so each required variable is checked on its own with all the others set. The list comes
+# from the `${NAME:?...}` entries in compose.yaml, so a new required variable is covered too.
+REQUIRED="$(sed -n 's/.*\${\([A-Z_][A-Z0-9_]*\):?.*/\1/p' compose.yaml | sort -u)"
+[ -n "$REQUIRED" ] || fail "found no required variables in compose.yaml"
+
 EMPTY_ENV="$(mktemp)"
-if message="$(CARD_LEDGER_IMAGE="$IMAGE" docker compose -p "$PROJECT-guard" --env-file "$EMPTY_ENV" config 2>&1)"; then
-	rm -f "$EMPTY_ENV"
+if CARD_LEDGER_IMAGE="$IMAGE" docker compose -p "$PROJECT-guard" --env-file "$EMPTY_ENV" config >/dev/null 2>&1; then
+	rm -f "${EMPTY_ENV:?}"
 	fail "compose accepted an empty environment"
 fi
-rm -f "$EMPTY_ENV"
-echo "$message" | grep -q "POSTGRES_PASSWORD" || fail "missing-variable error does not name POSTGRES_PASSWORD"
-pass "missing required variables are rejected with a readable message"
+rm -f "${EMPTY_ENV:?}"
+
+for missing in $REQUIRED; do
+	GUARD_ENV="$(mktemp)"
+	for present in $REQUIRED; do
+		[ "$present" = "$missing" ] || echo "$present=guard-check-value-0123456789abcdef0123456789" >>"$GUARD_ENV"
+	done
+	if message="$(CARD_LEDGER_IMAGE="$IMAGE" docker compose -p "$PROJECT-guard" --env-file "$GUARD_ENV" config 2>&1)"; then
+		rm -f "${GUARD_ENV:?}"
+		fail "compose accepted an environment without $missing"
+	fi
+	rm -f "${GUARD_ENV:?}"
+	echo "$message" | grep -q "$missing" || fail "missing-variable error does not name $missing (compose said: $message)"
+	pass "a missing $missing is rejected and named"
+done
 
 # An unedited copy of .env.example must not be bootable (its secrets are empty).
 if CARD_LEDGER_IMAGE="$IMAGE" docker compose -p "$PROJECT-guard" --env-file .env.example config >/dev/null 2>&1; then
