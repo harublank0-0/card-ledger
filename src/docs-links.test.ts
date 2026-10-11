@@ -16,6 +16,7 @@ function walk(dir: string): string[] {
 function markdownFiles(): string[] {
 	const top = [
 		"README.md",
+		"CHANGELOG.md",
 		"CONTRIBUTING.md",
 		"SECURITY.md",
 		"CODE_OF_CONDUCT.md",
