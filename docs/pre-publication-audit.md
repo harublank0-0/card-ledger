@@ -161,7 +161,7 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 
 - **No independent human audit.** The review in section 8 was model-assisted; the open items there remain, and unbounded list reads (the statements list returns every statement; only the transaction list is paginated) and the first-user sign-up race (two simultaneous first sign-ups can both pass the count check, acknowledged in `src/lib/auth.ts`) are known and accepted for single-operator installs.
 - The application image is about 1.2 GB.
-- CI ran on GitHub twice on 2026-10-11. `83f42d3`: `verify` and `docker` passed, the informational `npm audit` job failed as designed. `96f0f9c`: `verify` passed, `docker` failed on a smoke-script check that depended on the order in which Compose reports missing variables (fixed in `d41fbde`; `6c9bd25` was green: `verify` and `docker`, with only the informational audit red). The `dco` job (pull requests only) and the backup-drill workflow have not run there yet.
+- CI ran on GitHub twice on 2026-10-11. `83f42d3`: `verify` and `docker` passed, the informational `npm audit` job failed as designed. `96f0f9c`: `verify` passed, `docker` failed on a smoke-script check that depended on the order in which Compose reports missing variables (fixed in `d41fbde`; `6c9bd25` was green: `verify` and `docker`, with only the informational audit red). The `dco` job ran on the test pull request #1 (2 signed-off commits, passed); its failing case (an unsigned commit) has been exercised only by the script's tests, not on GitHub. `90a0692` was the first run with every job green, the audit included, after the dependency overrides. The backup-drill workflow has not run there yet.
 - The issue forms and README have not been rendered on GitHub.
 
 ## Manual steps on GitHub
@@ -170,8 +170,8 @@ These are repository settings and cannot be done from the repository itself.
 
 - [x] Create `haruBlank0-0/card-ledger` and push (done; the repository is public as of 2026-10-11).
 - [x] Enable **private vulnerability reporting** (Settings, Code security): `SECURITY.md` and the issue chooser point at it. On since 2026-10-11 (the API reports `enabled: true`); it was off when the repository first went public.
-- [ ] Protect `main`: require pull requests and the `verify`, `dco` and `docker` checks. Not confirmed (no rulesets exist; classic branch protection is not readable without admin access).
+- [ ] Protect `main`: require pull requests and the checks **Lint, types, tests, build**, **DCO sign-off** and **Docker smoke test** (GitHub lists a required check by its job name; each appears in the picker once it has run on a pull request, which PR #1 did). Not confirmed (no rulesets exist; classic branch protection is not readable without admin access).
 - [x] Create the `bug` and `enhancement` labels the issue forms use (they exist: GitHub's default labels).
 - [ ] Set the repository description and topics (for example `personal-finance`, `self-hosted`, `subscription-tracker`). None set as of 2026-10-11.
-- [ ] After the first run, confirm all three CI jobs and the backup drill are green, and fix whatever the first real run reveals. `verify` and `docker` are green; start the backup drill once with "Run workflow" and open a test pull request to exercise `dco`.
+- [ ] After the first run, confirm all three CI jobs and the backup drill are green, and fix whatever the first real run reveals. `verify`, `docker`, `audit` and (on pull request #1) `dco` are green; start the backup drill once with "Run workflow".
 - [ ] Optionally enable Dependabot alerts for the Prisma advisories above.

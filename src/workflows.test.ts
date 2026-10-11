@@ -88,3 +88,55 @@ describe("GitHub Actions workflows", () => {
 		}
 	});
 });
+
+describe("documents that tell the maintainer which checks to require", () => {
+	// GitHub's required-status-check picker lists a check by its job *name* ("DCO sign-off"),
+	// not by the job id in the workflow (`dco`). The documents must use what the maintainer
+	// will actually see, and the names must be the ones in ci.yml.
+	const ci =
+		workflows.find((workflow) => workflow.name === "ci.yml")?.text ?? "";
+	const names = Object.fromEntries(
+		[...ci.matchAll(/^ {2}(verify|dco|docker):\n {4}name: (.+)$/gm)].map(
+			(match) => [match[1], match[2].trim()],
+		),
+	);
+
+	const requirementLines = (file: string) =>
+		readFileSync(path.join(process.cwd(), file), "utf8")
+			.split("\n")
+			.filter(
+				(line) =>
+					/branch protection|protect `main`/i.test(line) &&
+					/requir/i.test(line),
+			);
+
+	it("reads the three display names from ci.yml", () => {
+		expect(names).toEqual({
+			verify: expect.any(String),
+			dco: expect.any(String),
+			docker: expect.any(String),
+		});
+	});
+
+	it.each([
+		"docs/pre-publication-audit.md",
+		"docs/decisions/0009-ci-minimal-pinned-secret-free.md",
+	])("%s names the checks by their display names, not their job ids", (file) => {
+		const lines = requirementLines(file);
+		expect(lines.length, file).toBeGreaterThan(0);
+		for (const line of lines) {
+			for (const name of Object.values(names)) {
+				expect(line, `${file}: ${name}`).toContain(name);
+			}
+			expect(line, file).not.toMatch(/`(verify|dco|docker)`/);
+		}
+	});
+
+	it("the roadmap's CI row names them too", () => {
+		const lines = requirementLines("docs/roadmap.md");
+		expect(lines.length).toBeGreaterThan(0);
+		for (const line of lines) {
+			for (const name of Object.values(names)) expect(line).toContain(name);
+		}
+	});
+});
