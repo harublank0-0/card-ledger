@@ -169,7 +169,7 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 These are repository settings and cannot be done from the repository itself.
 
 - [x] Create `haruBlank0-0/card-ledger` and push (done; the repository is public as of 2026-10-11).
-- [ ] Enable **private vulnerability reporting** (Settings, Code security): `SECURITY.md` and the issue chooser point at it. **Still off as of 2026-10-11** (the API reports `enabled: false`; read with a read-only account, so confirm in Settings), while the repository is public: reports cannot be filed privately until it is on.
+- [x] Enable **private vulnerability reporting** (Settings, Code security): `SECURITY.md` and the issue chooser point at it. On since 2026-10-11 (the API reports `enabled: true`); it was off when the repository first went public.
 - [ ] Protect `main`: require pull requests and the `verify`, `dco` and `docker` checks. Not confirmed (no rulesets exist; classic branch protection is not readable without admin access).
 - [x] Create the `bug` and `enhancement` labels the issue forms use (they exist: GitHub's default labels).
 - [ ] Set the repository description and topics (for example `personal-finance`, `self-hosted`, `subscription-tracker`). None set as of 2026-10-11.
