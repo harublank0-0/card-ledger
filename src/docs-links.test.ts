@@ -196,3 +196,53 @@ describe("scripts/restore-test.sh", () => {
 		expect(script).toContain("reminders disabled");
 	});
 });
+
+describe("sign-up policy and reminder email in the operator guide", () => {
+	const guide = readFileSync(
+		path.join(root, "docs", "self-hosting.md"),
+		"utf8",
+	);
+	const section = (from: string, to: string) => {
+		const start = guide.indexOf(from);
+		const end = guide.indexOf(to, start + from.length);
+		expect(start, `${from} heading`).toBeGreaterThanOrEqual(0);
+		expect(end, `${to} heading`).toBeGreaterThan(start);
+		return guide.slice(start, end);
+	};
+
+	it("says that open sign-up with SMTP lets anyone have reminders sent to any address", () => {
+		const firstUser = section("## First user", "## Email reminders");
+		expect(firstUser).toContain("SIGNUP_MODE=open");
+		expect(firstUser).toMatch(/not verif/i);
+		expect(firstUser).toContain("SMTP");
+		expect(firstUser).toMatch(/any (email )?address/i);
+		expect(firstUser).toMatch(/`first-user`.*`closed`|`closed`.*`first-user`/s);
+	});
+
+	it("points the reminders section at that warning", () => {
+		const reminders = section(
+			"## Email reminders",
+			"## Reaching it from other devices",
+		);
+		expect(reminders).toContain("SIGNUP_MODE=open");
+		expect(reminders).toContain("#first-user");
+	});
+
+	it("explains the start-up warning in the troubleshooting table", () => {
+		const start = guide.indexOf("## Troubleshooting");
+		expect(start, "Troubleshooting heading").toBeGreaterThanOrEqual(0);
+		const row = guide
+			.slice(start)
+			.split("\n")
+			.find((line) => line.startsWith("|") && /warning/i.test(line));
+		expect(row, "a row about the start-up warning").toBeDefined();
+		expect(row).toContain("SIGNUP_MODE=open");
+		expect(row).toContain("SMTP");
+	});
+
+	it("repeats the warning where the setting is chosen (.env.example)", () => {
+		const example = readFileSync(path.join(root, ".env.example"), "utf8");
+		const comment = example.split("SIGNUP_MODE=")[0]?.split("\n").slice(-4);
+		expect(comment?.join("\n")).toMatch(/not verified|unverified/i);
+	});
+});

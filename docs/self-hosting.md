@@ -62,6 +62,8 @@ With the default `SIGNUP_MODE=first-user`, the first account to register becomes
 
 Deleting the only account re-opens `first-user` registration. Passwords must be at least 12 characters.
 
+**`open` and email reminders do not mix well.** Card Ledger does not verify email addresses. With `SIGNUP_MODE=open` and an SMTP server configured, anyone who can reach the app can register any address, and the reminder job will email that address, with text the registrant chose (subscription and card names). Use `first-user` (the default) or `closed` whenever you configure SMTP. If you do want an open instance with reminders, for a group you trust, set sending limits at your mail provider and keep the instance off the public internet. The server logs a warning at start-up when it sees this combination; it still starts.
+
 ## Email reminders (optional)
 
 Reminders are off until you set an SMTP server in `.env`:
@@ -82,6 +84,8 @@ Apply it with `docker compose up -d`. The job runs when the stack starts and the
 ```sh
 docker compose logs reminders
 ```
+
+Reminders go to each account's own sign-up address, which is not verified: read the warning about `SIGNUP_MODE=open` under [First user](#first-user) before combining the two.
 
 Without `SMTP_HOST` each run logs `reminders disabled` and the rest of the app is unaffected. Deliverability (SPF, DKIM, relay limits) is up to your mail provider.
 
@@ -157,6 +161,7 @@ docker compose down -v     # also DELETES the database volume; there is no undo
 | "Sign-up is disabled on this instance" | An account already exists (`first-user`) or `SIGNUP_MODE=closed`. Sign in, or change the mode. |
 | `port is already allocated` | Another program uses the port. Set `APP_PORT` in `.env`. |
 | No reminder emails | `SMTP_HOST` is not set or the server rejects the login. Read `docker compose logs reminders`. |
+| `app` logs a warning about `SIGNUP_MODE=open` with an SMTP server | Open sign-up and email reminders are both on, and addresses are not verified, so anyone can have reminders sent to any address. Set `SIGNUP_MODE=first-user` or `closed`, or accept it for a trusted group (see [First user](#first-user)). The app still starts. |
 | Changed `POSTGRES_PASSWORD` and now nothing connects | PostgreSQL only reads that variable when the volume is first created. Either change it back, or set the database password to match: `docker compose exec db psql -U cardledger -c "ALTER USER cardledger PASSWORD 'new-value'"`. |
 
 ## Your data
