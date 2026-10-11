@@ -70,7 +70,7 @@ npm run licenses:check        # also runs as part of `npm test`
 - **CC-BY-4.0** (`caniuse-lite`): browser-support data used at build time, not shipped to users.
 - **Python-2.0** (`argparse`): permissive and GPL-compatible.
 - **Exception, `elkjs` (EPL-2.0):** a dependency of the Prisma CLI's Studio. It sits in the image's `node_modules` but is never bundled with or linked into the application: aggregation, not a combined work.
-- **Exception, `seq-queue` (no `license` field):** it ships an MIT `LICENSE` file; it is pulled in by better-auth through `mysql2`, which Card Ledger does not use.
+- *(Former exception, `seq-queue`, no `license` field: removed on 2026-10-11. It was only a dependency of `mysql2` 3.15; the patched `mysql2` 3.24 does not use it, and a test now fails on any exception for a package that is no longer installed.)*
 
 The licence of the project itself is verified byte-for-byte (ignoring trailing whitespace) against `https://www.gnu.org/licenses/agpl-3.0.txt`, and `package.json` declares `AGPL-3.0-only`.
 
@@ -80,14 +80,14 @@ The licence of the project itself is verified byte-for-byte (ignoring trailing w
 npm audit --omit=dev
 ```
 
-Four **high** advisories remain, all in transitive packages of the `prisma` CLI:
+`npm audit --omit=dev` reports **0 vulnerabilities** since 2026-10-11, because of two `overrides` in `package.json` (pinned by `src/dependency-overrides.test.ts`). Without them, four **high** advisories show up, all in transitive packages of the `prisma` CLI:
 
 | Package | Advisory | Why it does not apply here | Fix |
 |---|---|---|---|
-| `deepmerge-ts` < 8 (via `@prisma/config`) | stack exhaustion merging recursive object graphs | merges the CLI's own configuration, never request data | needs Prisma to move to `deepmerge-ts` 8 |
-| `mysql2` < 3.22 (a dependency of `prisma`; also installed as an optional peer of `better-auth` and `db0`) | auth plugin downgrade leaks credentials; compressed-protocol decompression bomb | Card Ledger talks to PostgreSQL only and never opens a MySQL connection | `prisma` pins `mysql2@3.15.3` exactly |
+| `deepmerge-ts` < 8 (via `@prisma/config`) | stack exhaustion merging recursive object graphs | merges the CLI's own configuration, never request data | overridden to `^8.0.2` |
+| `mysql2` < 3.22 (a dependency of `prisma`; also installed as an optional peer of `better-auth` and `db0`) | auth plugin downgrade leaks credentials; compressed-protocol decompression bomb | Card Ledger talks to PostgreSQL only and never opens a MySQL connection | overridden to `^3.24.5` (`prisma` pins `mysql2@3.15.3` exactly) |
 
-`npm audit fix --force` would downgrade Prisma by a major version, which is not a fix. These were deliberately **not** worked around with `overrides` (patched `mysql2` 3.24 and `deepmerge-ts` 8 exist, but forcing them under the Prisma CLI is untested). Re-check when Prisma publishes a release with updated pins; CI keeps reporting them in the non-blocking `audit` job.
+`npm audit fix --force` would downgrade Prisma by a major version, which is not a fix, and Prisma 7.10.0 is the newest stable 7.x (its `latest` tag is an 8.0 release candidate). The overrides were first left out because forcing newer packages under the Prisma CLI was untested; they were then tried in a scratch copy and in this repository: `prisma validate`, `prisma generate`, `prisma migrate status` against a real database, typecheck, the full test suite, the build, and `docker:smoke` (migrations applied by the CLI inside the image) all pass, and the production dependency closure no longer contains `seq-queue`, `denque` or `sqlstring`. Remove the overrides, and `src/dependency-overrides.test.ts`, when Prisma ships a release with updated pins. A moderate-severity pair remains in development dependencies only (`npm audit`, not `--omit=dev`); CI's `audit` job looks at production dependencies at high severity.
 
 ## 6. Starter leftovers
 
