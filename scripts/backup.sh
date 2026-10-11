@@ -1,7 +1,7 @@
 #!/bin/sh
 # Write a consistent backup of the Card Ledger database.
 #
-#   scripts/backup.sh              (or: npm run backup)
+#   scripts/backup.sh              (or: pnpm run backup)
 #
 # Runs pg_dump inside the `db` container, so no PostgreSQL client is needed on the host, and
 # works while the app is running. Output is a custom-format dump:

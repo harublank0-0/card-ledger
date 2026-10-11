@@ -7,7 +7,7 @@ import { EXCEPTIONS } from "../scripts/license-policy";
 const root = process.cwd();
 const tsx = path.join(root, "node_modules", ".bin", "tsx");
 
-describe("npm run licenses:check (the real installed production tree)", () => {
+describe("pnpm run licenses:check (the real installed production tree)", () => {
 	const result = spawnSync(tsx, ["scripts/check-licenses.ts"], {
 		cwd: root,
 		encoding: "utf8",

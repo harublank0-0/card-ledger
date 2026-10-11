@@ -98,7 +98,7 @@ describe("scaffold leftovers", () => {
 	});
 
 	it("keeps src/lib/utils.ts, which shadcn's utils alias points at", () => {
-		// Not dead code: `npx shadcn add` generates components that import `cn` from here
+		// Not dead code: `pnpm dlx shadcn add` generates components that import `cn` from here
 		// (components.json: aliases.utils). Removing it would break the next added component.
 		const config = JSON.parse(
 			readFileSync(path.join(process.cwd(), "components.json"), "utf8"),
@@ -109,10 +109,12 @@ describe("scaffold leftovers", () => {
 		);
 	});
 
-	it("keeps no pnpm advice that contradicts the project's package manager", () => {
+	it("keeps no npm advice that contradicts the project's package manager", () => {
 		const rules = path.join(process.cwd(), ".cursorrules");
 		if (existsSync(rules)) {
-			expect(readFileSync(rules, "utf8")).not.toMatch(/pnpm/);
+			const text = readFileSync(rules, "utf8");
+			expect(text).toMatch(/pnpm dlx/);
+			expect(text).not.toMatch(/\bnpx\b|\bnpm (i|install|run)\b/);
 		}
 	});
 });

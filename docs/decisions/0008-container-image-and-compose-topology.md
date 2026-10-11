@@ -25,4 +25,4 @@ Self-hosting must work from a fresh clone with `docker compose up`, without publ
 ## Consequences
 - The image is large (about 1.2 GB) because it carries full production `node_modules` for the reminder job and Prisma CLI. Bundling the job into a single file and trimming dependencies is a known follow-up.
 - Cookies are `Secure` only when `BETTER_AUTH_URL` is `https://` (verified in the production container); behind an HTTPS proxy `BETTER_AUTH_URL` must equal the public URL exactly, or sign-in is rejected with `INVALID_ORIGIN`.
-- `scripts/docker-smoke.sh` (`npm run docker:smoke`) checks these properties and is the basis for the CI smoke test in O-03.
+- `scripts/docker-smoke.sh` (`pnpm run docker:smoke`) checks these properties and is the basis for the CI smoke test in O-03.

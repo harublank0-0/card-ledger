@@ -1,4 +1,4 @@
-# Development services only (database and mail catcher, for `npm run dev`).
+# Development services only (database and mail catcher, for `pnpm run dev`).
 # Self-hosting uses compose.yaml.
 services:
   db:

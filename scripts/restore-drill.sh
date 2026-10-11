@@ -2,7 +2,7 @@
 # Restore drill: proves that a backup taken by scripts/backup.sh can rebuild a working
 # instance on an empty database.
 #
-#   npm run backup:drill
+#   pnpm run backup:drill
 #
 # In a throwaway compose project it starts the stack, loads the synthetic demo data, backs
 # it up, destroys the database volume, restores onto the fresh empty database and checks

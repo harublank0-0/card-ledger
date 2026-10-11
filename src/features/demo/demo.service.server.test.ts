@@ -171,7 +171,7 @@ describe("applyDemoData", () => {
 
 describe("the seed script", () => {
 	const run = (env: Record<string, string>) =>
-		spawnSync("npx", ["tsx", "prisma/seed.ts"], {
+		spawnSync("pnpm", ["exec", "tsx", "prisma/seed.ts"], {
 			env: { ...process.env, ...env },
 			encoding: "utf8",
 			timeout: 90_000,

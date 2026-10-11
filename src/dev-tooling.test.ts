@@ -31,9 +31,9 @@ describe("development tooling", () => {
 		]) {
 			expect(all[name], name).toBeUndefined();
 		}
-		const lock = read("package-lock.json");
-		expect(lock).not.toContain("node_modules/@tanstack/devtools-vite");
-		expect(lock).not.toContain("node_modules/@tanstack/devtools-event-bus");
+		const lock = read("pnpm-lock.yaml");
+		expect(lock).not.toContain("@tanstack/devtools-vite@");
+		expect(lock).not.toContain("@tanstack/devtools-event-bus@");
 	});
 
 	it("keeps every devtools package out of the production dependencies", () => {

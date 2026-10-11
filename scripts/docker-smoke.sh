@@ -1,7 +1,7 @@
 #!/bin/sh
 # Smoke test for the self-hosting stack (Dockerfile + compose.yaml).
 #
-#   npm run docker:smoke
+#   pnpm run docker:smoke
 #
 # Builds the image, starts the stack under a throwaway project name with generated
 # secrets, and checks the properties an operator relies on: it comes up healthy, the

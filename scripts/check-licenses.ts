@@ -2,10 +2,10 @@
  * Check that every installed production dependency has a licence compatible with
  * AGPL-3.0-only, using the allowlist in scripts/license-policy.ts.
  *
- *   npm run licenses:check
+ *   pnpm run licenses:check
  *
  * Exits 1 if any package has a forbidden or unreviewed licence. It reads `node_modules`, so
- * run `npm ci` first. It makes no network calls.
+ * run `pnpm install --frozen-lockfile` first. It makes no network calls.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -20,13 +20,17 @@ import {
 function productionPackagePaths(): string[] {
 	let stdout = "";
 	try {
-		stdout = execFileSync("npm", ["ls", "--omit=dev", "--all", "--parseable"], {
-			encoding: "utf8",
-			maxBuffer: 64 * 1024 * 1024,
-			stdio: ["ignore", "pipe", "ignore"],
-		});
+		stdout = execFileSync(
+			"pnpm",
+			["ls", "--prod", "--depth", "Infinity", "--parseable"],
+			{
+				encoding: "utf8",
+				maxBuffer: 64 * 1024 * 1024,
+				stdio: ["ignore", "pipe", "ignore"],
+			},
+		);
 	} catch (error) {
-		// `npm ls` exits non-zero for things like optional platform packages that are not
+		// `pnpm ls` exits non-zero for things like optional platform packages that are not
 		// installed; what it printed is still the tree we want.
 		stdout = (error as { stdout?: string }).stdout ?? "";
 	}
@@ -84,7 +88,7 @@ function main() {
 
 	if (seen.size === 0) {
 		console.error(
-			"No installed production dependencies found. Run `npm ci` first.",
+			"No installed production dependencies found. Run `pnpm install --frozen-lockfile` first.",
 		);
 		process.exit(1);
 	}

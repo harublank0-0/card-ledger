@@ -5,8 +5,8 @@
 ## How it was tested
 
 - [ ] Tests added or updated. Logic for money, dates, recurrence or reminders has unit tests; anything touching user data has unauthenticated and cross-user tests.
-- [ ] `npm run check`, `npm run typecheck`, `npm test` and `npm run build` pass locally.
-- [ ] If this touches the Dockerfile, compose files or backup scripts: `npm run docker:smoke` / `npm run backup:drill` pass.
+- [ ] `pnpm run check`, `pnpm run typecheck`, `pnpm test` and `pnpm run build` pass locally.
+- [ ] If this touches the Dockerfile, compose files or backup scripts: `pnpm run docker:smoke` / `pnpm run backup:drill` pass.
 
 ## Checklist
 
