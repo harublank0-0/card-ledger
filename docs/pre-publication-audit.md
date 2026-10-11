@@ -161,7 +161,7 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 
 - **No independent human audit.** The review in section 8 was model-assisted; the open items there remain, and unbounded list reads (the statements list returns every statement; only the transaction list is paginated) and the first-user sign-up race (two simultaneous first sign-ups can both pass the count check, acknowledged in `src/lib/auth.ts`) are known and accepted for single-operator installs.
 - The application image is about 1.2 GB.
-- CI ran on GitHub once (2026-10-11, `83f42d3`): `verify` and `docker` passed and the informational `npm audit` job failed as designed. The `dco` job (pull requests only) and the backup-drill workflow have not run there yet.
+- CI ran on GitHub twice on 2026-10-11. `83f42d3`: `verify` and `docker` passed, the informational `npm audit` job failed as designed. `96f0f9c`: `verify` passed, `docker` failed on a smoke-script check that depended on the order in which Compose reports missing variables (fixed in `d41fbde`, not yet seen green on GitHub). The `dco` job (pull requests only) and the backup-drill workflow have not run there yet.
 - The issue forms and README have not been rendered on GitHub.
 
 ## Manual steps on GitHub
