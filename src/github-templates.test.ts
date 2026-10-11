@@ -61,7 +61,7 @@ describe("bug report form", () => {
 			"Version or commit",
 			"docker compose logs",
 			"Docker Compose",
-			"npm run dev",
+			"pnpm run dev",
 		]) {
 			expect(form, needle).toContain(needle);
 		}
@@ -85,9 +85,9 @@ describe("pull request template", () => {
 		for (const needle of [
 			"git commit -s",
 			"synthetic",
-			"npm run check",
-			"npm run typecheck",
-			"npm test",
+			"pnpm run check",
+			"pnpm run typecheck",
+			"pnpm test",
 			"cross-user",
 			"docs/roadmap.md",
 			"AGPL-3.0-only",

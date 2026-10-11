@@ -19,10 +19,10 @@ If you cannot use the form, open a public issue titled "Security contact request
 Please include:
 
 - what is affected (feature, endpoint or script) and the commit or version you tested;
-- how you run it (the compose stack or `npm run dev`) and anything unusual about the setup;
+- how you run it (the compose stack or `pnpm run dev`) and anything unusual about the setup;
 - steps to reproduce, the impact you expect, and a suggested fix if you have one.
 
-Please **do not include real financial data, backups, `.env` files, session tokens or other people's information.** Reproduce with the synthetic demo account (`npm run db:seed`) or data you created yourself.
+Please **do not include real financial data, backups, `.env` files, session tokens or other people's information.** Reproduce with the synthetic demo account (`pnpm run db:seed`) or data you created yourself.
 
 ## What to expect
 

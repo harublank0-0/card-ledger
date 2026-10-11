@@ -215,7 +215,7 @@ Per-user composite indexes listed above cover: transaction list/filter by date, 
 
 ## 7. Migrations and data lifecycle
 
-- Migrations are generated with `npm run db:migrate` (dev) and applied with `prisma migrate deploy` in production (container start).
+- Migrations are generated with `pnpm run db:migrate` (dev) and applied with `prisma migrate deploy` in production (container start).
 - Never edit an applied migration. Destructive changes need a documented upgrade note in release notes.
 - Backups: `pg_dump` runbook in Phase 2; restore drill documented and tested.
 - Account deletion cascades through `User`; export is available before deletion.

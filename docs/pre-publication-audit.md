@@ -52,14 +52,14 @@ The audit found that `.env.production` and stray `*.dump` files were **not** ign
 | No bootable default secret | `src/env-example.test.ts`; the smoke test rejects an unedited `.env.example` |
 | The health endpoint reveals only pass/fail | `src/features/health/health.handler.server.test.ts` |
 | Logs carry no amounts, notes or error messages | `src/lib/logger.server.test.ts`; startup check never logs a value (`src/lib/startup-env.server.test.ts`) |
-| No telemetry | no outbound URLs in application source; the Prisma CLI's usage ping is disabled in every image stage, in CI and in the npm scripts (`src/telemetry.test.ts`; [ADR 0008](./decisions/0008-container-image-and-compose-topology.md)); the code review found it had been left on in the build stage and CI, which is now fixed; the only runtime connection is an operator-configured SMTP server |
+| No telemetry | no outbound URLs in application source; the Prisma CLI's usage ping is disabled in every image stage, in CI and in the package.json scripts (`src/telemetry.test.ts`; [ADR 0008](./decisions/0008-container-image-and-compose-topology.md)); the code review found it had been left on in the build stage and CI, which is now fixed; the only runtime connection is an operator-configured SMTP server |
 | Session cookies are `Secure` when the public URL is `https://` | verified against the production container (recorded in the roadmap, S-01) |
 | Auth secret and server-only code are absent from the client bundle | CI `verify` job step; checked locally on every build |
 
 ## 4. Dependency licences
 
 ```sh
-npm run licenses:check        # also runs as part of `npm test`
+pnpm run licenses:check        # also runs as part of `pnpm test`
 ```
 
 527 packages in the installed production tree: MIT 441, ISC 35, Apache-2.0 29, BSD-3-Clause 6, MPL-2.0 4, Unlicense 3, BSD-2-Clause 2, and one each of MIT-and-ISC, Python-2.0, CC-BY-4.0, MIT-0 and 0BSD, plus the two exceptions below. There is no GPL-2.0-only, SSPL, non-commercial or proprietary licence.
@@ -77,21 +77,21 @@ The licence of the project itself is verified byte-for-byte (ignoring trailing w
 ## 5. Dependency advisories (informational)
 
 ```sh
-npm audit --omit=dev
+pnpm audit --prod
 ```
 
-`npm audit --omit=dev` reports **0 vulnerabilities** since 2026-10-11, because of two `overrides` in `package.json` (pinned by `src/dependency-overrides.test.ts`). Without them, four **high** advisories show up, all in transitive packages of the `prisma` CLI:
+`pnpm audit --prod` reports **0 vulnerabilities** since 2026-10-11, because of two `overrides` in `pnpm-workspace.yaml` (they were in `package.json` while the project used npm; pinned by `src/dependency-overrides.test.ts`). Without them, four **high** advisories show up, all in transitive packages of the `prisma` CLI:
 
 | Package | Advisory | Why it does not apply here | Fix |
 |---|---|---|---|
 | `deepmerge-ts` < 8 (via `@prisma/config`) | stack exhaustion merging recursive object graphs | merges the CLI's own configuration, never request data | overridden to `^8.0.2` |
 | `mysql2` < 3.22 (a dependency of `prisma`; also installed as an optional peer of `better-auth` and `db0`) | auth plugin downgrade leaks credentials; compressed-protocol decompression bomb | Card Ledger talks to PostgreSQL only and never opens a MySQL connection | overridden to `^3.24.5` (`prisma` pins `mysql2@3.15.3` exactly) |
 
-`npm audit fix --force` would downgrade Prisma by a major version, which is not a fix, and Prisma 7.10.0 is the newest stable 7.x (its `latest` tag is an 8.0 release candidate). The overrides were first left out because forcing newer packages under the Prisma CLI was untested; they were then tried in a scratch copy and in this repository: `prisma validate`, `prisma generate`, `prisma migrate status` against a real database, typecheck, the full test suite, the build, and `docker:smoke` (migrations applied by the CLI inside the image) all pass, and the production dependency closure no longer contains `seq-queue`, `denque` or `sqlstring`. Remove the overrides, and `src/dependency-overrides.test.ts`, when Prisma ships a release with updated pins. A moderate-severity pair remains in development dependencies only (`npm audit`, not `--omit=dev`); CI's `audit` job looks at production dependencies at high severity.
+The `npm audit fix --force` that npm suggested at the time would downgrade Prisma by a major version, which is not a fix, and Prisma 7.10.0 is the newest stable 7.x (its `latest` tag is an 8.0 release candidate). The overrides were first left out because forcing newer packages under the Prisma CLI was untested; they were then tried in a scratch copy and in this repository: `prisma validate`, `prisma generate`, `prisma migrate status` against a real database, typecheck, the full test suite, the build, and `docker:smoke` (migrations applied by the CLI inside the image) all pass, and the production dependency closure no longer contains `seq-queue`, `denque` or `sqlstring`. Remove the overrides, and `src/dependency-overrides.test.ts`, when Prisma ships a release with updated pins. A moderate-severity pair remains in development dependencies only (`npm audit`, not `--omit=dev`); CI's `audit` job looks at production dependencies at high severity.
 
 ## 6. Starter leftovers
 
-Removed or corrected: the starter README, the `post-cta-init` script (it ran `npx -y create-db@latest`, an external call), the unused `public/prisma.svg`, and pnpm advice in `.cursorrules`. Left in place on purpose: `.cta.json` (scaffold metadata, harmless). The TanStack devtools Vite plugin was **removed** after the code review found that, during `npm run dev`, it listens on `localhost:4206` for unauthenticated cross-origin requests that end in `exec("npm install -D <payload>")`. The router and query panels are now loaded only in development, by dynamic import, from `devDependencies` (see `src/integrations/devtools.tsx`); none of it is in the production bundle or image.
+Removed or corrected: the starter README, the `post-cta-init` script (it ran `npx -y create-db@latest`, an external call), the unused `public/prisma.svg`, and the pnpm advice in `.cursorrules` (correct again since the project moved to pnpm on 2026-10-11). Left in place on purpose: `.cta.json` (scaffold metadata, harmless). The TanStack devtools Vite plugin was **removed** after the code review found that, during `pnpm run dev`, it listens on `localhost:4206` for unauthenticated cross-origin requests that end in `exec("npm install -D <payload>")`. The router and query panels are now loaded only in development, by dynamic import, from `devDependencies` (see `src/integrations/devtools.tsx`); none of it is in the production bundle or image.
 
 ## 7. History and authorship
 
@@ -108,7 +108,7 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 |---|---|
 | The delete-account password guard could be bypassed with `Content-Type: x/application/json` (reproduced: the account was deleted) | `91981a3` |
 | A decimal comma was silently deleted, so `150,00` became 15,000.00 (reproduced) | `1decc5c` |
-| The devtools Vite plugin ran an unauthenticated localhost endpoint that ended in a shell command during `npm run dev` | `5b52fa6` |
+| The devtools Vite plugin ran an unauthenticated localhost endpoint that ended in a shell command during `pnpm run dev` | `5b52fa6` |
 | The manual restore-test procedure could delete the live database volume or email real users from a restored copy | `99b4cd9` |
 | An invalid `DEFAULT_TIMEZONE` aborted the reminder run for every later user and broke pages | `8dbaacc` |
 | Reactivating a cancelled subscription kept the cancel end date, so it expired and dropped out of reminders | `cd0b497` |
@@ -154,7 +154,7 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 
 **Looked at and left as is:**
 
-- `src/lib/utils.ts` is not dead code: `components.json` points shadcn's `utils` alias at it, so `npx shadcn add` generates components that import `cn` from there. It is kept, with a comment and a test.
+- `src/lib/utils.ts` is not dead code: `components.json` points shadcn's `utils` alias at it, so `pnpm dlx shadcn add` generates components that import `cn` from there. It is kept, with a comment and a test.
 - The seven components in `src/components/ui` import `cn` from the `cn` npm package rather than `src/lib/utils.ts`. Both claim to merge Tailwind classes, but with different engines, so swapping could change rendered class output for the sake of one fewer dependency. Not changed.
 
 ## Known gaps

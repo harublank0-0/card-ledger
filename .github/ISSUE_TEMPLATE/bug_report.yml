@@ -8,7 +8,7 @@ body:
       value: |
         Thanks for taking the time to report this.
 
-        **Never paste real financial data.** That includes card numbers, account or statement details, amounts from your real ledger, database backups, `.env` files, session tokens and exports. Describe the problem with made-up values, or reproduce it with the synthetic demo account (`npm run db:seed`).
+        **Never paste real financial data.** That includes card numbers, account or statement details, amounts from your real ledger, database backups, `.env` files, session tokens and exports. Describe the problem with made-up values, or reproduce it with the synthetic demo account (`pnpm run db:seed`).
 
         **Security vulnerabilities do not belong here.** Report them privately: see [SECURITY.md](https://github.com/haruBlank0-0/card-ledger/blob/main/SECURITY.md).
   - type: textarea
@@ -35,7 +35,7 @@ body:
       label: How are you running Card Ledger?
       options:
         - Docker Compose (docs/self-hosting.md)
-        - Local development (npm run dev)
+        - Local development (pnpm run dev)
         - Something else
     validations:
       required: true

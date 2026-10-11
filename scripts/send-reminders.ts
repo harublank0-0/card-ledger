@@ -1,7 +1,7 @@
 /**
  * Cron entry point: sends due reminder emails and exits.
  *
- *   npm run reminders:send            (development, reads .env.local)
+ *   pnpm run reminders:send            (development, reads .env.local)
  *   node/tsx scripts/send-reminders.ts (production, environment provided by the container)
  *
  * Safe to run as often as you like (for example hourly): each reminder is claimed in the

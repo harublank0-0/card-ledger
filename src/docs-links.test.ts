@@ -83,7 +83,6 @@ describe("README", () => {
 	it("is no longer the starter template", () => {
 		for (const phrase of [
 			"Welcome to your new TanStack Start app",
-			"pnpm dlx",
 			"swapi.dev",
 			"src/routes/demo",
 			"dist/server/index.mjs",

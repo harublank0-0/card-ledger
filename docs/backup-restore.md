@@ -2,14 +2,14 @@
 
 A backup is a PostgreSQL dump of the whole database: every user's cards, subscriptions, transactions, statements and the sign-in records. **Treat a backup like the live database.** The scripts write backups readable by you only, `backups/` is git-ignored, and copies that leave the machine should be encrypted.
 
-The backup and restore scripts and the drill below are tested by the project (`npm run backup:drill`). The scheduling and encryption snippets are standard examples that are not run by any test here.
+The backup and restore scripts and the drill below are tested by the project (`pnpm run backup:drill`). The scheduling and encryption snippets are standard examples that are not run by any test here.
 
 ## Back up
 
 With the stack running, from the repository root:
 
 ```sh
-sh scripts/backup.sh        # or: npm run backup
+sh scripts/backup.sh        # or: pnpm run backup
 ```
 
 This runs `pg_dump` inside the `db` container (no PostgreSQL client needed on the host) and works while the app is running. It writes `backups/card-ledger-<UTC timestamp>-<NN>.dump`, reads the whole archive back to catch a truncated or unreadable dump, and keeps the newest 14 files. That read-back is not a checksum: it cannot prove a silent bit flip did not happen, so verify off-host copies with a checksum of your own (for example `shasum -a 256`) and keep the restore drill in your routine.
@@ -100,7 +100,7 @@ This stops the app and reminder job, saves what is there as a new backup (and ab
 
 A backup you have never restored is a hope, not a backup.
 
-**Automated, synthetic data.** `npm run backup:drill` builds a throwaway stack, loads the demo data, backs it up, destroys the database volume, restores onto the empty database, and checks that every table has the same number of rows, the app is healthy and the demo user can sign in with the original password. It also checks retention, private file permissions, that a failed backup leaves nothing behind, and that restore refuses a non-empty database without `--force`. It never touches your running instance. Run it after changing anything under `scripts/` or upgrading Docker, and as the first thing to check if a restore ever surprises you.
+**Automated, synthetic data.** `pnpm run backup:drill` builds a throwaway stack, loads the demo data, backs it up, destroys the database volume, restores onto the empty database, and checks that every table has the same number of rows, the app is healthy and the demo user can sign in with the original password. It also checks retention, private file permissions, that a failed backup leaves nothing behind, and that restore refuses a non-empty database without `--force`. It never touches your running instance. Run it after changing anything under `scripts/` or upgrading Docker, and as the first thing to check if a restore ever surprises you.
 
 **Your real backup.** To prove your own latest backup restores into a working copy, without touching the running instance:
 

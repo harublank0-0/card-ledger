@@ -6,7 +6,7 @@ A self-hostable personal finance and subscription tracker. Keep your credit card
 
 ![The dashboard: spending this month per currency, active subscriptions, amounts owed on cards, upcoming payments and spending by category](docs/screenshots/dashboard.png)
 
-*Screenshots show the synthetic demo account created by `npm run db:seed`. Nothing in them is real.*
+*Screenshots show the synthetic demo account created by `pnpm run db:seed`. Nothing in them is real.*
 
 ## Principles
 
@@ -57,15 +57,17 @@ Open <http://localhost:3000>. The first account you create becomes the owner and
 
 ## Development
 
+Needs Node.js 24 (`nvm use` reads `.nvmrc`), pnpm (`corepack enable` provides the pinned version) and Docker.
+
 ```bash
-npm ci
+pnpm install --frozen-lockfile
 docker compose -f compose.dev.yaml up -d    # PostgreSQL and a mail catcher
 # create .env.local (see CONTRIBUTING.md), then:
-npm run db:generate && npm run db:migrate && npm run db:seed
-npm run dev                                  # http://localhost:3100
+pnpm run db:generate && pnpm run db:migrate && pnpm run db:seed
+pnpm run dev                                  # http://localhost:3100
 ```
 
-Quality gates: `npm run check`, `npm run typecheck`, `npm test`, `npm run build`. Full setup and workflow: [CONTRIBUTING.md](./CONTRIBUTING.md).
+Quality gates: `pnpm run check`, `pnpm run typecheck`, `pnpm test`, `pnpm run build`. Full setup and workflow: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 Built with TanStack Start (React 19), PostgreSQL through Prisma, Better Auth, Tailwind CSS with shadcn/ui, Vitest and Biome.
 

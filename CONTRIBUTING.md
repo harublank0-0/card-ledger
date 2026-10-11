@@ -20,12 +20,14 @@ If you run a modified version of Card Ledger as a network service (including a h
 
 ## Set up a development environment
 
-You need Node.js 24, npm and Docker.
+You need Node.js 24 (the line in `.nvmrc`), pnpm (the version pinned in `package.json`, which Corepack provides) and Docker. `.npmrc` makes an install refuse a Node.js or pnpm outside the range in `engines`. Use pnpm only: an `npm install` ignores the security overrides in `pnpm-workspace.yaml` and leaves a `node_modules` that fails the licence check.
 
 ```bash
 git clone https://github.com/haruBlank0-0/card-ledger.git
 cd card-ledger
-npm ci
+nvm use                                    # Node.js 24 from .nvmrc (fnm, asdf and others read it too)
+corepack enable                            # provides the pnpm version pinned in package.json
+pnpm install --frozen-lockfile
 docker compose -f compose.dev.yaml up -d   # PostgreSQL on 127.0.0.1:5434 and a mail catcher (Mailpit)
 ```
 
@@ -38,20 +40,20 @@ BETTER_AUTH_SECRET=<at least 32 random characters, for example: openssl rand -ba
 # Optional: send reminder emails to the local Mailpit inbox (http://localhost:8025)
 SMTP_HOST=127.0.0.1
 SMTP_PORT=1025
-# Stops the Prisma CLI's usage ping when you run `npx prisma ...` directly (the npm scripts set it)
+# Stops the Prisma CLI's usage ping when you run `pnpm exec prisma ...` directly (the package scripts set it)
 CHECKPOINT_DISABLE=1
 ```
 
 Then:
 
 ```bash
-npm run db:generate   # generates the Prisma client into src/generated (git-ignored)
-npm run db:migrate    # applies migrations to your development database
-npm run db:seed       # optional: synthetic demo account (prints a one-time password)
-npm run dev           # http://localhost:3100
+pnpm run db:generate   # generates the Prisma client into src/generated (git-ignored)
+pnpm run db:migrate    # applies migrations to your development database
+pnpm run db:seed       # optional: synthetic demo account (prints a one-time password)
+pnpm run dev           # http://localhost:3100
 ```
 
-After changing `prisma/schema.prisma`, run `npm run db:migrate` and restart `npm run dev`. The development server shows the TanStack Router and Query panels (bottom corners). Do not add `@tanstack/devtools-vite` back: its dev event bus accepts unauthenticated requests from any web page and can run shell commands. The test suite creates and migrates its own `<database>_test` database on the same server, so it never touches your development data.
+After changing `prisma/schema.prisma`, run `pnpm run db:migrate` and restart `pnpm run dev`. The development server shows the TanStack Router and Query panels (bottom corners). Do not add `@tanstack/devtools-vite` back: its dev event bus accepts unauthenticated requests from any web page and can run shell commands. The test suite creates and migrates its own `<database>_test` database on the same server, so it never touches your development data.
 
 The stack, directory layout and conventions are described in [AGENTS.md](./AGENTS.md) and [docs/architecture.md](./docs/architecture.md); the data model in [docs/database.md](./docs/database.md).
 
@@ -69,18 +71,18 @@ Write the test first and watch it fail for the right reason.
 - Money, calendar-date, recurrence and reminder logic needs unit tests, including edge cases (month ends, leap years, time zones, rounding).
 - Anything that reads or writes user data needs an **unauthenticated** test and a **cross-user** test (user B cannot see or change user A's record).
 - Before you call something done, break it on purpose (remove a `userId` scope, a guard or a money rule) and check that a test fails. Restore it afterwards.
-- Run `npm run docker:smoke` when you touch `Dockerfile`, `compose.yaml` or anything that runs in the container, and `npm run backup:drill` when you touch the backup or restore scripts. Both need Docker.
+- Run `pnpm run docker:smoke` when you touch `Dockerfile`, `compose.yaml` or anything that runs in the container, and `pnpm run backup:drill` when you touch the backup or restore scripts. Both need Docker.
 
 ### Before opening a pull request
 
 ```bash
-npm run check       # Biome lint + format
-npm run typecheck
-npm test            # needs the development database to be running
-npm run build
+pnpm run check       # Biome lint + format
+pnpm run typecheck
+pnpm test            # needs the development database to be running
+pnpm run build
 ```
 
-Pull requests run the same checks in [CI](./.github/workflows/ci.yml), plus the DCO check, the Docker smoke test and an informational `npm audit`. CI needs no secrets, so it runs the same for forks. You can run the DCO check yourself: `sh scripts/check-dco.sh origin/main..HEAD`.
+Pull requests run the same checks in [CI](./.github/workflows/ci.yml), plus the DCO check, the Docker smoke test and an informational `pnpm audit`. CI needs no secrets, so it runs the same for forks. You can run the DCO check yourself: `sh scripts/check-dco.sh origin/main..HEAD`.
 
 ### Commit messages
 
@@ -100,7 +102,7 @@ git commit -s -m "feat: add something"
 
 Do not add a dependency without saying why in the pull request. A new dependency must:
 
-- have a licence compatible with `AGPL-3.0-only` (permissive licences such as MIT, ISC, BSD and Apache-2.0 are fine; GPL-2.0-only, SSPL and non-commercial licences are not). `npm run licenses:check` enforces an allowlist and the test suite runs it, so an unreviewed licence fails the build;
+- have a licence compatible with `AGPL-3.0-only` (permissive licences such as MIT, ISC, BSD and Apache-2.0 are fine; GPL-2.0-only, SSPL and non-commercial licences are not). `pnpm run licenses:check` enforces an allowlist and the test suite runs it, so an unreviewed licence fails the build;
 - not send telemetry or call external services;
 - be maintained and proportionate to the problem it solves (we ship it to every self-hoster).
 

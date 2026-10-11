@@ -1,7 +1,7 @@
 /**
  * Fills the database with SYNTHETIC demo data for development, screenshots and evaluation.
  *
- *   npm run db:seed
+ *   pnpm run db:seed
  *
  * It (re)creates one account, demo@card-ledger.test, with invented cards, subscriptions,
  * transactions and statements, and prints a freshly generated password once. Running it
