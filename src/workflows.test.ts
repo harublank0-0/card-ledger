@@ -40,6 +40,21 @@ describe("GitHub Actions workflows", () => {
 		}
 	});
 
+	it("pin the runner image instead of following ubuntu-latest", () => {
+		// `ubuntu-latest` moves to a new OS release on GitHub's schedule (24.04 to 26 in
+		// October 2026), changing the pipeline without a commit. The label is the image the
+		// workflows were last seen passing on; moving it is a deliberate change.
+		for (const { name, text } of workflows) {
+			const labels = [...text.matchAll(/^\s*runs-on:\s*(\S+)/gm)].map(
+				(match) => match[1],
+			);
+			expect(labels.length, name).toBeGreaterThan(0);
+			for (const label of labels) {
+				expect(label, `${name}: ${label}`).toMatch(/^ubuntu-\d{2}\.\d{2}$/);
+			}
+		}
+	});
+
 	it("grant read-only repository access", () => {
 		for (const { name, text } of workflows) {
 			expect(text, name).toMatch(/^permissions:\s*\n\s+contents:\s*read\s*$/m);
