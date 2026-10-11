@@ -288,4 +288,4 @@ Candidates, to be prioritized from real feedback: CSV import (bank exports), rec
 
 ## Phase 5 — Managed cloud (not planned in detail)
 
-Only constraints are recorded now: same codebase and image; `SIGNUP_MODE=open`; managed SMTP, backups, and updates handled outside the application; revisit data-isolation hardening (row-level security) and operational monitoring before multi-user hosting at scale; **no billing code until demand is validated**.
+Only constraints are recorded now: same codebase and image; `SIGNUP_MODE=open`; **email verification before reminders are sent** (today addresses are not verified, so open sign-up with SMTP can email a stranger: only documented and warned about, see [the audit](./pre-publication-audit.md) section 8); managed SMTP, backups, and updates handled outside the application; revisit data-isolation hardening (row-level security) and operational monitoring before multi-user hosting at scale; **no billing code until demand is validated**.

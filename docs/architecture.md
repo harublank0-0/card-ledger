@@ -109,7 +109,7 @@ Pure logic (recurrence, reminder planning, statement balances, dashboard aggrega
 - Every domain table has `userId` with an index; unique constraints that should be per-user include `userId`.
 - Each feature must ship a **cross-user access test** (user B cannot read/update/delete user A's record; unauthenticated call is rejected).
 - Postgres row-level security is considered and deferred; see [ADR 0003](./decisions/0003-user-scoped-data-isolation.md).
-- Sign-up policy is configuration: `SIGNUP_MODE=first-user|open|closed`. Self-host default is `first-user` (the first account is created, then registration closes).
+- Sign-up policy is configuration: `SIGNUP_MODE=first-user|open|closed`. Self-host default is `first-user` (the first account is created, then registration closes). Email addresses are not verified, so `open` combined with SMTP lets anyone have reminders sent to any address; this is documented and logged at start-up, not prevented (a verification flow is deferred, see the roadmap).
 
 ## 6. Configuration and deployment model
 
@@ -128,7 +128,7 @@ Server-only variables never use the `VITE_` prefix. Env is read inside handlers/
 
 Self-host target (Phase 2): multi-stage Dockerfile (non-root), `compose.yaml` with app + PostgreSQL on a private network (Postgres port **not** published), migrations applied on start, a cron-driven reminder job, documented HTTPS (reverse proxy) and Tailscale private access, and a backup/restore runbook.
 
-A future managed cloud would run the **same image** with `SIGNUP_MODE=open`, managed SMTP, and operator-run backups. No cloud code is planned now.
+A future managed cloud would run the **same image** with `SIGNUP_MODE=open`, managed SMTP, and operator-run backups, and would need email verification first (see §5). No cloud code is planned now.
 
 ## 7. Domain overview
 

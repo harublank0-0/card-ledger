@@ -149,7 +149,7 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 
 **Open (reviewed, not fixed):**
 
-- Reminders are sent to unverified email addresses when `SIGNUP_MODE=open` and SMTP is configured, so an instance could be used to send reminder-shaped email to a stranger. Single-user (`first-user`) instances are not affected. Needs an email-verification flow (a product decision).
+- Reminders are sent to unverified email addresses when `SIGNUP_MODE=open` and SMTP is configured, so an instance could be used to send reminder-shaped email to a stranger (the subject and body carry subscription and card names the registrant chose). Single-user (`first-user`) and `closed` instances are not affected. **Mitigated, not fixed:** the self-hosting guide says so under "First user", `.env.example` repeats it beside `SIGNUP_MODE`, and the app logs a warning at start-up for this combination (it still starts; pinned by tests, 8 mutations caught). The fix is an email-verification flow, a product decision deferred until a multi-user or managed-cloud use needs it ([roadmap](./roadmap.md), Phase 5).
 - The application does not cap request body size itself; this is documented as a proxy setting, not enforced.
 
 **Looked at and left as is:**
