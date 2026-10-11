@@ -22,4 +22,4 @@ CI protects a project that handles financial data and is built by outside contri
 
 ## Consequences
 - Maintainers update pinned SHAs by hand (or, later, with a dependency bot).
-- Branch protection should require the checks **Lint, types, tests, build**, **DCO sign-off** and **Docker smoke test** once the repository is on GitHub; GitHub lists a required check by its job name, not by the job id used above. That setting is outside the repository.
+- Branch protection should require the checks **Lint, types, tests, build**, **DCO sign-off** and **Docker smoke test** once the repository is on GitHub; GitHub lists a required check by its job name, not by the job id used above. That setting is outside the repository; it is set as the ruleset `protect-main` (2026-10-11), which also requires a pull request, so the pull-request-only DCO check is always on the path to `main`.
