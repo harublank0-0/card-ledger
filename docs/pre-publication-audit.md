@@ -161,17 +161,17 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 
 - **No independent human audit.** The review in section 8 was model-assisted; the open items there remain, and unbounded list reads (the statements list returns every statement; only the transaction list is paginated) and the first-user sign-up race (two simultaneous first sign-ups can both pass the count check, acknowledged in `src/lib/auth.ts`) are known and accepted for single-operator installs.
 - The application image is about 1.2 GB.
-- The CI workflows have never run on GitHub; they were validated with `actionlint` and by running their steps locally.
+- CI ran on GitHub once (2026-10-11, `83f42d3`): `verify` and `docker` passed and the informational `npm audit` job failed as designed. The `dco` job (pull requests only) and the backup-drill workflow have not run there yet.
 - The issue forms and README have not been rendered on GitHub.
 
 ## Manual steps on GitHub
 
 These are repository settings and cannot be done from the repository itself.
 
-- [ ] Create `haruBlank0-0/card-ledger` and push (the maintainer's decision; nothing here pushes).
-- [ ] Enable **private vulnerability reporting** (Settings, Code security): `SECURITY.md` and the issue chooser point at it.
-- [ ] Protect `main`: require pull requests and the `verify`, `dco` and `docker` checks.
-- [ ] Create the `bug` and `enhancement` labels the issue forms use.
-- [ ] Set the repository description and topics (for example `personal-finance`, `self-hosted`, `subscription-tracker`).
-- [ ] After the first run, confirm all three CI jobs and the backup drill are green, and fix whatever the first real run reveals.
+- [x] Create `haruBlank0-0/card-ledger` and push (done; the repository is public as of 2026-10-11).
+- [ ] Enable **private vulnerability reporting** (Settings, Code security): `SECURITY.md` and the issue chooser point at it. **Still off as of 2026-10-11** (the API reports `enabled: false`; read with a read-only account, so confirm in Settings), while the repository is public: reports cannot be filed privately until it is on.
+- [ ] Protect `main`: require pull requests and the `verify`, `dco` and `docker` checks. Not confirmed (no rulesets exist; classic branch protection is not readable without admin access).
+- [x] Create the `bug` and `enhancement` labels the issue forms use (they exist: GitHub's default labels).
+- [ ] Set the repository description and topics (for example `personal-finance`, `self-hosted`, `subscription-tracker`). None set as of 2026-10-11.
+- [ ] After the first run, confirm all three CI jobs and the backup drill are green, and fix whatever the first real run reveals. `verify` and `docker` are green; start the backup drill once with "Run workflow" and open a test pull request to exercise `dco`.
 - [ ] Optionally enable Dependabot alerts for the Prisma advisories above.
