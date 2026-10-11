@@ -127,7 +127,7 @@ describe("evaluatePackage", () => {
 	});
 
 	it("keeps the project's own exceptions short and justified", () => {
-		expect(Object.keys(EXCEPTIONS).sort()).toEqual(["elkjs", "seq-queue"]);
+		expect(Object.keys(EXCEPTIONS).sort()).toEqual(["elkjs"]);
 		for (const reason of Object.values(EXCEPTIONS)) {
 			expect(reason.length).toBeGreaterThan(40);
 		}

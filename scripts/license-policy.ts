@@ -154,8 +154,6 @@ export type Finding = {
  * forbidden licence can never be excused. Keep this list short and every reason specific.
  */
 export const EXCEPTIONS: Record<string, string> = {
-	"seq-queue":
-		"MIT: the package ships an MIT LICENSE file but omits the licence field. It is pulled in by better-auth through mysql2, which Card Ledger does not use (it runs on PostgreSQL).",
 	elkjs:
 		"EPL-2.0: a dependency of the Prisma CLI's Studio. It is installed in the image's node_modules but never bundled with or linked into the application, so it is aggregation, not a combined work.",
 };

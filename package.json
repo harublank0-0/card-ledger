@@ -111,5 +111,9 @@
     "@prisma/engines@7.10.0": true,
     "fsevents": false
   },
-  "license": "AGPL-3.0-only"
+  "license": "AGPL-3.0-only",
+  "overrides": {
+    "mysql2": "^3.24.5",
+    "deepmerge-ts": "^8.0.2"
+  }
 }
