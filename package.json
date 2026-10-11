@@ -115,5 +115,10 @@
   "overrides": {
     "mysql2": "^3.24.5",
     "deepmerge-ts": "^8.0.2"
-  }
+  },
+  "engines": {
+    "node": "^24",
+    "pnpm": "^12.9.1"
+  },
+  "packageManager": "pnpm@12.9.1"
 }
