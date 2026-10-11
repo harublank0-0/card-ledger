@@ -49,19 +49,21 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
+          node-version-file: .nvmrc
+      # pnpm is the version named in package.json ("packageManager"), fetched by Corepack.
+      - name: Enable pnpm
+        run: corepack enable
+      - run: pnpm install --frozen-lockfile
       - name: Generate the Prisma client
-        run: npx prisma generate
+        run: pnpm exec prisma generate
       - name: Lint and format (Biome)
-        run: npm run check
+        run: pnpm run check
       - name: Type check
-        run: npm run typecheck
+        run: pnpm run typecheck
       - name: Tests (the suite creates and migrates its own _test database)
-        run: npm test
+        run: pnpm test
       - name: Build
-        run: npm run build
+        run: pnpm run build
       - name: The auth secret must not be in the client bundle
         run: |
           if grep -rlF -- "$BETTER_AUTH_SECRET" .output/public; then
@@ -97,7 +99,7 @@ jobs:
         run: sh scripts/docker-smoke.sh
 
   audit:
-    name: npm audit (informational)
+    name: pnpm audit (informational)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     # Reports known advisories in production dependencies without blocking a pull request.
@@ -108,5 +110,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
-      - run: npm audit --omit=dev --audit-level=high
+          node-version-file: .nvmrc
+      - name: Enable pnpm
+        run: corepack enable
+      - run: pnpm audit --prod --audit-level high

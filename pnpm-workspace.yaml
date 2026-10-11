@@ -1,0 +1,15 @@
+# pnpm 12 reads its settings from here, not from a "pnpm" field in package.json.
+#
+# Overrides: two transitive dependencies of the Prisma CLI carried high-severity advisories
+# (prisma pins mysql2 exactly; @prisma/config uses deepmerge-ts 7). Prisma has no newer
+# stable 7.x. Pinned by src/dependency-overrides.test.ts; remove them when Prisma ships
+# updated pins. See docs/pre-publication-audit.md, section 5.
+overrides:
+  mysql2: ^3.24.5
+  deepmerge-ts: ^8.0.2
+
+# Dependencies allowed to run install scripts (everything else is blocked).
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true

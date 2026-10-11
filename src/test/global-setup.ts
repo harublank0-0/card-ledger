@@ -29,7 +29,7 @@ export default async function setup() {
 	url.pathname = `/${testDb}`;
 	const testUrl = url.toString();
 
-	execFileSync("npx", ["prisma", "migrate", "deploy"], {
+	execFileSync("pnpm", ["exec", "prisma", "migrate", "deploy"], {
 		env: { ...process.env, DATABASE_URL: testUrl, CHECKPOINT_DISABLE: "1" },
 		stdio: "pipe",
 	});

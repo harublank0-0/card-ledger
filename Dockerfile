@@ -9,32 +9,35 @@ ARG NODE_VERSION=24
 
 FROM node:${NODE_VERSION}-bookworm-slim AS base
 WORKDIR /app
-# No update checks or usage pings from the Prisma CLI or npm (no telemetry, no external calls
-# at build or run time). Set here so every stage inherits it, including `build`, which runs
-# `prisma generate`: the CLI otherwise contacts checkpoint.prisma.io.
+# No update checks or usage pings from the Prisma CLI or the package manager (no telemetry,
+# no external calls at build or run time). Set here so every stage inherits it, including
+# `build`, which runs `prisma generate`: the CLI otherwise contacts checkpoint.prisma.io.
+# Corepack fetches the pnpm version named in package.json ("packageManager") on first use
+# during the build, without asking.
 ENV CHECKPOINT_DISABLE=1 \
 	PRISMA_HIDE_UPDATE_MESSAGE=1 \
-	NPM_CONFIG_UPDATE_NOTIFIER=false
+	NPM_CONFIG_UPDATE_NOTIFIER=false \
+	COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends openssl ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
 # All dependencies, for building.
 FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+RUN corepack enable && pnpm install --frozen-lockfile
 
 # Production dependencies only (includes `prisma` for migrations and `tsx` for the reminder job).
 FROM base AS prod-deps
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+RUN corepack enable && pnpm install --frozen-lockfile --prod
 
 FROM deps AS build
 COPY . .
 # Prisma 7 loads prisma.config.ts, which requires DATABASE_URL, even for `generate`. This
 # placeholder is used only to satisfy that check; nothing connects to it.
-RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" npx prisma generate
-RUN npm run build
+RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder" pnpm exec prisma generate
+RUN pnpm run build
 
 FROM base AS runtime
 ENV NODE_ENV=production \

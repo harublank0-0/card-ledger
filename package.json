@@ -92,14 +92,6 @@
     "vite": "^8.0.0",
     "vitest": "^5.0.3"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss",
-      "@prisma/engines",
-      "prisma"
-    ]
-  },
   "intent": {
     "skills": [
       "*"
@@ -112,10 +104,6 @@
     "fsevents": false
   },
   "license": "AGPL-3.0-only",
-  "overrides": {
-    "mysql2": "^3.24.5",
-    "deepmerge-ts": "^8.0.2"
-  },
   "engines": {
     "node": "^24",
     "pnpm": "^12.9.1"

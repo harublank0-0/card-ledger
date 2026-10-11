@@ -46,7 +46,7 @@ describe("the Prisma CLI's checkpoint ping is disabled everywhere the CLI runs",
 		}
 	});
 
-	it("in the npm scripts that run the CLI", () => {
+	it("in the package.json scripts that run the CLI", () => {
 		const scripts = JSON.parse(read("package.json")).scripts as Record<
 			string,
 			string
