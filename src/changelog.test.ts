@@ -38,7 +38,7 @@ describe("CHANGELOG.md", () => {
 		for (const needle of [
 			/independent/i, // not independently audited
 			/SIGNUP_MODE=open/, // reminders to unverified addresses
-			/request body/i, // no in-app size cap
+			/unbounded/i, // the statements list is not paginated
 			/PostgreSQL major/i, // restores across majors untested
 			/reverse proxy|Caddy/i, // examples untested
 			/only account/i, // deleting the only account re-opens registration
@@ -63,12 +63,22 @@ describe("CHANGELOG.md", () => {
 		expect(read("README.md")).toMatch(/\]\(\.\/CHANGELOG\.md\)/);
 	});
 
+	it("says the application caps request bodies, and no longer lists that as a limit", () => {
+		expect(changelog).toMatch(/1 MiB/);
+		const limits = section(/^### Known limitations/m);
+		expect(limits).not.toMatch(/request body/i);
+		expect(limits).not.toMatch(/first-user race/i);
+	});
+
 	it("repeats nothing the audit document lists as fixed as if it were open", () => {
-		// The two items the audit still lists as open must be in the limitations; this keeps the
-		// two documents from drifting apart.
+		// What the audit still lists as open must be in the limitations, and what it lists as
+		// fixed must not be; this keeps the two documents from drifting apart.
 		const audit = read("docs/pre-publication-audit.md");
-		const open = audit.slice(audit.indexOf("**Open (reviewed, not fixed):**"));
+		const start = audit.indexOf("**Open (reviewed, not fixed):**");
+		const end = audit.indexOf("**Looked at", start);
+		expect(start).toBeGreaterThan(-1);
+		const open = audit.slice(start, end);
 		expect(open).toContain("SIGNUP_MODE=open");
-		expect(open).toMatch(/request body/i);
+		expect(open).not.toMatch(/request body/i);
 	});
 });

@@ -37,7 +37,9 @@ the internet.
   signed-in user. Money is stored as integer minor units with a currency and is never summed
   across currencies.
 - **Sign-up policy**: `first-user` (default; the first account becomes the owner and registration
-  closes), `open` or `closed`.
+  closes, even if several people try at the same moment), `open` or `closed`.
+- **Request size limit**: the application itself refuses request bodies over 1 MiB with HTTP 413.
+  A limit at your reverse proxy is still good practice.
 
 ### Install
 
@@ -69,8 +71,8 @@ so take a backup first.
   through a real browser: sign-up, the main pages, sign-out and sign-in, then backup, restore test
   and the upgrade steps.
 - A model-assisted code and security review was run before publication and its findings were fixed
-  with tests (36 fixed; two items remain open and are listed below). It is **not** an independent
-  audit. What was checked, and what was not, is recorded in
+  with tests (the audit lists 39 fixed findings; one item remains open and is listed below). It is
+  **not** an independent audit. What was checked, and what was not, is recorded in
   [docs/pre-publication-audit.md](./docs/pre-publication-audit.md).
 
 ### Known limitations
@@ -84,12 +86,8 @@ Please read these before running it.
   `SIGNUP_MODE=open` and SMTP configured, anyone who can reach the app can register any address and
   have reminders emailed to it. The server logs a warning at start-up when it sees this
   combination. Use `first-user` or `closed` when you configure SMTP.
-- **No request body limit in the application.** Set one at your reverse proxy (the guide shows
-  Caddy and nginx lines).
 - **Unbounded lists.** The statements list returns every statement; only the transaction list is
   paginated. Fine for one person's data, not for a very large account.
-- **First-user race.** Two simultaneous first sign-ups can both succeed. Create the first account
-  before you expose the instance to a network.
 - **Deleting the only account re-opens first-user registration**, until someone creates a new one.
 - **Restores are tested on PostgreSQL 17 only.** Restoring across PostgreSQL major versions has
   not been tried.
