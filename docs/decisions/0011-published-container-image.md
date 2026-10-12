@@ -47,9 +47,10 @@ must keep ADR 0009's rules (no secrets, first-party actions pinned by SHA, least
   build.
 
 ## Consequences
-- The first image appears with the first release after 0.1.0; 0.1.0 is built from source.
-- The package is private until the maintainer makes it public once (documented in
-  `docs/releasing.md`).
+- The first image is 0.1.1; 0.1.0 is built from source.
+- The package is linked to the public repository by the image's source label and was public from
+  its first push, with no manual step. `docs/releasing.md` says how to check it, and what to do if
+  a changed default makes it private.
 - A release now takes about as long as the slower architecture's build and smoke test.
 - Not done yet: signing (for example cosign) and SBOM attestations, and pinning the base image by
   digest. Each is a separate decision, because it adds either a tool or a rebuild routine.

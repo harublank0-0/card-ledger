@@ -171,3 +171,39 @@ describe("the changelog's headings", () => {
 		}
 	});
 });
+
+describe("the project records that 0.1.1 and its image are published", () => {
+	it("says so in AGENTS.md", () => {
+		const agents = read("AGENTS.md");
+		expect(agents).toMatch(/`v0\.1\.0` and `v0\.1\.1` are published/);
+		expect(agents).toContain("ghcr.io/haruBlank0-0/card-ledger");
+	});
+
+	it("has a row for it in the roadmap's progress table", () => {
+		expect(read("docs/roadmap.md")).toMatch(/^\| yes \| R-02 .*0\.1\.1/m);
+	});
+
+	it("ticks the audit checklist item for the first published image", () => {
+		expect(read("docs/pre-publication-audit.md")).toMatch(
+			/- \[x\] .*prebuilt image.*0\.1\.1/,
+		);
+	});
+
+	it("no longer says a new package starts private, which it did not", () => {
+		for (const file of [
+			"docs/releasing.md",
+			"docs/decisions/0011-published-container-image.md",
+		]) {
+			expect(read(file), file).not.toMatch(
+				/creates the package as private|private until the maintainer/i,
+			);
+		}
+	});
+
+	it("tells the reader which release has the first image", () => {
+		const guide = read("docs/self-hosting.md");
+		const start = guide.indexOf("## Use the prebuilt image");
+		const end = guide.indexOf("## First user");
+		expect(guide.slice(start, end)).toContain("0.1.1");
+	});
+});

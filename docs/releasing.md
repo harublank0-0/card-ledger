@@ -44,9 +44,13 @@ platforms:
 docker buildx imagetools inspect ghcr.io/haruBlank0-0/card-ledger:0.1.1
 ```
 
-The first time, GitHub creates the package as private: open the repository's package
-(Packages in the right sidebar), then Package settings, and make it public, so that people can
-pull it without signing in. A tag that is not exactly `vMAJOR.MINOR.PATCH` publishes nothing.
+Check that the package is public, because people must be able to pull it without signing in. For
+0.1.1 it was public from the first push: the image carries the repository as its source label, so
+GitHub links the package to the public repository and it inherits the visibility. If it is private
+anyway (a changed default, or an organisation setting), open the repository's package (Packages in
+the right sidebar), then Package settings, and make it public. An anonymous
+`docker buildx imagetools inspect` of the tag is the test. A tag that is not exactly
+`vMAJOR.MINOR.PATCH` publishes nothing.
 
 ## The release body
 

@@ -177,6 +177,8 @@ These are repository settings and cannot be done from the repository itself.
 - [x] After the first run, confirm all three CI jobs and the backup drill are green, and fix whatever the first real run reveals. `verify`, `docker`, `audit` and (on pull request #1) `dco` are green, and the backup drill passed when started on demand (2026-10-11).
 - [x] Publish the first release: `v0.1.0` as a GitHub pre-release on 2026-10-12, the tag on the merge of pull request #6, with the 0.1.0 section of `CHANGELOG.md` as its body (links pinned to the tag; the procedure is in [`releasing.md`](./releasing.md)).
 - [x] Protect release tags: the tag ruleset `protect-release-tags` (pattern `v*`, deletion and updates restricted), active.
-- [ ] Delete the merged branches on GitHub and turn on "Automatically delete head branches".
+- [x] Publish the first prebuilt image: `v0.1.1` (2026-10-12): run 38226087052 built and smoke-tested each architecture on a native runner (13 of 13 checks), pushed them and merged `0.1.1` and `0.1` into one manifest (`sha256:3ff93a86…`, `linux/amd64` and `linux/arm64`). Verified afterwards from outside: an anonymous inspect and tag listing worked (GitHub made the package public itself, because it is linked to the public repository), the image pulled on arm64 without credentials, its revision label equals the commit the tag points at, and the 13 smoke checks pass on the pulled image. Not covered: running the amd64 image on real amd64 hardware outside CI, signing, SBOM attestations and base-image digest pinning (ADR 0011).
+- [x] Delete the merged branches on GitHub (done: only `main` remains as of 2026-10-12).
+- [ ] Turn on "Automatically delete head branches" (a repository setting that cannot be read without admin access, so unconfirmed).
 - [ ] Look at the README, the issue forms and the Security tab as a signed-out visitor; nobody has confirmed how they render.
 - [ ] Optionally enable Dependabot alerts for the Prisma advisories above.

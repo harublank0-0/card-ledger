@@ -60,7 +60,7 @@ It must print exactly `{"status":"ok"}`. Anything else, or a page that is not Ca
 
 ## Use the prebuilt image
 
-Releases after 0.1.0 publish a container image to the GitHub Container Registry. CI builds it from
+Releases from 0.1.1 on publish a container image to the GitHub Container Registry (0.1.0 has none). CI builds it from
 the tagged commit on a native runner for each architecture, runs the same smoke test as above on
 that exact image, and only then pushes it, for `linux/amd64` and `linux/arm64`. Running it replaces
 the local build, which saves the three minutes and the build tools.
