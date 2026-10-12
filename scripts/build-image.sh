@@ -5,7 +5,7 @@
 #
 # The image-check and publish workflows both call this, so what CI checks on a pull request is
 # what a release pushes. The reference is taken as given (for example
-# ghcr.io/haruBlank0-0/card-ledger:1.2.3-amd64). Optional environment:
+# ghcr.io/harublank0-0/card-ledger:1.2.3-amd64). Optional environment:
 #
 #   IMAGE_VERSION    label org.opencontainers.image.version (default: dev)
 #   IMAGE_REVISION   the commit the image is built from (default: `git rev-parse HEAD`)

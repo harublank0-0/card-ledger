@@ -176,7 +176,7 @@ describe("the project records that 0.1.1 and its image are published", () => {
 	it("says so in AGENTS.md", () => {
 		const agents = read("AGENTS.md");
 		expect(agents).toMatch(/`v0\.1\.0` and `v0\.1\.1` are published/);
-		expect(agents).toContain("ghcr.io/haruBlank0-0/card-ledger");
+		expect(agents).toContain("ghcr.io/harublank0-0/card-ledger");
 	});
 
 	it("has a row for it in the roadmap's progress table", () => {
@@ -205,5 +205,13 @@ describe("the project records that 0.1.1 and its image are published", () => {
 		const start = guide.indexOf("## Use the prebuilt image");
 		const end = guide.indexOf("## First user");
 		expect(guide.slice(start, end)).toContain("0.1.1");
+	});
+});
+
+describe("the 0.1.1 notes", () => {
+	it("say that the image name is lowercase, correcting the first copy of these notes", () => {
+		const notes = section(/^## 0\.1\.1/m);
+		expect(notes).toMatch(/lowercase/i);
+		expect(notes).toContain("ghcr.io/harublank0-0/card-ledger:0.1.1");
 	});
 });
