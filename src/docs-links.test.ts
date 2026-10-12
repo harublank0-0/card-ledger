@@ -348,10 +348,12 @@ describe("the prebuilt image in the operator documents", () => {
 		);
 	});
 
-	it("lists the image under an Unreleased heading in the changelog", () => {
+	it("lists the image in the newest changelog section (Unreleased, or the release that ships it)", () => {
 		const changelog = readFileSync(path.join(root, "CHANGELOG.md"), "utf8");
 		const top = changelog.split(/^## /m)[1] ?? "";
-		expect(top).toMatch(/^Unreleased/);
+		expect(top.split("\n")[0]).toMatch(
+			/^(Unreleased|\d+\.\d+\.\d+ — .*\d{4}-\d{2}-\d{2})/,
+		);
 		expect(top).toMatch(/prebuilt image|container image/i);
 		expect(top).toContain("ghcr.io/haruBlank0-0/card-ledger");
 	});

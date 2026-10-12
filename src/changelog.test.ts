@@ -148,3 +148,26 @@ describe("the project records that 0.1.0 is published", () => {
 		expect(audit).toMatch(/- \[x\] Set the repository description and topics/);
 	});
 });
+
+describe("the changelog's headings", () => {
+	it("date every release, and only the section of work in progress is left undated", () => {
+		const headings = changelog.match(/^## .+$/gm) ?? [];
+		expect(headings.length).toBeGreaterThan(0);
+		for (const heading of headings) {
+			expect(heading, heading).toMatch(
+				/^## (Unreleased|\d+\.\d+\.\d+ — .*\d{4}-\d{2}-\d{2}.*)$/,
+			);
+		}
+	});
+
+	it("lists releases newest first", () => {
+		const versions = [
+			...changelog.matchAll(/^## (\d+)\.(\d+)\.(\d+) — /gm),
+		].map((m) => [Number(m[1]), Number(m[2]), Number(m[3])] as const);
+		for (let i = 1; i < versions.length; i++) {
+			const [a, b] = [versions[i - 1], versions[i]];
+			const newer = a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+			expect(newer).toBeGreaterThan(0);
+		}
+	});
+});
