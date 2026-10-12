@@ -58,6 +58,37 @@ It must print exactly `{"status":"ok"}`. Anything else, or a page that is not Ca
 
 `docker compose up` stops with a message naming the variable if `POSTGRES_PASSWORD` or `BETTER_AUTH_SECRET` is empty; there is no default secret.
 
+## Use the prebuilt image
+
+Releases after 0.1.0 publish a container image to the GitHub Container Registry. CI builds it from
+the tagged commit on a native runner for each architecture, runs the same smoke test as above on
+that exact image, and only then pushes it, for `linux/amd64` and `linux/arm64`. Running it replaces
+the local build, which saves the three minutes and the build tools.
+
+Set the image in `.env` (see the available versions on the repository's Releases or Packages page):
+
+```sh
+CARD_LEDGER_IMAGE=ghcr.io/haruBlank0-0/card-ledger:<version>
+```
+
+Then pull it and start the stack without building:
+
+```sh
+docker compose pull
+docker compose up -d --no-build
+```
+
+- **Pin a version.** There is no `latest` tag, on purpose: migrations only move forward, so an
+  upgrade should be something you choose. `<version>` is a full version such as `0.2.0`; the
+  `0.2` tag follows the newest patch release of that line.
+- **Upgrade** by taking a backup, changing the version in `.env`, and running the two commands
+  above again. The `migrate` service applies any new migrations on start.
+- **Check where an image came from.** Each image carries the commit it was built from:
+  `docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' <image>`
+  prints the commit of the release tag.
+- **Building from source stays supported** (`docker compose up -d --build`, as above), and is the
+  only option for 0.1.0, which has no published image.
+
 ## First user
 
 With the default `SIGNUP_MODE=first-user`, the first account to register becomes the owner, and registration then closes. **Create that account before you expose the app to a network.**
