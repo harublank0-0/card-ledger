@@ -2,8 +2,11 @@
 # Smoke test for the self-hosting stack (Dockerfile + compose.yaml).
 #
 #   pnpm run docker:smoke
+#   SMOKE_IMAGE=<image-ref> sh scripts/docker-smoke.sh
 #
-# Builds the image, starts the stack under a throwaway project name with generated
+# Builds the image (or, with SMOKE_IMAGE, uses the image you name: it is started as it is,
+# not rebuilt, and not deleted afterwards, so the publish workflow tests the exact artefact it
+# is about to push), starts the stack under a throwaway project name with generated
 # secrets, and checks the properties an operator relies on: it comes up healthy, the
 # database is not reachable from the host, the app listens on loopback only, containers run
 # as non-root, the image carries no secrets, and data survives a restart. Everything it
@@ -14,7 +17,7 @@ set -eu
 cd "$(dirname "$0")/.."
 
 PROJECT="card-ledger-smoke-$$"
-IMAGE="card-ledger-smoke:$$"
+IMAGE="${SMOKE_IMAGE:-card-ledger-smoke:$$}"
 PORT="${SMOKE_PORT:-3198}"
 ENV_FILE="$(mktemp)"
 FAILED=1
@@ -37,7 +40,10 @@ cleanup() {
 		compose logs --tail=40 2>&1 >&2 || true
 	fi
 	compose down -v --remove-orphans >/dev/null 2>&1 || true
-	docker image rm -f "$IMAGE" >/dev/null 2>&1 || true
+	# An image given through SMOKE_IMAGE is the caller's artefact: never remove it.
+	if [ -z "${SMOKE_IMAGE:-}" ]; then
+		docker image rm -f "$IMAGE" >/dev/null 2>&1 || true
+	fi
 	rm -f "$ENV_FILE"
 }
 trap cleanup EXIT INT TERM
@@ -101,8 +107,12 @@ if CARD_LEDGER_IMAGE="$IMAGE" docker compose -p "$PROJECT-guard" --env-file .env
 fi
 pass "an unedited .env.example is rejected"
 
-# 2. Build and start.
-quiet compose up -d --build || fail "docker compose up failed"
+# 2. Build (or use the given image) and start.
+if [ -n "${SMOKE_IMAGE:-}" ]; then
+	quiet compose up -d --no-build || fail "docker compose up failed"
+else
+	quiet compose up -d --build || fail "docker compose up failed"
+fi
 wait_for_health || fail "app did not become healthy within 180 seconds"
 body="$(curl -fsS "http://127.0.0.1:$PORT/api/health")"
 [ "$body" = '{"status":"ok"}' ] || fail "unexpected health body: $body"
