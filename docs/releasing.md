@@ -41,7 +41,7 @@ native runner per architecture, pushes `X.Y.Z-amd64` and `X.Y.Z-arm64`, and merg
 platforms:
 
 ```sh
-docker buildx imagetools inspect ghcr.io/haruBlank0-0/card-ledger:0.1.1
+docker buildx imagetools inspect ghcr.io/harublank0-0/card-ledger:0.1.1
 ```
 
 Check that the package is public, because people must be able to pull it without signing in. For

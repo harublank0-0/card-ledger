@@ -12,7 +12,7 @@ So how it is built, tested and tagged is part of the project's security story, a
 must keep ADR 0009's rules (no secrets, first-party actions pinned by SHA, least privilege).
 
 ## Decision
-- **Registry: GitHub Container Registry**, `ghcr.io/haruBlank0-0/card-ledger`. It needs no account
+- **Registry: GitHub Container Registry**, `ghcr.io/harublank0-0/card-ledger`. It needs no account
   beyond GitHub and no stored credential: the workflow logs in with its own `github.token`.
 - **Only on a version tag** (`vMAJOR.MINOR.PATCH`), never from `main` and never from a pull
   request. Every image corresponds to a reviewed, published release.

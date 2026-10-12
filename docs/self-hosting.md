@@ -68,7 +68,7 @@ the local build, which saves the three minutes and the build tools.
 Set the image in `.env` (see the available versions on the repository's Releases or Packages page):
 
 ```sh
-CARD_LEDGER_IMAGE=ghcr.io/haruBlank0-0/card-ledger:<version>
+CARD_LEDGER_IMAGE=ghcr.io/harublank0-0/card-ledger:<version>
 ```
 
 Then pull it and start the stack without building:
@@ -78,6 +78,9 @@ docker compose pull
 docker compose up -d --no-build
 ```
 
+- **The name is lowercase.** Docker only accepts lowercase image names, so it is `harublank0-0`
+  even though GitHub shows the account as `haruBlank0-0`; `haruBlank0-0` in an image name fails
+  with "repository name must be lowercase".
 - **Pin a version.** There is no `latest` tag, on purpose: migrations only move forward, so an
   upgrade should be something you choose. `<version>` is a full version such as `0.2.0`; the
   `0.2` tag follows the newest patch release of that line.

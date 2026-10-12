@@ -12,12 +12,13 @@ independent security audit**; read the known limitations before running it.
 
 ### Added
 
-- **A prebuilt container image**, `ghcr.io/haruBlank0-0/card-ledger:0.1.1`, for `linux/amd64` and
+- **A prebuilt container image**, `ghcr.io/harublank0-0/card-ledger:0.1.1`, for `linux/amd64` and
   `linux/arm64` (Apple silicon and other ARM machines as well as x86 hosts). CI builds each
   architecture on a native runner from the tagged commit, runs the stack's 13-check smoke test on
   that exact image, and only then pushes it. The tags are the full version and its minor line
   (`0.1`). There is no `latest` tag: migrations only move forward, so an upgrade should always be
-  your choice.
+  your choice. The name is **all lowercase**: Docker rejects the capitalisation GitHub displays for
+  the account (`haruBlank0-0`), which the first copy of these notes used by mistake.
 - **Run it without building**: set `CARD_LEDGER_IMAGE` in `.env`, then
   `docker compose pull && docker compose up -d --no-build`. The self-hosting guide has the steps
   ("Use the prebuilt image"); building from source (`docker compose up -d --build`) is unchanged.
@@ -32,7 +33,7 @@ independent security audit**; read the known limitations before running it.
 ### Upgrading from 0.1.0
 
 Nothing is required. To move to the prebuilt image, take a backup as you would before any change,
-set `CARD_LEDGER_IMAGE=ghcr.io/haruBlank0-0/card-ledger:0.1.1` in `.env`, then run
+set `CARD_LEDGER_IMAGE=ghcr.io/harublank0-0/card-ledger:0.1.1` in `.env`, then run
 `docker compose pull` and `docker compose up -d --no-build`. The `migrate` service finds nothing
 to apply.
 

@@ -321,12 +321,19 @@ describe("the prebuilt image in the operator documents", () => {
 	it("explains how to run a release without building it", () => {
 		const prebuilt = section("## Use the prebuilt image", "## First user");
 		expect(prebuilt).toContain(
-			"CARD_LEDGER_IMAGE=ghcr.io/haruBlank0-0/card-ledger:",
+			"CARD_LEDGER_IMAGE=ghcr.io/harublank0-0/card-ledger:",
 		);
 		expect(prebuilt).toContain("docker compose pull");
 		expect(prebuilt).toContain("docker compose up -d --no-build");
 		expect(prebuilt).toMatch(/linux\/amd64/);
 		expect(prebuilt).toMatch(/linux\/arm64/);
+	});
+
+	it("says that the image name is lowercase, unlike the account's display name", () => {
+		const prebuilt = section("## Use the prebuilt image", "## First user");
+		expect(prebuilt).toContain("The name is lowercase");
+		expect(prebuilt).toContain("harublank0-0");
+		expect(prebuilt).toContain("must be lowercase");
 	});
 
 	it("tells the reader to pin a version and says there is no latest tag", () => {
@@ -338,7 +345,7 @@ describe("the prebuilt image in the operator documents", () => {
 
 	it("documents the setting in .env.example", () => {
 		expect(readFileSync(path.join(root, ".env.example"), "utf8")).toMatch(
-			/^# CARD_LEDGER_IMAGE=ghcr\.io\/haruBlank0-0\/card-ledger:/m,
+			/^# CARD_LEDGER_IMAGE=ghcr\.io\/harublank0-0\/card-ledger:/m,
 		);
 	});
 
@@ -355,6 +362,6 @@ describe("the prebuilt image in the operator documents", () => {
 			/^(Unreleased|\d+\.\d+\.\d+ — .*\d{4}-\d{2}-\d{2})/,
 		);
 		expect(top).toMatch(/prebuilt image|container image/i);
-		expect(top).toContain("ghcr.io/haruBlank0-0/card-ledger");
+		expect(top).toContain("ghcr.io/harublank0-0/card-ledger");
 	});
 });
