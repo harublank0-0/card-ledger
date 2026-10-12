@@ -1,0 +1,130 @@
+# Publishes the container image when a version tag is pushed (docs/decisions/0011).
+#
+# For each architecture, on a native runner: build with scripts/build-image.sh, run the smoke
+# test on that exact image, and only then push it. The architectures are then merged into one
+# multi-architecture tag. Only the jobs that push hold `packages: write`; pull requests never
+# run this workflow (see image-check.yml for the same build and test without a registry).
+name: Publish image
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+# No Prisma CLI usage ping from CI (see docs/decisions/0008).
+env:
+  CHECKPOINT_DISABLE: "1"
+
+concurrency:
+  group: publish-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  meta:
+    name: Check the tag and name the image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      image: ${{ steps.names.outputs.image }}
+      version: ${{ steps.names.outputs.version }}
+      minor: ${{ steps.names.outputs.minor }}
+    steps:
+      - name: Only a version tag publishes an image
+        id: names
+        env:
+          TAG: ${{ github.ref_name }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -eu
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::The tag is not a version tag of the form vMAJOR.MINOR.PATCH; nothing is published."
+            exit 1
+          fi
+          version="${TAG#v}"
+          minor="${version%.*}"
+          owner="$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          {
+            echo "image=ghcr.io/$owner/card-ledger"
+            echo "version=$version"
+            echo "minor=$minor"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build, test and push (${{ matrix.arch }})
+    needs: meta
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      IMAGE: ${{ needs.meta.outputs.image }}
+      VERSION: ${{ needs.meta.outputs.version }}
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        env:
+          IMAGE_REVISION: ${{ github.sha }}
+        run: IMAGE_VERSION="$VERSION" sh scripts/build-image.sh "$IMAGE:$VERSION-$ARCH"
+      - name: Smoke test that exact image
+        run: SMOKE_IMAGE="$IMAGE:$VERSION-$ARCH" sh scripts/docker-smoke.sh
+      - name: Log in to the registry with this job's token
+        env:
+          TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: printf '%s' "$TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+      - name: Push the single-architecture image
+        run: docker push "$IMAGE:$VERSION-$ARCH"
+
+  manifest:
+    name: Publish the multi-architecture tags
+    needs: [meta, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ${{ needs.meta.outputs.image }}
+      VERSION: ${{ needs.meta.outputs.version }}
+      MINOR: ${{ needs.meta.outputs.minor }}
+    steps:
+      - name: Log in to the registry with this job's token
+        env:
+          TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: printf '%s' "$TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+      - name: Merge the architectures under the version and minor tags
+        run: |
+          docker buildx imagetools create \
+            --tag "$IMAGE:$VERSION" \
+            --tag "$IMAGE:$MINOR" \
+            "$IMAGE:$VERSION-amd64" \
+            "$IMAGE:$VERSION-arm64"
+      - name: Check that both tags carry both architectures
+        run: |
+          set -eu
+          for tag in "$VERSION" "$MINOR"; do
+            out="$(docker buildx imagetools inspect "$IMAGE:$tag")"
+            printf '%s\n' "$out"
+            for platform in linux/amd64 linux/arm64; do
+              printf '%s\n' "$out" | grep -q "$platform" || {
+                echo "::error::$IMAGE:$tag has no $platform image"
+                exit 1
+              }
+            done
+          done

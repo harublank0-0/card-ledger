@@ -12,3 +12,4 @@ Short records of significant decisions. Status values: Proposed, Accepted, Super
 - [0008 Container image and compose topology](./0008-container-image-and-compose-topology.md)
 - [0009 CI: minimal, pinned and secret-free](./0009-ci-minimal-pinned-secret-free.md)
 - [0010 pnpm and a pinned toolchain](./0010-pnpm-and-pinned-toolchain.md)
+- [0011 A published container image](./0011-published-container-image.md)
