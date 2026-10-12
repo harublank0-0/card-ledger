@@ -144,13 +144,14 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 | Proxy and rate-limit guidance: the client address must be a single `X-Forwarded-For` the proxy sets; request size is capped at the proxy (documented, pinned by a production-mode test; the proxy's behaviour is the operator's) | `a025894` |
 | An unpaid statement on an archived card was shown by the dashboard but skipped by reminders (a product decision: remind) | `ed0b483` |
 | With the database down the browser showed Better Auth's "Failed to get session"; it now says the service is temporarily unavailable (checked in a browser) | `5f94b5d` |
+| The application did not cap request body size (only a documented proxy setting): it is now refused above 1 MiB with 413 by a Nitro middleware on every route, counting streamed bodies that declare no length (checked on a built server: exactly 1 MiB passes, one byte more, 2 MiB and a chunked 2 MiB body get 413; a unit test of the middleware, a test that pins its registration, and mutation checks that fail when it is removed, disabled or raised) | `9e4436f` |
+| Two simultaneous first sign-ups could both pass the user-count check and create two owners: first-user sign-ups now run under a Postgres advisory lock, with a per-process queue so a burst larger than the connection pool cannot starve the lock owner (15 simultaneous sign-ups give one account in the integration test; 12 concurrent requests from distinct client addresses to a built server gave one account in each of three runs; four mutation checks each fail a test) | `5ac2600` |
 
 **Checked, no findings:** every server function uses the auth middleware and every query is scoped by `userId`; foreign ids are ownership-checked; refund, statement-overlap and payment races are locked correctly; no float arithmetic on money, and recurrence matched a brute-force reference over 20,000 random cases; no XSS vectors, open redirects, SQL injection or secrets in the client bundle; CSRF protection for server functions is enforced (cross-site, forged-Origin and origin-less requests get 403, verified on a built server); the CI workflows, action pins, lockfile and licence parser.
 
 **Open (reviewed, not fixed):**
 
 - Reminders are sent to unverified email addresses when `SIGNUP_MODE=open` and SMTP is configured, so an instance could be used to send reminder-shaped email to a stranger (the subject and body carry subscription and card names the registrant chose). Single-user (`first-user`) and `closed` instances are not affected. **Mitigated, not fixed:** the self-hosting guide says so under "First user", `.env.example` repeats it beside `SIGNUP_MODE`, and the app logs a warning at start-up for this combination (it still starts; pinned by tests, 8 mutations caught). The fix is an email-verification flow, a product decision deferred until a multi-user or managed-cloud use needs it ([roadmap](./roadmap.md), Phase 5).
-- The application does not cap request body size itself; this is documented as a proxy setting, not enforced.
 
 **Looked at and left as is:**
 
@@ -159,7 +160,7 @@ Four reviewers read the committed code on 2026-10-10 (security and data isolatio
 
 ## Known gaps
 
-- **No independent human audit.** The review in section 8 was model-assisted; the open items there remain, and unbounded list reads (the statements list returns every statement; only the transaction list is paginated) and the first-user sign-up race (two simultaneous first sign-ups can both pass the count check, acknowledged in `src/lib/auth.ts`) are known and accepted for single-operator installs.
+- **No independent human audit.** The review in section 8 was model-assisted; the open items there remain, and unbounded list reads (the statements list returns every statement; only the transaction list is paginated) is known and accepted for single-operator installs.
 - The application image is about 1.2 GB.
 - CI ran on GitHub twice on 2026-10-11. `83f42d3`: `verify` and `docker` passed, the informational `npm audit` job failed as designed. `96f0f9c`: `verify` passed, `docker` failed on a smoke-script check that depended on the order in which Compose reports missing variables (fixed in `d41fbde`; `6c9bd25` was green: `verify` and `docker`, with only the informational audit red). The `dco` job ran on the test pull request #1 (2 signed-off commits, passed); its failing case (an unsigned commit) has been exercised only by the script's tests, not on GitHub. `90a0692` was the first run with every job green, the audit included, after the dependency overrides. The backup drill ran there on demand (`workflow_dispatch`, `58de36e`, 2m40s): all 11 of its checks passed. It restores onto the same PostgreSQL major version with synthetic data, so a restore across major versions is still unverified.
 - The issue forms and README have not been rendered on GitHub.

@@ -122,7 +122,9 @@ and run `docker compose up -d`. `BETTER_AUTH_URL` must equal the address in the 
 
 This is checked by `src/lib/rate-limit.integration.test.ts` against the real handler; how your proxy builds the header is not.
 
-**Request size.** The application does not cap request bodies itself. Put a limit at the proxy, for example in Caddy `request_body { max_size 1MB }` inside the site block, or nginx `client_max_body_size 1m;`. Nothing in this application needs more than a few kilobytes per request.
+**Request size.** The application refuses any request body over 1 MiB with `413`, on every route, including a chunked body that declares no length. The limit is fixed (nothing in this application sends more than a few kilobytes, so there is no setting for it). A limit at the proxy is still worth having, because the proxy rejects an oversized upload before it reaches the application; for example in Caddy `request_body { max_size 1MB }` inside the site block, or nginx `client_max_body_size 1m;`.
+
+This is covered by `src/server/body-limit.test.ts` and `src/server/body-limit-wiring.test.ts` (the middleware and its registration); `pnpm run docker:smoke` confirms the image still serves pages with it registered but does not send an oversized body.
 
 The proxy, Tailscale and tunnel examples above are standard configurations, not something this repository tests.
 
