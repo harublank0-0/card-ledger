@@ -1,4 +1,5 @@
 const DELETE_USER_PATH = "/api/auth/delete-user";
+const SIGN_UP_PATH = "/api/auth/sign-up/email";
 
 function normalisedPath(request: Request) {
 	let path = new URL(request.url).pathname;
@@ -58,13 +59,30 @@ export async function guardAccountDeletion(
 	);
 }
 
+/** Whether this is the email sign-up endpoint (same normalisation as the deletion guard). */
+export function isSignUpRequest(request: Request) {
+	return request.method === "POST" && normalisedPath(request) === SIGN_UP_PATH;
+}
+
+/** Runs a task so that concurrent calls cannot interleave. */
+export type SignUpSerializer = <T>(run: () => Promise<T>) => Promise<T>;
+
 /**
  * What the `/api/auth/*` POST route does: apply the guards, then hand the request to Better
  * Auth. Kept as one function so the route and its tests use the exact same composition.
+ *
+ * `serializeSignUp`, when given, wraps sign-up requests (and only those), so that a policy
+ * which depends on counting existing users cannot be raced by simultaneous requests.
  */
 export async function handleAuthPost(
 	request: Request,
 	handler: (request: Request) => Response | Promise<Response>,
+	options: { serializeSignUp?: SignUpSerializer } = {},
 ): Promise<Response> {
-	return (await guardAccountDeletion(request)) ?? handler(request);
+	const blocked = await guardAccountDeletion(request);
+	if (blocked) return blocked;
+	if (options.serializeSignUp && isSignUpRequest(request)) {
+		return options.serializeSignUp(async () => handler(request));
+	}
+	return handler(request);
 }

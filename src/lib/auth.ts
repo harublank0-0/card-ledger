@@ -37,8 +37,8 @@ export const auth = betterAuth({
 	databaseHooks: {
 		user: {
 			create: {
-				// SIGNUP_MODE policy. Note: two truly simultaneous first sign-ups could both
-				// pass the count check; acceptable for a single-operator install.
+				// SIGNUP_MODE policy. In first-user mode the auth route serialises sign-up requests
+				// (`serializeFirstUserSignUp`), so the count read here cannot be stale.
 				before: async () => {
 					const users = await prisma.user.count();
 					if (!isSignupAllowed(env.SIGNUP_MODE, users)) {

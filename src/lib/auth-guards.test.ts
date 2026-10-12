@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { guardAccountDeletion } from "./auth-guards";
+import {
+	guardAccountDeletion,
+	handleAuthPost,
+	isSignUpRequest,
+} from "./auth-guards";
 
 const post = (path: string, body?: unknown, raw?: string) =>
 	new Request(`http://localhost:3100${path}`, {
@@ -105,5 +109,94 @@ describe("guardAccountDeletion", () => {
 				}),
 			),
 		).toBeNull();
+	});
+});
+
+describe("isSignUpRequest", () => {
+	it("recognises the email sign-up POST, including path variants Better Auth might route", () => {
+		for (const path of [
+			"/api/auth/sign-up/email",
+			"/api/auth/sign-up/email/",
+			"/api/auth/Sign-Up/Email",
+			"/api/auth/sign-up%2Femail",
+		]) {
+			expect(isSignUpRequest(post(path, {})), path).toBe(true);
+		}
+	});
+
+	it("is false for everything else", () => {
+		expect(isSignUpRequest(post("/api/auth/sign-in/email", {}))).toBe(false);
+		expect(isSignUpRequest(post("/api/auth/sign-up", {}))).toBe(false);
+		expect(isSignUpRequest(post("/api/auth/sign-up/email/extra", {}))).toBe(
+			false,
+		);
+		expect(
+			isSignUpRequest(
+				new Request("http://localhost:3100/api/auth/sign-up/email", {
+					method: "GET",
+				}),
+			),
+		).toBe(false);
+	});
+});
+
+describe("handleAuthPost", () => {
+	const ok = async () => new Response("handled");
+
+	it("runs only sign-up requests through the serializer, with the request untouched", async () => {
+		const calls: string[] = [];
+		const serializeSignUp = async <T>(run: () => Promise<T>) => {
+			calls.push("serialized");
+			return run();
+		};
+		const handler = async (request: Request) => {
+			calls.push(`handled ${new URL(request.url).pathname}`);
+			return new Response(await request.text());
+		};
+
+		const signUp = post("/api/auth/sign-up/email", { email: "a@b.test" });
+		const response = await handleAuthPost(signUp, handler, { serializeSignUp });
+		expect(await response.text()).toBe('{"email":"a@b.test"}');
+		expect(calls).toEqual(["serialized", "handled /api/auth/sign-up/email"]);
+
+		calls.length = 0;
+		await handleAuthPost(post("/api/auth/sign-in/email", {}), handler, {
+			serializeSignUp,
+		});
+		expect(calls).toEqual(["handled /api/auth/sign-in/email"]);
+	});
+
+	it("does not serialise when no serializer is given", async () => {
+		const response = await handleAuthPost(
+			post("/api/auth/sign-up/email", {}),
+			ok,
+		);
+		expect(await response.text()).toBe("handled");
+	});
+
+	it("still applies the account-deletion guard first", async () => {
+		let serialized = false;
+		const response = await handleAuthPost(
+			post("/api/auth/delete-user", {}),
+			ok,
+			{
+				serializeSignUp: async (run) => {
+					serialized = true;
+					return run();
+				},
+			},
+		);
+		expect(response.status).toBe(400);
+		expect(serialized).toBe(false);
+	});
+
+	it("lets a failure inside the serializer reach the caller", async () => {
+		await expect(
+			handleAuthPost(post("/api/auth/sign-up/email", {}), ok, {
+				serializeSignUp: async () => {
+					throw new Error("lock unavailable");
+				},
+			}),
+		).rejects.toThrow("lock unavailable");
 	});
 });
