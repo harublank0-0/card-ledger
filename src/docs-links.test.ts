@@ -304,3 +304,55 @@ describe("port 3000 and the health check in the operator guide", () => {
 		expect(line).toContain("self-hosting");
 	});
 });
+
+describe("the prebuilt image in the operator documents", () => {
+	const guide = readFileSync(
+		path.join(root, "docs", "self-hosting.md"),
+		"utf8",
+	);
+	const section = (from: string, to: string) => {
+		const start = guide.indexOf(from);
+		const end = guide.indexOf(to, start + from.length);
+		expect(start, `${from} heading`).toBeGreaterThanOrEqual(0);
+		expect(end, `${to} heading`).toBeGreaterThan(start);
+		return guide.slice(start, end);
+	};
+
+	it("explains how to run a release without building it", () => {
+		const prebuilt = section("## Use the prebuilt image", "## First user");
+		expect(prebuilt).toContain(
+			"CARD_LEDGER_IMAGE=ghcr.io/haruBlank0-0/card-ledger:",
+		);
+		expect(prebuilt).toContain("docker compose pull");
+		expect(prebuilt).toContain("docker compose up -d --no-build");
+		expect(prebuilt).toMatch(/linux\/amd64/);
+		expect(prebuilt).toMatch(/linux\/arm64/);
+	});
+
+	it("tells the reader to pin a version and says there is no latest tag", () => {
+		const prebuilt = section("## Use the prebuilt image", "## First user");
+		expect(prebuilt).toMatch(/no `latest` tag|does not publish `latest`/);
+		expect(prebuilt).not.toMatch(/card-ledger:latest/);
+		expect(prebuilt).toMatch(/backup/i);
+	});
+
+	it("documents the setting in .env.example", () => {
+		expect(readFileSync(path.join(root, ".env.example"), "utf8")).toMatch(
+			/^# CARD_LEDGER_IMAGE=ghcr\.io\/haruBlank0-0\/card-ledger:/m,
+		);
+	});
+
+	it("points the README's quick start at it", () => {
+		expect(readFileSync(path.join(root, "README.md"), "utf8")).toMatch(
+			/prebuilt image/i,
+		);
+	});
+
+	it("lists the image under an Unreleased heading in the changelog", () => {
+		const changelog = readFileSync(path.join(root, "CHANGELOG.md"), "utf8");
+		const top = changelog.split(/^## /m)[1] ?? "";
+		expect(top).toMatch(/^Unreleased/);
+		expect(top).toMatch(/prebuilt image|container image/i);
+		expect(top).toContain("ghcr.io/haruBlank0-0/card-ledger");
+	});
+});

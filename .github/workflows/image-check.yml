@@ -1,0 +1,57 @@
+# Builds the image for both architectures and runs the release's smoke test on it, without
+# touching a registry or holding any write permission. Runs when something that goes into the
+# image changes, so a broken arm64 build is found on the pull request and not on release day.
+name: Image check
+
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - compose.yaml
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - prisma/**
+      - scripts/build-image.sh
+      - scripts/docker-smoke.sh
+      - .github/workflows/image-check.yml
+      - .github/workflows/publish-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# No Prisma CLI usage ping from CI (see docs/decisions/0008).
+env:
+  CHECKPOINT_DISABLE: "1"
+
+concurrency:
+  group: image-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and smoke test (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: sh scripts/build-image.sh "card-ledger-check:$ARCH"
+      - name: Smoke test that image
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: SMOKE_IMAGE="card-ledger-check:$ARCH" sh scripts/docker-smoke.sh

@@ -25,8 +25,8 @@ const { assigned, documented } = parse(example);
 
 // DATABASE_URL is built by compose from POSTGRES_PASSWORD, so operators never set it.
 const DERIVED = new Set(["DATABASE_URL"]);
-// Used by tooling (smoke test, CI), not part of an operator's configuration.
-const INTERNAL = new Set(["CARD_LEDGER_IMAGE"]);
+// Nothing is internal any more: CARD_LEDGER_IMAGE selects a prebuilt image and is documented.
+const INTERNAL = new Set<string>();
 
 describe(".env.example", () => {
 	it("documents every server setting an operator can choose", () => {

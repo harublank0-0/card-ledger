@@ -33,6 +33,21 @@ git push origin v0.1.0
 merge: a tag created earlier points at an older commit, and the release notes then describe code
 that the tag does not contain.
 
+## The image
+
+Pushing the tag starts the "Publish image" workflow. It builds and smoke-tests the image on a
+native runner per architecture, pushes `X.Y.Z-amd64` and `X.Y.Z-arm64`, and merges them into
+`X.Y.Z` and `X.Y`. Check that the workflow is green and that the multi-architecture tag lists both
+platforms:
+
+```sh
+docker buildx imagetools inspect ghcr.io/haruBlank0-0/card-ledger:0.1.1
+```
+
+The first time, GitHub creates the package as private: open the repository's package
+(Packages in the right sidebar), then Package settings, and make it public, so that people can
+pull it without signing in. A tag that is not exactly `vMAJOR.MINOR.PATCH` publishes nothing.
+
 ## The release body
 
 A release page does not resolve relative links, so `[SECURITY.md](./SECURITY.md)` copied from the

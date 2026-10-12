@@ -43,14 +43,30 @@ describe("GitHub Actions workflows", () => {
 	it("pin the runner image instead of following ubuntu-latest", () => {
 		// `ubuntu-latest` moves to a new OS release on GitHub's schedule (24.04 to 26 in
 		// October 2026), changing the pipeline without a commit. The label is the image the
-		// workflows were last seen passing on; moving it is a deliberate change.
+		// workflows were last seen passing on; moving it is a deliberate change. The `-arm`
+		// suffix is GitHub's native arm64 runner for the same release.
+		const pinned = /^ubuntu-\d{2}\.\d{2}(-arm)?$/;
 		for (const { name, text } of workflows) {
-			const labels = [...text.matchAll(/^\s*runs-on:\s*(\S+)/gm)].map(
+			const labels = [...text.matchAll(/^\s*runs-on:\s*(.+?)\s*$/gm)].map(
 				(match) => match[1],
 			);
 			expect(labels.length, name).toBeGreaterThan(0);
+			const matrixRunners = [
+				...text.matchAll(/^\s*(?:-\s*)?runner:\s*(\S+)/gm),
+			].map((match) => match[1]);
 			for (const label of labels) {
-				expect(label, `${name}: ${label}`).toMatch(/^ubuntu-\d{2}\.\d{2}$/);
+				if (label.startsWith("${{")) {
+					expect(label, `${name}: ${label}`).toBe("${{ matrix.runner }}");
+					expect(
+						matrixRunners.length,
+						`${name}: matrix runners`,
+					).toBeGreaterThan(0);
+				} else {
+					expect(label, `${name}: ${label}`).toMatch(pinned);
+				}
+			}
+			for (const runner of matrixRunners) {
+				expect(runner, `${name}: matrix runner ${runner}`).toMatch(pinned);
 			}
 		}
 	});
@@ -138,5 +154,85 @@ describe("documents that tell the maintainer which checks to require", () => {
 		for (const line of lines) {
 			for (const name of Object.values(names)) expect(line).toContain(name);
 		}
+	});
+});
+
+describe("image workflows", () => {
+	// A published image is something other people run with their financial data, so the
+	// workflow that pushes one is held to more than the others: it runs on version tags only, it
+	// is the only place that may write packages, and it never moves a floating tag.
+	const publish = readFileSync(path.join(dir, "publish-image.yml"), "utf8");
+	const check = readFileSync(path.join(dir, "image-check.yml"), "utf8");
+	const withoutComments = (text: string) =>
+		text
+			.split("\n")
+			.filter((line) => !/^\s*#/.test(line))
+			.join("\n");
+
+	it("publishes only when a version tag is pushed", () => {
+		expect(publish).toMatch(/^on:\n {2}push:\n {4}tags:/m);
+		expect(publish).not.toMatch(/pull_request|workflow_dispatch|branches:/);
+	});
+
+	it("keeps the check free of registry access and of write permission", () => {
+		const body = withoutComments(check);
+		expect(body).not.toMatch(/packages:\s*write/);
+		expect(body).not.toMatch(/docker (login|push)|imagetools/);
+		expect(body).not.toMatch(/pull_request_target/);
+	});
+
+	it("grants packages: write to jobs of the publish workflow only", () => {
+		for (const { name, text } of workflows) {
+			const count = (text.match(/packages:\s*write/g) ?? []).length;
+			if (name === "publish-image.yml") {
+				expect(count, name).toBeGreaterThanOrEqual(2);
+				// Never at the top level: the top-level permissions stay read-only.
+				expect(text, name).toMatch(
+					/^permissions:\n\s+contents:\s*read\s*\n(?!\s+packages)/m,
+				);
+			} else {
+				expect(count, name).toBe(0);
+			}
+		}
+	});
+
+	it("never publishes a floating latest tag", () => {
+		expect(withoutComments(publish)).not.toMatch(/latest/i);
+	});
+
+	it("takes the tag name from the environment and checks that it is a version", () => {
+		for (const line of publish.split("\n")) {
+			if (line.includes("github.ref_name")) {
+				expect(line).toMatch(
+					/^\s+[A-Z_]+:\s*\$\{\{\s*github\.ref_name\s*\}\}\s*$/,
+				);
+			}
+		}
+		expect(publish).toMatch(/\^v\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\$/);
+	});
+
+	it("builds both architectures natively and merges them into one tag", () => {
+		expect(publish).toContain("ubuntu-24.04-arm");
+		expect(publish).toMatch(/runner:\s*ubuntu-24\.04\s*$/m);
+		expect(publish).toContain("docker buildx imagetools create");
+		expect(publish).toContain("linux/amd64");
+		expect(publish).toContain("linux/arm64");
+	});
+
+	it("builds and tests the image the same way in both workflows", () => {
+		for (const [name, text] of [
+			["publish-image.yml", publish],
+			["image-check.yml", check],
+		] as const) {
+			expect(text, name).toContain("sh scripts/build-image.sh");
+			expect(text, name).toMatch(/SMOKE_IMAGE=/);
+			expect(text, name).toContain("sh scripts/docker-smoke.sh");
+		}
+	});
+
+	it("logs in with the job's own token, never a stored secret", () => {
+		expect(publish).toContain("github.token");
+		expect(publish).toContain("--password-stdin");
+		expect(publish).not.toMatch(/secrets\./);
 	});
 });

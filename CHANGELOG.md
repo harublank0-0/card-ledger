@@ -3,6 +3,16 @@
 All notable changes are listed here, newest first. Card Ledger is pre-1.0: anything may change
 between 0.x releases, and every release says what to do when upgrading.
 
+## Unreleased
+
+### Added
+
+- **A prebuilt container image**, `ghcr.io/haruBlank0-0/card-ledger:<version>`, published for
+  `linux/amd64` and `linux/arm64` with each release after 0.1.0. CI builds it from the tagged
+  commit and runs the stack smoke test on that exact image before pushing it. Pin a version; there
+  is no `latest` tag. See "Use the prebuilt image" in the
+  [self-hosting guide](./docs/self-hosting.md).
+
 ## 0.1.0 — first public release (2026-10-12)
 
 Card Ledger is a self-hostable personal finance and subscription tracker: your cards,

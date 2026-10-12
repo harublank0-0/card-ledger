@@ -1,5 +1,11 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	chmodSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -13,7 +19,8 @@ const script = path.join(process.cwd(), "scripts", "docker-smoke.sh");
 
 const FAKE_DOCKER = `#!/bin/sh
 # Only \`compose ... config\` is simulated; every other command fails so the smoke script
-# stops right after the guard checks.
+# stops right after the guard checks. Every call is logged with the image compose was given.
+[ -n "\${FAKE_DOCKER_LOG:-}" ] && echo "[\${CARD_LEDGER_IMAGE:-}] $*" >> "$FAKE_DOCKER_LOG"
 case " $* " in
 *" config "*) ;;
 *) exit 1 ;;
@@ -90,5 +97,58 @@ describe("scripts/docker-smoke.sh: missing required variables", () => {
 		expect(status).not.toBe(0);
 		expect(output).toMatch(/FAIL: missing-variable error does not name \w+/);
 		expect(output).toContain("boom: something unrelated to the variables");
+	});
+});
+
+describe("scripts/docker-smoke.sh: a prebuilt image", () => {
+	// The publish workflow smoke-tests the exact image it is about to push. SMOKE_IMAGE names it:
+	// the stack must start from that image, without rebuilding it and without deleting it
+	// afterwards (it is the artefact being published).
+	function calls(env: Record<string, string>) {
+		const bin = mkdtempSync(path.join(tmpdir(), "fake-docker-"));
+		dirs.push(bin);
+		const log = path.join(bin, "calls.log");
+		const docker = path.join(bin, "docker");
+		writeFileSync(docker, FAKE_DOCKER);
+		chmodSync(docker, 0o755);
+		const result = spawnSync("sh", [script], {
+			encoding: "utf8",
+			timeout: 60_000,
+			env: {
+				...process.env,
+				PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
+				FAKE_DOCKER_LOG: log,
+				SMOKE_IMAGE: "",
+				...env,
+			},
+		});
+		const logged = readFileSync(log, "utf8").split("\n").filter(Boolean);
+		return { logged, output: `${result.stdout}\n${result.stderr}` };
+	}
+
+	it("builds an image of its own from the Dockerfile by default", () => {
+		const { logged } = calls({});
+		const up = logged.find((line) => / up -d/.test(line));
+		expect(up, "the compose up call").toBeDefined();
+		expect(up).toMatch(/^\[card-ledger-smoke:\d+\] /);
+		expect(up).toContain("--build");
+		expect(logged.some((line) => / image rm /.test(line))).toBe(true);
+	});
+
+	it("starts the given image without building it", () => {
+		const image = "ghcr.io/example/card-ledger:1.2.3";
+		const { logged } = calls({ SMOKE_IMAGE: image });
+		const up = logged.find((line) => / up -d/.test(line));
+		expect(up, "the compose up call").toBeDefined();
+		expect(up).toMatch(new RegExp(`^\\[${image.replace(/[.]/g, "\\.")}\\] `));
+		expect(up).toContain("--no-build");
+		expect(up).not.toMatch(/--build\b/);
+	});
+
+	it("never deletes the image it was given", () => {
+		const image = "ghcr.io/example/card-ledger:1.2.3";
+		const { logged } = calls({ SMOKE_IMAGE: image });
+		const removals = logged.filter((line) => / image rm /.test(line));
+		expect(removals).toEqual([]);
 	});
 });
