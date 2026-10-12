@@ -102,8 +102,14 @@ describe("what the release notes say about the audit and the date", () => {
 		expect(fixed).toBeGreaterThan(30);
 	});
 
-	it("quotes that number in the release notes", () => {
-		expect(changelog).toContain(`the audit lists ${fixed} fixed findings`);
+	it("never claims more fixed findings than the audit lists", () => {
+		// A release note states the count as it was at that release, so it must not be rewritten
+		// when later fixes add rows. It can only be at or below the table (the table only grows).
+		const quoted = [
+			...changelog.matchAll(/the audit lists (\d+) fixed findings/g),
+		].map((match) => Number(match[1]));
+		expect(quoted.length).toBeGreaterThan(0);
+		for (const count of quoted) expect(count).toBeLessThanOrEqual(fixed);
 	});
 
 	it("quotes it in the audit's own summary row", () => {
@@ -120,5 +126,25 @@ describe("what the release notes say about the audit and the date", () => {
 		const heading = changelog.match(/^## .*0\.1\.0.*$/m)?.[0] ?? "";
 		expect(heading).toMatch(/\d{4}-\d{2}-\d{2}/);
 		expect(heading).not.toMatch(/unreleased/i);
+	});
+});
+
+describe("the project records that 0.1.0 is published", () => {
+	it("says so in AGENTS.md, which tells a new session where the project stands", () => {
+		const agents = read("AGENTS.md");
+		expect(agents).toContain("v0.1.0");
+		expect(agents).toContain("protect-release-tags");
+		expect(agents).not.toMatch(/description and topics are still to be set/);
+	});
+
+	it("has a row for the release in the roadmap's progress table", () => {
+		expect(read("docs/roadmap.md")).toMatch(/^\| yes \| R-01 .*v0\.1\.0/m);
+	});
+
+	it("ticks the audit checklist items for the release and the tag ruleset", () => {
+		const audit = read("docs/pre-publication-audit.md");
+		expect(audit).toMatch(/- \[x\] .*first release.*v0\.1\.0/);
+		expect(audit).toMatch(/- \[x\] .*protect-release-tags/);
+		expect(audit).toMatch(/- \[x\] Set the repository description and topics/);
 	});
 });
