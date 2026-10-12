@@ -22,6 +22,15 @@ const baseConfig = {
 			rollupConfig: { external: [/^@sentry\//] },
 			// Validates the environment at boot and logs which variables are wrong.
 			plugins: ["./src/server/startup.ts"],
+			// Refuses request bodies over 1 MiB with 413 before anything parses them. It must be
+			// middleware: an error thrown from a Nitro `request` hook is only logged.
+			handlers: [
+				{
+					route: "/**",
+					handler: "./src/server/body-limit.ts",
+					middleware: true,
+				},
+			],
 		}),
 		tailwindcss(),
 		tanstackStart(),

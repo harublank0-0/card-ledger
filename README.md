@@ -81,6 +81,7 @@ Built with TanStack Start (React 19), PostgreSQL through Prisma, Better Auth, Ta
 | [Database](./docs/database.md) | tables and constraints |
 | [Data format](./docs/data-format.md) | the JSON and CSV export |
 | [Decision records](./docs/decisions/README.md) | why things are the way they are |
+| [Changelog](./CHANGELOG.md) | what each release contains, and its known limitations |
 | [Roadmap](./docs/roadmap.md) | what is built and what is next |
 | [Pre-publication audit](./docs/pre-publication-audit.md) | what was checked before publishing, and what was not |
 
