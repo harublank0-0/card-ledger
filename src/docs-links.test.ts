@@ -245,3 +245,61 @@ describe("sign-up policy and reminder email in the operator guide", () => {
 		expect(comment?.join("\n")).toMatch(/not verified|unverified/i);
 	});
 });
+
+describe("port 3000 and the health check in the operator guide", () => {
+	// A fresh install on a machine where another program already listens on port 3000 (on an
+	// address Docker does not treat as taken, such as IPv6) starts without any error, and
+	// `localhost` then reaches the other program. The guide must say how to tell, and the
+	// upgrade check must not report success because that program answered.
+	const guide = readFileSync(
+		path.join(root, "docs", "self-hosting.md"),
+		"utf8",
+	);
+	const readme = readFileSync(path.join(root, "README.md"), "utf8");
+	const section = (from: string, to: string) => {
+		const start = guide.indexOf(from);
+		const end = guide.indexOf(to, start + from.length);
+		expect(start, `${from} heading`).toBeGreaterThanOrEqual(0);
+		expect(end, `${to} heading`).toBeGreaterThan(start);
+		return guide.slice(start, end);
+	};
+
+	it("tells the reader how to recognise the app and what a wrong answer means", () => {
+		const install = section("## Install", "## First user");
+		expect(install).toContain("APP_PORT");
+		expect(install).toContain('{"status":"ok"}');
+		expect(install).toContain("/api/health");
+		expect(install).toMatch(/another program/i);
+		expect(install).toMatch(/IPv6|not always report|does not report/i);
+	});
+
+	it("asks Docker for the published address in the upgrade check, not a fixed port", () => {
+		const upgrade = section("## Upgrade", "## Health and logs");
+		expect(upgrade).toContain("docker compose port app 3000");
+		expect(upgrade).not.toMatch(/127\.0\.0\.1:3000\/api\/health/);
+	});
+
+	it("explains a different application on the port in the troubleshooting table", () => {
+		const start = guide.indexOf("## Troubleshooting");
+		expect(start, "Troubleshooting heading").toBeGreaterThanOrEqual(0);
+		const row = guide
+			.slice(start)
+			.split("\n")
+			.find(
+				(line) =>
+					line.startsWith("|") && /different (application|app)/i.test(line),
+			);
+		expect(row, "a row about another application answering").toBeDefined();
+		expect(row).toContain("APP_PORT");
+		expect(row).toContain("/api/health");
+	});
+
+	it("points the README's first-run line at the same remedy", () => {
+		const line = readme
+			.split("\n")
+			.find((entry) => entry.startsWith("Open <http://localhost:3000>"));
+		expect(line, "README open-the-app line").toBeDefined();
+		expect(line).toContain("APP_PORT");
+		expect(line).toContain("self-hosting");
+	});
+});

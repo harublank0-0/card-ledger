@@ -53,7 +53,7 @@ Edit `.env` and set the two required secrets (`openssl rand -hex 24` for `POSTGR
 docker compose up -d --build
 ```
 
-Open <http://localhost:3000>. The first account you create becomes the owner and registration then closes. The app listens on `127.0.0.1` only; to use it from other devices put HTTPS in front of it, as described in the [self-hosting guide](./docs/self-hosting.md), which also covers email reminders, upgrades and troubleshooting. Set up [backups](./docs/backup-restore.md) before you rely on it.
+Open <http://localhost:3000> (if another program already uses port 3000, set `APP_PORT` in `.env`, as the [self-hosting guide](./docs/self-hosting.md) explains). The first account you create becomes the owner and registration then closes. The app listens on `127.0.0.1` only; to use it from other devices put HTTPS in front of it, as described in the [self-hosting guide](./docs/self-hosting.md), which also covers email reminders, upgrades and troubleshooting. Set up [backups](./docs/backup-restore.md) before you rely on it.
 
 ## Development
 
