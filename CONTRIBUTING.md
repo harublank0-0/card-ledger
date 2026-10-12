@@ -114,6 +114,10 @@ Do not add a dependency without saying why in the pull request. A new dependency
 - Every query is scoped to the signed-in user, and authorization is enforced on the server (not only in route guards).
 - Money is integer minor units plus a currency code, never floats and never summed across currencies.
 
+## Releasing (maintainers)
+
+The order for cutting a release, and the mistakes it is built to avoid, is in [docs/releasing.md](./docs/releasing.md).
+
 ## Reporting security issues
 
 Please do not open a public issue for vulnerabilities. Follow [SECURITY.md](./SECURITY.md).
