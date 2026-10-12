@@ -82,3 +82,43 @@ describe("CHANGELOG.md", () => {
 		expect(open).not.toMatch(/request body/i);
 	});
 });
+
+describe("what the release notes say about the audit and the date", () => {
+	// The notes quote how many findings the audit fixed. That number is a count of the rows in the
+	// audit's Fixed table, so it is computed, not remembered: a new fix without a new number (or
+	// the other way round) fails here instead of shipping a stale claim.
+	const audit = read("docs/pre-publication-audit.md");
+	const fixedTable = audit.slice(
+		audit.indexOf("**Fixed:**"),
+		audit.indexOf("**Checked, no findings:**"),
+	);
+	const fixed = fixedTable
+		.split("\n")
+		.filter(
+			(line) => line.startsWith("|") && /`[0-9a-f]{7}`/.test(line),
+		).length;
+
+	it("counts the fixed findings in the audit's table", () => {
+		expect(fixed).toBeGreaterThan(30);
+	});
+
+	it("quotes that number in the release notes", () => {
+		expect(changelog).toContain(`the audit lists ${fixed} fixed findings`);
+	});
+
+	it("quotes it in the audit's own summary row", () => {
+		expect(audit).toContain(`done: ${fixed} findings fixed`);
+	});
+
+	it("quotes it in the roadmap's audit row", () => {
+		expect(read("docs/roadmap.md")).toContain(
+			`${fixed} findings fixed with tests`,
+		);
+	});
+
+	it("dates the 0.1.0 release", () => {
+		const heading = changelog.match(/^## .*0\.1\.0.*$/m)?.[0] ?? "";
+		expect(heading).toMatch(/\d{4}-\d{2}-\d{2}/);
+		expect(heading).not.toMatch(/unreleased/i);
+	});
+});

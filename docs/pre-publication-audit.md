@@ -17,7 +17,7 @@ Completed 2026-10-10 against commit `a16e2df` (28 commits, 221 tracked files). I
 | `LICENSE` is the unmodified official AGPL-3.0 text | yes |
 | Known vulnerabilities in production dependencies | 4 high advisories, not exploitable here, awaiting an upstream Prisma release |
 | Starter leftovers | removed or corrected |
-| Code and security review (model-assisted, not an independent audit) | done: 18 findings fixed, remaining items listed in section 8 |
+| Code and security review (model-assisted, not an independent audit) | done: 40 findings fixed, one item left open (section 8) |
 
 ## 1. Secrets and real data
 

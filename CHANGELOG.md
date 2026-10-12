@@ -3,7 +3,7 @@
 All notable changes are listed here, newest first. Card Ledger is pre-1.0: anything may change
 between 0.x releases, and every release says what to do when upgrading.
 
-## 0.1.0 — first public release (unreleased)
+## 0.1.0 — first public release (2026-10-12)
 
 Card Ledger is a self-hostable personal finance and subscription tracker: your cards,
 subscriptions, spending, card statements and due dates in one place, with email reminders, on a
@@ -71,7 +71,7 @@ so take a backup first.
   through a real browser: sign-up, the main pages, sign-out and sign-in, then backup, restore test
   and the upgrade steps.
 - A model-assisted code and security review was run before publication and its findings were fixed
-  with tests (the audit lists 39 fixed findings; one item remains open and is listed below). It is
+  with tests (the audit lists 40 fixed findings; one item remains open and is listed below). It is
   **not** an independent audit. What was checked, and what was not, is recorded in
   [docs/pre-publication-audit.md](./docs/pre-publication-audit.md).
 
