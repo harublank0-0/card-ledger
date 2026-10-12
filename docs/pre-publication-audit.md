@@ -173,6 +173,10 @@ These are repository settings and cannot be done from the repository itself.
 - [x] Enable **private vulnerability reporting** (Settings, Code security): `SECURITY.md` and the issue chooser point at it. On since 2026-10-11 (the API reports `enabled: true`); it was off when the repository first went public.
 - [x] Protect `main`: require pull requests and the checks **Lint, types, tests, build**, **DCO sign-off** and **Docker smoke test** (GitHub lists a required check by its job name; each appears in the picker once it has run on a pull request, which PR #1 did). Done as the ruleset `protect-main`, read back through the API on 2026-10-11: active on the default branch, no bypass actors (the maintainer is bound by it too), deletions and force pushes blocked, a pull request required (0 approvals, as the only maintainer), and the three checks required from the GitHub Actions app.
 - [x] Create the `bug` and `enhancement` labels the issue forms use (they exist: GitHub's default labels).
-- [ ] Set the repository description and topics (for example `personal-finance`, `self-hosted`, `subscription-tracker`). None set as of 2026-10-11.
+- [x] Set the repository description and topics (done 2026-10-12: twelve topics, from `personal-finance` to `tanstack-start`).
 - [x] After the first run, confirm all three CI jobs and the backup drill are green, and fix whatever the first real run reveals. `verify`, `docker`, `audit` and (on pull request #1) `dco` are green, and the backup drill passed when started on demand (2026-10-11).
+- [x] Publish the first release: `v0.1.0` as a GitHub pre-release on 2026-10-12, the tag on the merge of pull request #6, with the 0.1.0 section of `CHANGELOG.md` as its body (links pinned to the tag; the procedure is in [`releasing.md`](./releasing.md)).
+- [x] Protect release tags: the tag ruleset `protect-release-tags` (pattern `v*`, deletion and updates restricted), active.
+- [ ] Delete the merged branches on GitHub and turn on "Automatically delete head branches".
+- [ ] Look at the README, the issue forms and the Security tab as a signed-out visitor; nobody has confirmed how they render.
 - [ ] Optionally enable Dependabot alerts for the Prisma advisories above.
