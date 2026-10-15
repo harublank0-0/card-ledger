@@ -355,13 +355,14 @@ describe("the prebuilt image in the operator documents", () => {
 		);
 	});
 
-	it("lists the image in the newest changelog section (Unreleased, or the release that ships it)", () => {
+	// The release that first shipped the image announces it. (This used to look at the newest
+	// section, which stopped holding once later work got its own "Unreleased" section.)
+	it("lists the image in the changelog section of 0.1.1, the release that first shipped it", () => {
 		const changelog = readFileSync(path.join(root, "CHANGELOG.md"), "utf8");
-		const top = changelog.split(/^## /m)[1] ?? "";
-		expect(top.split("\n")[0]).toMatch(
-			/^(Unreleased|\d+\.\d+\.\d+ — .*\d{4}-\d{2}-\d{2})/,
-		);
-		expect(top).toMatch(/prebuilt image|container image/i);
-		expect(top).toContain("ghcr.io/harublank0-0/card-ledger");
+		const shipped =
+			changelog.split(/^## /m).find((s) => s.startsWith("0.1.1 — ")) ?? "";
+		expect(shipped.split("\n")[0]).toMatch(/^0\.1\.1 — .*\d{4}-\d{2}-\d{2}/);
+		expect(shipped).toMatch(/prebuilt image|container image/i);
+		expect(shipped).toContain("ghcr.io/harublank0-0/card-ledger");
 	});
 });

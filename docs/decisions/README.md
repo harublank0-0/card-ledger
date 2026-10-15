@@ -13,3 +13,4 @@ Short records of significant decisions. Status values: Proposed, Accepted, Super
 - [0009 CI: minimal, pinned and secret-free](./0009-ci-minimal-pinned-secret-free.md)
 - [0010 pnpm and a pinned toolchain](./0010-pnpm-and-pinned-toolchain.md)
 - [0011 A published container image](./0011-published-container-image.md)
+- [0012 Visual design system](./0012-visual-design-system.md)

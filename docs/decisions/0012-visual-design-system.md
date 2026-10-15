@@ -1,0 +1,27 @@
+# 0012 — Visual design system
+
+Status: Proposed
+
+## Context
+The first interface was the scaffold's zinc theme with leftover template styles (gradients, a teal "sea" palette nothing used, a serif display face) and every block in its own shadowed card. It worked, but lists were stacks of cards instead of tables, amounts did not line up, statuses relied on colour alone in places, and there was no shared page structure, so each screen solved headings, empty states and errors differently. The maintainer asked for a calm, precise financial workspace with the ledger as the focal point and made the visual decisions a delegated choice.
+
+## Decision
+- **Palette as tokens in `src/styles.css`.** Canvas `#F7F8FA`, surface `#FFFFFF`, ink `#18212F`, slate `#596579` for secondary text, hairline `#E2E7ED`, and emerald `#047857` as the only accent. Every text pair was measured: ink on canvas 15.2:1, slate on surface 5.9:1 (5.3:1 on the subtle grey), emerald on surface and white on emerald 5.5:1, red `#B42318` 6.6:1, amber `#92400E` on its tint 6.8:1. The contrast table sits next to the tokens.
+- **Colour has one meaning each.** Emerald is for the primary action and the selected place (navigation, segmented filters); red only for errors and money that is late; amber only for warnings (a statement due within 7 days, a cancel-by date within 7 days, reminders paused). Status badges always carry words, and coloured tones add an icon (`StatusBadge`, pinned by a test).
+- **System fonts, no web font.** A web font would mean either a request to a font CDN on every page load, which the no-external-calls principle rules out, or a new self-hosted dependency for little gain. The stack (`ui-sans-serif, system-ui, …, Segoe UI Variable, Roboto, Noto Sans`) gives each platform its own well-hinted face. Amounts, dates and counts use tabular figures, and numeric columns are right-aligned.
+- **One page structure.** A compact sidebar on wide screens and a top bar with a slide-in sheet below 1024px (`AppShell`); every page opens with `PageHeader` (title, one line on what the page is for, the main action on the right). Lists are tables in a single panel with their filters as a toolbar on top (`Panel`, `components/ui/table.tsx`); summary figures share one panel split by hairlines (`StatGroup`) instead of a card each, and appear only where the data already exists. Forms are panels with an action bar (`FormPanel`, `SubmitButton`). Radii: 12px for panels, 8px for controls; shadows are a 1px hint, larger only for menus, dialogs and toasts.
+- **Choosing a surface by amount of content.** Adding and editing stay on their own pages (the forms are long, and the existing navigation and tests rely on those URLs). Deleting a transaction, statement or payment asks in a small confirmation dialog (`ConfirmDialog`), replacing the inline two-step buttons. Navigation on phones is a sheet. Row actions on the cards list are a menu.
+- **Feedback.** Success is a short toast (`notify()` in `src/lib/toast.ts`, no dependency; messages are generic, like page titles, never amounts or names). Failures stay next to the control that failed (`ActionError`, `role="alert"`), still produced by `useAction`. While the next screen loads, the shell stays, a thin progress bar runs along the top of the content, the table being refiltered dims, and a page slower than 600ms shows an outline of a page (`RoutePending`) inside the shell.
+- **Motion.** Only motion that answers an action: buttons shift 1px when pressed, menus and selects fade and move 4px in 150ms, dialogs fade and scale from 97%, the phone menu slides 2rem. `prefers-reduced-motion: reduce` turns animations and transitions off globally (pinned by a test). Keyboard focus is a solid 2px emerald outline on links and buttons and an emerald border on fields; there is a skip link to the content.
+- **No new dependencies.** The sheet, alert dialog and dropdown menu were added with the shadcn CLI and use the `radix-ui` and `tw-animate-css` packages already installed.
+
+## Alternatives
+- A web font such as Inter, self-hosted through an npm package: rejected for now (see above); revisit if a cross-platform look ever matters more than a smaller, request-free page.
+- Keep cards for list rows and add the missing columns: rejected; a table is denser, aligns amounts and is what a ledger is.
+- Dialogs or side sheets for adding and editing records: rejected for the long forms (transactions, subscriptions, statements); they would lose their URLs and the page-level layout the detail pages need.
+- Emerald for success badges and refunds as well as actions: refunds keep the existing green amount, but a "Paid" badge uses the separate success tint and an icon, so the accent does not turn into decoration.
+
+## Consequences
+- New screens should be built from these components; a block that is not a table, a form or a group of figures usually does not need a panel.
+- The dark palette in `styles.css` is kept in step with the light one but is not switched on anywhere; turning it on is a separate decision (it needs its own contrast check).
+- The README screenshots must be regenerated when the interface changes visibly.

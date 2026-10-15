@@ -28,7 +28,7 @@ Non-goals for the MVP: organizations/workspaces, multi-tenant database infrastru
 | DB | Prisma 7.10, `prisma-client` generator → `src/generated/prisma`, `@prisma/adapter-pg` | `src/db.ts`, `src/database-url.ts`, `prisma.config.ts` |
 | Auth | Better Auth 1.7 (email/password, `tanstackStartCookies`) | **No database adapter yet** — users/sessions are not persisted. Route at `src/routes/api/auth/$.ts`; client at `src/lib/auth-client.ts` |
 | Env validation | `@t3-oss/env-core` in `src/env.ts` | Only `SERVER_URL`, `VITE_APP_TITLE` today; DB/auth variables not yet validated |
-| UI | Tailwind 4, shadcn/ui (button, input, label, select, slider, switch, textarea) | Alias `#/*` → `src/*` |
+| UI | Tailwind 4, shadcn/ui (alert-dialog, button, dropdown-menu, input, label, select, sheet, slider, switch, textarea), shared page components in `src/components` | Alias `#/*` → `src/*`; design rules in [ADR 0012](./decisions/0012-visual-design-system.md) |
 | Forms / data | TanStack Form, TanStack Query (SSR-integrated in `src/router.tsx`) | |
 | Lint/format | Biome (tabs, double quotes) | No ESLint/Prettier |
 | MCP | `/mcp` route + demo `addTodo` tool | **Unauthenticated**, writes `mcp-todos.json` to disk |
