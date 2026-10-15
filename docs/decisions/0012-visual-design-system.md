@@ -1,6 +1,6 @@
 # 0012 — Visual design system
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 The first interface was the scaffold's zinc theme with leftover template styles (gradients, a teal "sea" palette nothing used, a serif display face) and every block in its own shadowed card. It worked, but lists were stacks of cards instead of tables, amounts did not line up, statuses relied on colour alone in places, and there was no shared page structure, so each screen solved headings, empty states and errors differently. The maintainer asked for a calm, precise financial workspace with the ledger as the focal point and made the visual decisions a delegated choice.
