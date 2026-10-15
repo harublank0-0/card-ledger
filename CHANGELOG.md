@@ -7,9 +7,11 @@ between 0.x releases, and every release says what to do when upgrading.
 
 ### Changed
 
-- **A redesigned interface.** A compact sidebar (a slide-in menu on phones), a clear heading with
+- **A redesigned interface.** A dark sidebar (a slide-in menu on phones), a clear heading with
   the main action on every page, and the ledger as a real table: amounts right-aligned in tabular
-  figures, filters as a toolbar above it, the whole row clickable. Summary figures share one panel
+  figures with the currency code set small beside them, filters as a toolbar above it, the whole
+  row clickable. Large headline figures, date tiles on the dashboard's lists, and cards shown as
+  card faces. Summary figures share one panel
   instead of a card each. Statuses always carry words, and coloured ones an icon; red is kept for
   errors and late payments and amber for warnings (a statement or cancel-by date within 7 days).
   Deleting a transaction, statement or payment now asks in a small dialog, saving shows a short
