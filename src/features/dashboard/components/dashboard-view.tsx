@@ -40,7 +40,7 @@ const MAX_UPCOMING = 10;
 const CANCEL_BY_WARNING_DAYS = 7;
 
 const linkClass =
-	"font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+	"font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-[color,background-color,border-color,text-decoration-color] hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 function EventLink({
 	event,
@@ -292,7 +292,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
 					</Stat>
 				</StatGroup>
 
-				<div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+				<div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
 					<div className="grid gap-6">
 						<Panel aria-labelledby="recent-title">
 							<PanelHeader
@@ -313,7 +313,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
 									{data.recent.map((t) => (
 										<li
 											key={t.id}
-											className="relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-background/80 sm:gap-4 sm:px-5"
+											className="relative flex items-start gap-3 px-4 py-3 transition-[color,background-color,border-color,text-decoration-color] hover:bg-background/80 sm:gap-4 sm:px-5"
 										>
 											<span className="hidden w-[5.5rem] shrink-0 pt-px text-sm whitespace-nowrap text-muted-foreground tabular-nums sm:block">
 												{t.occurredOn}
@@ -374,7 +374,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
 										return (
 											<li
 												key={`${event.kind}-${event.target.id}-${event.date}`}
-												className="relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-background/80 sm:px-5"
+												className="relative flex items-start gap-3 px-4 py-3 transition-[color,background-color,border-color,text-decoration-color] hover:bg-background/80 sm:px-5"
 											>
 												<span
 													className={cn(

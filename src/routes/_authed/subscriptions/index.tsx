@@ -174,14 +174,19 @@ function Subscriptions() {
 									const next = s.nextRenewal ? (
 										<>
 											Renews{" "}
-											<span className="tabular-nums">{s.nextRenewal}</span>{" "}
-											<span className="text-muted-foreground">
+											<span className="whitespace-nowrap tabular-nums">
+												{s.nextRenewal}
+											</span>{" "}
+											<span className="whitespace-nowrap text-muted-foreground">
 												({relativeDays(diffInDays(today, s.nextRenewal))})
 											</span>
 										</>
 									) : s.expiresOn ? (
 										<>
-											Ends <span className="tabular-nums">{s.expiresOn}</span>
+											Ends{" "}
+											<span className="whitespace-nowrap tabular-nums">
+												{s.expiresOn}
+											</span>
 										</>
 									) : null;
 									return (
@@ -235,7 +240,7 @@ function Subscriptions() {
 														</p>
 													)}
 											</TableCell>
-											<TableCell className="hidden whitespace-nowrap sm:table-cell">
+											<TableCell className="hidden min-w-36 sm:table-cell xl:whitespace-nowrap">
 												{next ?? (
 													<span className="text-muted-foreground">—</span>
 												)}
@@ -255,7 +260,7 @@ function Subscriptions() {
 														search={{ subscriptionId: s.id }}
 													>
 														<ReceiptText aria-hidden="true" />
-														<span className="sr-only md:not-sr-only md:whitespace-nowrap">
+														<span className="sr-only xl:not-sr-only xl:whitespace-nowrap">
 															Record charge
 														</span>
 														<span className="sr-only">for {s.name}</span>

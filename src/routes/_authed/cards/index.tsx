@@ -127,10 +127,10 @@ function Cards() {
 									<TableHead numeric className="hidden md:table-cell">
 										Credit limit
 									</TableHead>
-									<TableHead className="hidden md:table-cell">
+									<TableHead className="hidden xl:table-cell">
 										Statement
 									</TableHead>
-									<TableHead className="hidden md:table-cell">
+									<TableHead className="hidden xl:table-cell">
 										Payment due
 									</TableHead>
 									<TableHead className="w-0">
@@ -141,7 +141,7 @@ function Cards() {
 							<TableBody>
 								{cards.map((card) => (
 									<TableRow key={card.id} interactive>
-										<TableCell className="w-full max-w-0 md:max-w-none">
+										<TableCell className="w-full max-w-0 xl:max-w-none">
 											<div className="flex items-center gap-3">
 												<span className="hidden size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground sm:flex">
 													<CreditCard aria-hidden="true" className="size-4" />
@@ -186,10 +186,10 @@ function Cards() {
 														card.currency as CurrencyCode,
 													)}
 										</TableCell>
-										<TableCell className="hidden align-middle whitespace-nowrap text-muted-foreground md:table-cell">
+										<TableCell className="hidden align-middle whitespace-nowrap text-muted-foreground xl:table-cell">
 											{dayLabel(card.statementDay)}
 										</TableCell>
-										<TableCell className="hidden align-middle whitespace-nowrap text-muted-foreground md:table-cell">
+										<TableCell className="hidden align-middle whitespace-nowrap text-muted-foreground xl:table-cell">
 											{dayLabel(card.paymentDueDay)}
 										</TableCell>
 										<TableCell className="py-2 pl-1 align-middle">

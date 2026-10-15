@@ -9,7 +9,7 @@ export function BackLink({ to, children }: { to: ListPage; children: string }) {
 	return (
 		<Link
 			to={to}
-			className="-ml-1 mb-2 inline-flex items-center gap-0.5 rounded-md px-1 py-0.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+			className="-ml-1 mb-2 inline-flex items-center gap-0.5 rounded-md px-1 py-0.5 text-sm text-muted-foreground transition-[color,background-color,border-color,text-decoration-color] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 		>
 			<ChevronLeft aria-hidden="true" className="size-4" />
 			{children}

@@ -14,7 +14,7 @@ const CSV_LABELS: Record<CsvEntity, string> = {
 };
 
 const downloadClass =
-	"inline-flex items-center gap-2 rounded-md font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+	"inline-flex items-center gap-2 rounded-md font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-[color,background-color,border-color,text-decoration-color] hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 /** Download links. Plain anchors: the browser saves the file; nothing is cached or tracked. */
 export function YourData() {

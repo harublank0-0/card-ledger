@@ -179,10 +179,10 @@ function Statements() {
 											Period
 										</TableHead>
 										<TableHead className="hidden sm:table-cell">Due</TableHead>
-										<TableHead className="hidden lg:table-cell">
+										<TableHead className="hidden xl:table-cell">
 											Status
 										</TableHead>
-										<TableHead numeric className="hidden lg:table-cell">
+										<TableHead numeric className="hidden xl:table-cell">
 											Minimum
 										</TableHead>
 										<TableHead numeric>Owed</TableHead>
@@ -191,7 +191,7 @@ function Statements() {
 								<TableBody>
 									{result.statements.map((s) => (
 										<TableRow key={s.id} interactive>
-											<TableCell className="w-full max-w-0 lg:max-w-none">
+											<TableCell className="w-full max-w-0 xl:max-w-none">
 												<Link
 													to="/statements/$statementId"
 													params={{ statementId: s.id }}
@@ -202,7 +202,7 @@ function Statements() {
 														•••• {s.card.last4}
 													</span>
 												</Link>
-												<div className="mt-1 lg:hidden">
+												<div className="mt-1 xl:hidden">
 													<StatementStatusBadge statement={s} />
 												</div>
 												<p className="mt-1 text-xs text-muted-foreground tabular-nums sm:hidden">
@@ -218,12 +218,12 @@ function Statements() {
 											<TableCell className="hidden whitespace-nowrap tabular-nums sm:table-cell">
 												{s.dueDate}
 											</TableCell>
-											<TableCell className="hidden lg:table-cell">
+											<TableCell className="hidden xl:table-cell">
 												<StatementStatusBadge statement={s} />
 											</TableCell>
 											<TableCell
 												numeric
-												className="hidden font-normal text-muted-foreground lg:table-cell"
+												className="hidden font-normal text-muted-foreground xl:table-cell"
 											>
 												{s.minimumDueMinor === null
 													? "—"

@@ -88,7 +88,7 @@ function NewStatement() {
 									<Link
 										to="/statements/new"
 										search={{ cardId: c.id }}
-										className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-background/80 focus-visible:bg-background/80 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring sm:px-5"
+										className="group flex items-center gap-3 px-4 py-3.5 transition-[color,background-color,border-color,text-decoration-color] hover:bg-background/80 focus-visible:bg-background/80 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring sm:px-5"
 									>
 										<span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
 											<CreditCard aria-hidden="true" className="size-4" />

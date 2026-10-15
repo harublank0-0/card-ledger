@@ -151,7 +151,8 @@ function StatementDetail() {
 													>
 														<Trash2 aria-hidden="true" />
 														<span className="sr-only">
-															Delete the payment of {p.paidOn}
+															Delete the payment of {money(p.amountMinor)} on{" "}
+															{p.paidOn}
 														</span>
 													</Button>
 												}

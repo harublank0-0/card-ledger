@@ -52,7 +52,7 @@ const SECONDARY: NavItem[] = [
 ];
 
 const navLinkClass =
-	"group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[status=active]:bg-sidebar-accent data-[status=active]:text-sidebar-accent-foreground";
+	"group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-[color,background-color,border-color,text-decoration-color] duration-150 hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[status=active]:bg-sidebar-accent data-[status=active]:text-sidebar-accent-foreground";
 
 function NavLinks({
 	items,
@@ -76,7 +76,7 @@ function NavLinks({
 					>
 						<Icon
 							aria-hidden="true"
-							className="size-4 text-muted-foreground transition-colors group-hover:text-foreground group-data-[status=active]:text-primary"
+							className="size-4 text-muted-foreground transition-[color,background-color,border-color,text-decoration-color] group-hover:text-foreground group-data-[status=active]:text-primary"
 						/>
 						{label}
 					</Link>

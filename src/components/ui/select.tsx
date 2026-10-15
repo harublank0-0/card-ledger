@@ -37,7 +37,7 @@ function SelectTrigger({
 			data-size={size}
 			className={cn(
 				fieldClasses,
-				"flex w-fit items-center justify-between gap-2 px-3 py-2 text-sm whitespace-nowrap data-[placeholder]:text-placeholder data-[size=default]:h-9 data-[size=sm]:h-8 data-[state=open]:border-ring data-[state=open]:ring-[3px] data-[state=open]:ring-ring/20 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
+				"flex w-fit min-w-0 items-center justify-between gap-2 px-3 py-2 text-sm whitespace-nowrap data-[placeholder]:text-placeholder data-[size=default]:h-9 data-[size=sm]:h-8 data-[state=open]:border-ring data-[state=open]:ring-[3px] data-[state=open]:ring-ring/20 *:data-[slot=select-value]:block *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:truncate *:data-[slot=select-value]:text-left [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
 				className,
 			)}
 			{...props}

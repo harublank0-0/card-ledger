@@ -65,7 +65,7 @@ function TableRow({
 		<tr
 			data-slot="table-row"
 			className={cn(
-				"border-b transition-colors duration-100",
+				"border-b transition-[color,background-color,border-color,text-decoration-color] duration-100",
 				interactive &&
 					"relative hover:bg-background/80 has-[a:focus-visible]:bg-background/80",
 				className,

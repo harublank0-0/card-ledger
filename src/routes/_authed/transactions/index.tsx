@@ -120,11 +120,11 @@ function Transactions() {
 
 				<Panel aria-label="Ledger">
 					<form
-						className="grid grid-cols-2 gap-3 border-b bg-background/50 px-4 py-3.5 sm:px-5 lg:grid-cols-[repeat(5,minmax(0,1fr))]"
+						className="grid grid-cols-2 gap-3 border-b bg-background/50 px-4 py-3.5 sm:px-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)]"
 						onSubmit={(e) => e.preventDefault()}
 						aria-label="Filters"
 					>
-						<div className="grid gap-1.5">
+						<div className="grid min-w-0 gap-1.5">
 							<label htmlFor="filter-from" className={filterLabelClass}>
 								From
 							</label>
@@ -134,7 +134,7 @@ function Transactions() {
 								onChange={(from) => setFilter({ from })}
 							/>
 						</div>
-						<div className="grid gap-1.5">
+						<div className="grid min-w-0 gap-1.5">
 							<label htmlFor="filter-to" className={filterLabelClass}>
 								To
 							</label>
@@ -144,7 +144,7 @@ function Transactions() {
 								onChange={(to) => setFilter({ to })}
 							/>
 						</div>
-						<div className="grid gap-1.5">
+						<div className="grid min-w-0 gap-1.5">
 							<span id="filter-card" className={filterLabelClass}>
 								Card
 							</span>
@@ -169,7 +169,7 @@ function Transactions() {
 								</SelectContent>
 							</Select>
 						</div>
-						<div className="grid gap-1.5">
+						<div className="grid min-w-0 gap-1.5">
 							<span id="filter-category" className={filterLabelClass}>
 								Category
 							</span>
@@ -197,7 +197,7 @@ function Transactions() {
 								</SelectContent>
 							</Select>
 						</div>
-						<div className="col-span-2 grid gap-1.5 lg:col-span-1">
+						<div className="col-span-2 grid min-w-0 gap-1.5 xl:col-span-1">
 							<span id="filter-type" className={filterLabelClass}>
 								Type
 							</span>
@@ -218,7 +218,7 @@ function Transactions() {
 							</Select>
 						</div>
 						{hasFilters && (
-							<div className="col-span-2 flex items-center justify-between gap-3 lg:col-span-5">
+							<div className="col-span-2 flex items-center justify-between gap-3 xl:col-span-5">
 								<p className="text-xs text-muted-foreground">
 									{result.total === 1
 										? "1 transaction matches"

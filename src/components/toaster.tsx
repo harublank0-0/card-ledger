@@ -35,7 +35,7 @@ export function Toaster() {
 						<button
 							type="button"
 							onClick={() => dismissToast(toast.id)}
-							className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+							className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-[color,background-color,border-color,text-decoration-color] hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 						>
 							<X aria-hidden="true" className="size-3.5" />
 							<span className="sr-only">Dismiss</span>
