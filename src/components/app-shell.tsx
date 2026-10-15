@@ -52,7 +52,7 @@ const SECONDARY: NavItem[] = [
 ];
 
 const navLinkClass =
-	"group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-muted-foreground transition-[color,background-color,border-color,text-decoration-color] duration-150 hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[status=active]:bg-sidebar-accent data-[status=active]:text-sidebar-accent-foreground";
+	"group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium text-sidebar-muted transition-[color,background-color,border-color,text-decoration-color] duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-ring data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground data-[status=active]:shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]";
 
 function NavLinks({
 	items,
@@ -76,7 +76,7 @@ function NavLinks({
 					>
 						<Icon
 							aria-hidden="true"
-							className="size-4 text-muted-foreground transition-[color,background-color,border-color,text-decoration-color] group-hover:text-foreground group-data-[status=active]:text-primary"
+							className="size-4 text-sidebar-subtle transition-[color,background-color,border-color,text-decoration-color] group-hover:text-sidebar-accent-foreground group-data-[status=active]:text-sidebar-primary-foreground"
 						/>
 						{label}
 					</Link>
@@ -90,7 +90,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 	return (
 		<nav aria-label="Main" className="grid gap-4">
 			<NavLinks items={PRIMARY} onNavigate={onNavigate} />
-			<div className="border-t pt-4">
+			<div className="border-t border-sidebar-border pt-4">
 				<NavLinks items={SECONDARY} onNavigate={onNavigate} />
 			</div>
 		</nav>
@@ -99,17 +99,20 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
 function Account({ email }: { email: string }) {
 	return (
-		<div className="grid gap-1 border-t pt-3">
+		<div className="grid gap-1 border-t border-sidebar-border pt-3">
 			<div className="px-2.5 pb-1">
-				<p className="text-xs text-muted-foreground">Signed in as</p>
-				<p className="truncate text-sm font-medium" title={email}>
+				<p className="text-xs text-sidebar-subtle">Signed in as</p>
+				<p
+					className="truncate text-sm font-medium text-sidebar-foreground"
+					title={email}
+				>
 					{email}
 				</p>
 			</div>
 			<Button
 				variant="ghost"
 				size="sm"
-				className="justify-start gap-3 px-2.5"
+				className="justify-start gap-3 px-2.5 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring"
 				onClick={async () => {
 					await authClient.signOut();
 					reloadTo("/sign-in");
@@ -164,7 +167,7 @@ export function AppShell({
 				Skip to content
 			</a>
 
-			<aside className="hidden border-r bg-sidebar lg:block">
+			<aside className="hidden bg-sidebar lg:block">
 				<div className="sticky top-0 flex h-screen flex-col gap-6 overflow-y-auto px-3 py-5">
 					<div className="px-1.5">
 						<Brand />
@@ -177,16 +180,23 @@ export function AppShell({
 			</aside>
 
 			<div className="min-w-0">
-				<header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card/90 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/80 sm:px-6 lg:hidden">
+				<header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-sidebar px-4 sm:px-6 lg:hidden">
 					<Brand />
 					<Sheet open={menuOpen} onOpenChange={setMenuOpen}>
 						<SheetTrigger asChild>
-							<Button variant="ghost" size="icon" className="-mr-2">
+							<Button
+								variant="ghost"
+								size="icon"
+								className="-mr-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-sidebar-ring"
+							>
 								<Menu aria-hidden="true" className="size-5" />
 								<span className="sr-only">Open menu</span>
 							</Button>
 						</SheetTrigger>
-						<SheetContent side="left" className="w-72 gap-6 px-3 py-5">
+						<SheetContent
+							side="left"
+							className="w-72 gap-6 border-sidebar-border bg-sidebar px-3 py-5 [&_[data-slot=sheet-close]]:text-sidebar-muted [&_[data-slot=sheet-close]:hover]:bg-sidebar-accent [&_[data-slot=sheet-close]:hover]:text-sidebar-accent-foreground"
+						>
 							<SheetTitle className="sr-only">Menu</SheetTitle>
 							<SheetDescription className="sr-only">
 								Go to another part of Card Ledger.

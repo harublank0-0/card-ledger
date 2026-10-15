@@ -3,6 +3,7 @@ import { cn } from "cn";
 import { Plus, ReceiptText, Repeat, SearchX, Tags } from "lucide-react";
 
 import { EmptyState, StatusBadge } from "#/components/feedback";
+import { Money } from "#/components/money";
 import { PageHeader } from "#/components/page-header";
 import { Figure, Panel, Stat, StatGroup } from "#/components/panel";
 import { Button } from "#/components/ui/button";
@@ -107,7 +108,9 @@ function Transactions() {
 								key={t.currency}
 								label={`${t.currency}, ${hasFilters ? "matching the filters" : "all time"}`}
 							>
-								<Figure>{money(t.netMinor, t.currency)}</Figure>
+								<Figure>
+									<Money minor={t.netMinor} currency={t.currency} figure />
+								</Figure>
 								<p className="text-xs text-muted-foreground tabular-nums">
 									Spent {money(t.spentMinor, t.currency)}
 									{t.refundedMinor > 0 &&
@@ -344,7 +347,10 @@ function Transactions() {
 												numeric
 												className={cn(t.type === "REFUND" && "text-success")}
 											>
-												{money(signedAmount(t.type, t.amountMinor), t.currency)}
+												<Money
+													minor={signedAmount(t.type, t.amountMinor)}
+													currency={t.currency}
+												/>
 											</TableCell>
 										</TableRow>
 									))}

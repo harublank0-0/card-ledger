@@ -11,7 +11,9 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { DateTile } from "#/components/date-tile";
 import { StatusBadge } from "#/components/feedback";
+import { Money } from "#/components/money";
 import { PageHeader } from "#/components/page-header";
 import {
 	Figure,
@@ -41,6 +43,10 @@ const CANCEL_BY_WARNING_DAYS = 7;
 
 const linkClass =
 	"font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-[color,background-color,border-color,text-decoration-color] hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
+/** Covers the whole list row, so the row is the click target; the outline marks keyboard focus. */
+const stretchedLinkClass =
+	"outline-none after:absolute after:inset-0 hover:underline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring";
 
 function EventLink({
 	event,
@@ -100,12 +106,6 @@ function eventTone(event: UpcomingEvent, tone: "danger" | "neutral") {
 		return "warning";
 	return "neutral";
 }
-
-const ICON_TONE = {
-	danger: "bg-destructive-soft text-destructive",
-	warning: "bg-warning-soft text-warning",
-	neutral: "bg-secondary text-muted-foreground",
-} as const;
 
 function MonthSwitcher({ data }: { data: DashboardData }) {
 	return (
@@ -216,7 +216,9 @@ export function DashboardView({ data }: { data: DashboardData }) {
 						) : (
 							data.spending.map((t) => (
 								<div key={t.currency} className="not-first:mt-2">
-									<Figure>{money(t.netMinor, t.currency)}</Figure>
+									<Figure className="text-[2rem]">
+										<Money minor={t.netMinor} currency={t.currency} figure />
+									</Figure>
 									<p className="text-xs text-muted-foreground tabular-nums">
 										Spent {money(t.spentMinor, t.currency)}
 										{t.refundedMinor > 0 &&
@@ -254,7 +256,11 @@ export function DashboardView({ data }: { data: DashboardData }) {
 						) : (
 							data.owed.outstanding.map((o) => (
 								<Figure key={o.currency}>
-									{money(o.outstandingMinor, o.currency)}
+									<Money
+										minor={o.outstandingMinor}
+										currency={o.currency}
+										figure
+									/>
 								</Figure>
 							))
 						)}
@@ -271,7 +277,7 @@ export function DashboardView({ data }: { data: DashboardData }) {
 					>
 						<Figure>
 							{data.subscriptions.activeCount}
-							<span className="ml-1.5 text-sm font-normal text-muted-foreground">
+							<span className="ml-1.5 text-sm font-normal tracking-normal text-muted-foreground">
 								active
 							</span>
 						</Figure>
@@ -281,10 +287,12 @@ export function DashboardView({ data }: { data: DashboardData }) {
 							</p>
 						) : (
 							data.subscriptions.commitments.map((c) => (
-								<p key={c.currency} className="text-sm tabular-nums">
-									<span className="font-medium">
-										{money(c.monthlyMinor, c.currency)}
-									</span>
+								<p key={c.currency} className="text-sm">
+									<Money
+										minor={c.monthlyMinor}
+										currency={c.currency}
+										className="font-medium"
+									/>
 									<span className="text-muted-foreground"> per month</span>
 								</p>
 							))
@@ -313,17 +321,18 @@ export function DashboardView({ data }: { data: DashboardData }) {
 									{data.recent.map((t) => (
 										<li
 											key={t.id}
-											className="relative flex items-start gap-3 px-4 py-3 transition-[color,background-color,border-color,text-decoration-color] hover:bg-background/80 sm:gap-4 sm:px-5"
+											className="relative flex items-center gap-3.5 px-4 py-3 transition-[color,background-color] hover:bg-background/80 sm:px-5"
 										>
-											<span className="hidden w-[5.5rem] shrink-0 pt-px text-sm whitespace-nowrap text-muted-foreground tabular-nums sm:block">
-												{t.occurredOn}
-											</span>
+											<DateTile date={t.occurredOn} />
 											<div className="min-w-0 flex-1">
 												<p className="flex flex-wrap items-center gap-x-2 gap-y-1">
 													<Link
 														to="/transactions/$transactionId"
 														params={{ transactionId: t.id }}
-														className="font-medium text-foreground outline-none after:absolute after:inset-0 hover:underline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring"
+														className={cn(
+															"font-medium text-foreground",
+															stretchedLinkClass,
+														)}
 													>
 														{t.description}
 													</Link>
@@ -332,23 +341,20 @@ export function DashboardView({ data }: { data: DashboardData }) {
 													)}
 												</p>
 												<p className="truncate text-xs text-muted-foreground">
-													<span className="tabular-nums sm:hidden">
-														{t.occurredOn} ·{" "}
-													</span>
 													{t.category?.name ?? "Uncategorized"}
 													{t.paymentMethod
 														? ` · ${t.paymentMethod.name} •••• ${t.paymentMethod.last4}`
 														: ""}
 												</p>
 											</div>
-											<span
+											<Money
+												minor={signedAmount(t.type, t.amountMinor)}
+												currency={t.currency}
 												className={cn(
-													"shrink-0 font-medium whitespace-nowrap tabular-nums",
+													"shrink-0 text-[15px] font-semibold",
 													t.type === "REFUND" && "text-success",
 												)}
-											>
-												{money(signedAmount(t.type, t.amountMinor), t.currency)}
-											</span>
+											/>
 										</li>
 									))}
 								</ul>
@@ -374,36 +380,41 @@ export function DashboardView({ data }: { data: DashboardData }) {
 										return (
 											<li
 												key={`${event.kind}-${event.target.id}-${event.date}`}
-												className="relative flex items-start gap-3 px-4 py-3 transition-[color,background-color,border-color,text-decoration-color] hover:bg-background/80 sm:px-5"
+												className="relative flex items-center gap-3.5 px-4 py-3 transition-[color,background-color] hover:bg-background/80 sm:px-5"
 											>
-												<span
-													className={cn(
-														"mt-px flex size-7 shrink-0 items-center justify-center rounded-full",
-														ICON_TONE[shown],
-													)}
-												>
-													<Icon aria-hidden="true" className="size-3.5" />
-												</span>
-												<div className="min-w-0 flex-1">
+												<DateTile date={event.date} tone={shown} />
+												<div className="flex min-w-0 flex-1 items-start gap-2">
+													<Icon
+														aria-hidden="true"
+														className={cn(
+															"mt-0.5 size-4 shrink-0",
+															shown === "danger"
+																? "text-destructive"
+																: shown === "warning"
+																	? "text-warning"
+																	: "text-muted-foreground",
+														)}
+													/>
 													<EventLink
 														event={event}
 														className={cn(
-															"outline-none after:absolute after:inset-0 hover:underline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring",
+															stretchedLinkClass,
 															shown === "danger"
 																? "font-medium text-destructive"
-																: "text-foreground",
+																: shown === "warning"
+																	? "font-medium text-warning"
+																	: "text-foreground",
 														)}
 													>
 														{text}
 													</EventLink>
-													<p className="text-xs text-muted-foreground tabular-nums">
-														{event.date}
-													</p>
 												</div>
 												{event.amountMinor !== undefined && event.currency && (
-													<span className="shrink-0 pt-px font-medium whitespace-nowrap tabular-nums">
-														{money(event.amountMinor, event.currency)}
-													</span>
+													<Money
+														minor={event.amountMinor}
+														currency={event.currency}
+														className="shrink-0 font-semibold"
+													/>
 												)}
 											</li>
 										);
@@ -463,8 +474,11 @@ export function DashboardView({ data }: { data: DashboardData }) {
 															/>
 														</span>
 													</th>
-													<td className="py-2 pr-4 text-right align-top font-medium whitespace-nowrap tabular-nums sm:pr-5">
-														{money(row.netMinor, breakdown.currency)}
+													<td className="py-2 pr-4 text-right align-top font-medium whitespace-nowrap sm:pr-5">
+														<Money
+															minor={row.netMinor}
+															currency={breakdown.currency}
+														/>
 														{row.refundedMinor > 0 && (
 															<span className="block text-xs font-normal text-muted-foreground">
 																refunded{" "}
@@ -483,8 +497,11 @@ export function DashboardView({ data }: { data: DashboardData }) {
 												>
 													Total
 												</th>
-												<td className="py-3 pr-4 text-right font-semibold tabular-nums sm:pr-5">
-													{money(breakdown.netMinor, breakdown.currency)}
+												<td className="py-3 pr-4 text-right font-semibold sm:pr-5">
+													<Money
+														minor={breakdown.netMinor}
+														currency={breakdown.currency}
+													/>
 												</td>
 											</tr>
 										</tfoot>

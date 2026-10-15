@@ -9,6 +9,7 @@ import { Archive, ArchiveRestore, ReceiptText } from "lucide-react";
 import { useState } from "react";
 
 import { ActionError, StatusBadge } from "#/components/feedback";
+import { Money } from "#/components/money";
 import { BackLink, PageHeader } from "#/components/page-header";
 import { Panel, PanelHeader } from "#/components/panel";
 import { RecordNotFound } from "#/components/route-fallbacks";
@@ -27,7 +28,7 @@ import {
 import { describeInterval } from "#/features/subscriptions/subscriptions.logic";
 import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
-import { formatMoney, minorToInputString } from "#/lib/money";
+import { minorToInputString } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
 import { notify } from "#/lib/toast";
 import { useAction } from "#/lib/use-action";
@@ -86,9 +87,11 @@ function EditSubscription() {
 				}
 				description={
 					<>
-						<span className="font-medium text-foreground tabular-nums">
-							{formatMoney(s.amountMinor, s.currency as CurrencyCode)}
-						</span>{" "}
+						<Money
+							minor={s.amountMinor}
+							currency={s.currency}
+							className="font-semibold text-foreground"
+						/>{" "}
 						{describeInterval(s.intervalCount, s.intervalUnit).toLowerCase()}
 					</>
 				}

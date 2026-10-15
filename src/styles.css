@@ -59,14 +59,18 @@
   --chart-4: #b45309;
   --chart-5: #be185d;
   --radius: 0.5rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #18212f;
+  /* The sidebar is ink, the darkest colour of the palette: links #AEB8C6 on it 8.1:1, labels
+     #8B97A8 5.5:1, white on the emerald selection 5.5:1, the light focus ring #6EE7B7 10.6:1. */
+  --sidebar: #18212f;
+  --sidebar-foreground: #e6eaf0;
+  --sidebar-muted: #aeb8c6;
+  --sidebar-subtle: #8b97a8;
   --sidebar-primary: #047857;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ecf6f1;
-  --sidebar-accent-foreground: #065f46;
-  --sidebar-border: #e2e7ed;
-  --sidebar-ring: #047857;
+  --sidebar-accent: #232e3f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a3546;
+  --sidebar-ring: #6ee7b7;
 
   --shadow-panel: 0 1px 2px rgb(24 33 47 / 0.04);
   --shadow-raised: 0 1px 2px rgb(24 33 47 / 0.05), 0 8px 24px -6px rgb(24 33 47 / 0.12);
@@ -112,6 +116,8 @@
   --ring: #34d399;
   --sidebar: #131a23;
   --sidebar-foreground: #e8ecf1;
+  --sidebar-muted: #aeb8c6;
+  --sidebar-subtle: #8b97a8;
   --sidebar-primary: #34d399;
   --sidebar-primary-foreground: #04251a;
   --sidebar-accent: #10291f;
@@ -168,6 +174,8 @@
   --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-subtle: var(--sidebar-subtle);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-accent: var(--sidebar-accent);

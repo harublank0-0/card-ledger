@@ -24,10 +24,10 @@ export function Brand({ onNavigate }: { onNavigate?: () => void }) {
 		<Link
 			to="/"
 			onClick={onNavigate}
-			className="flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+			className="flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-ring"
 		>
 			<BrandMark />
-			<span className="text-[15px] font-semibold tracking-tight text-foreground">
+			<span className="text-[15px] font-semibold tracking-tight text-sidebar-foreground">
 				Card Ledger
 			</span>
 		</Link>

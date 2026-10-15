@@ -4,6 +4,7 @@ import { Clock, Plus, ReceiptText, Repeat } from "lucide-react";
 import { z } from "zod";
 
 import { EmptyState, StatusBadge, type Tone } from "#/components/feedback";
+import { Money } from "#/components/money";
 import { PageHeader } from "#/components/page-header";
 import { Figure, Panel, Stat, StatGroup } from "#/components/panel";
 import {
@@ -27,8 +28,6 @@ import {
 	monthlyCommitments,
 } from "#/features/subscriptions/subscriptions.logic";
 import { diffInDays } from "#/lib/calendar-date";
-import type { CurrencyCode } from "#/lib/money";
-import { formatMoney } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
 
 export const Route = createFileRoute("/_authed/subscriptions/")({
@@ -104,7 +103,7 @@ function Subscriptions() {
 								{commitments.map(({ currency, monthlyMinor }) => (
 									<li key={currency}>
 										<Figure>
-											{formatMoney(monthlyMinor, currency as CurrencyCode)}
+											<Money minor={monthlyMinor} currency={currency} figure />
 										</Figure>
 									</li>
 								))}
@@ -246,7 +245,7 @@ function Subscriptions() {
 												)}
 											</TableCell>
 											<TableCell numeric>
-												{formatMoney(s.amountMinor, s.currency as CurrencyCode)}
+												<Money minor={s.amountMinor} currency={s.currency} />
 											</TableCell>
 											<TableCell className="py-2 pl-1">
 												<Button

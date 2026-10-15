@@ -3,6 +3,7 @@ import { cn } from "cn";
 import { FileText, Plus } from "lucide-react";
 
 import { EmptyState } from "#/components/feedback";
+import { Money } from "#/components/money";
 import { PageHeader } from "#/components/page-header";
 import { Figure, Panel, Stat, StatGroup } from "#/components/panel";
 import {
@@ -82,7 +83,13 @@ function Statements() {
 					<StatGroup>
 						{result.outstanding.map((o) => (
 							<Stat key={o.currency} label={`Still owed (${o.currency})`}>
-								<Figure>{money(o.outstandingMinor, o.currency)}</Figure>
+								<Figure>
+									<Money
+										minor={o.outstandingMinor}
+										currency={o.currency}
+										figure
+									/>
+								</Figure>
 							</Stat>
 						))}
 					</StatGroup>
@@ -225,14 +232,24 @@ function Statements() {
 												numeric
 												className="hidden font-normal text-muted-foreground xl:table-cell"
 											>
-												{s.minimumDueMinor === null
-													? "—"
-													: money(s.minimumDueMinor, s.currency)}
+												{s.minimumDueMinor === null ? (
+													"—"
+												) : (
+													<Money
+														minor={s.minimumDueMinor}
+														currency={s.currency}
+													/>
+												)}
 											</TableCell>
 											<TableCell numeric>
-												{s.status === "PAID"
-													? money(s.balanceMinor, s.currency)
-													: money(s.outstandingMinor, s.currency)}
+												{s.status === "PAID" ? (
+													<Money minor={s.balanceMinor} currency={s.currency} />
+												) : (
+													<Money
+														minor={s.outstandingMinor}
+														currency={s.currency}
+													/>
+												)}
 												<span className="block text-xs font-normal text-muted-foreground">
 													{s.status === "PAID"
 														? s.overpaidMinor > 0

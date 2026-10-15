@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-
+import { Money } from "#/components/money";
 import { BackLink, PageHeader } from "#/components/page-header";
 import { Panel } from "#/components/panel";
 import { RecordNotFound } from "#/components/route-fallbacks";
@@ -108,7 +108,10 @@ function NewTransaction() {
 							<div className="px-4 py-3 sm:px-5">
 								<dt className="text-xs text-muted-foreground">Original</dt>
 								<dd className="mt-0.5 font-medium tabular-nums">
-									{money(original.amountMinor, original.currency)}
+									<Money
+										minor={original.amountMinor}
+										currency={original.currency}
+									/>
 								</dd>
 							</div>
 							<div className="px-4 py-3 sm:px-5">
@@ -116,7 +119,10 @@ function NewTransaction() {
 									Already refunded
 								</dt>
 								<dd className="mt-0.5 font-medium tabular-nums">
-									{money(original.refundedMinor, original.currency)}
+									<Money
+										minor={original.refundedMinor}
+										currency={original.currency}
+									/>
 								</dd>
 							</div>
 							<div className="px-4 py-3 sm:px-5">
@@ -124,7 +130,10 @@ function NewTransaction() {
 									Can still refund
 								</dt>
 								<dd className="mt-0.5 font-medium tabular-nums">
-									{money(original.refundableMinor, original.currency)}
+									<Money
+										minor={original.refundableMinor}
+										currency={original.currency}
+									/>
 								</dd>
 							</div>
 						</dl>

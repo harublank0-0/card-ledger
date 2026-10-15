@@ -9,6 +9,7 @@ import { Trash2, Undo2 } from "lucide-react";
 
 import { ConfirmDialog } from "#/components/confirm-dialog";
 import { ActionError, StatusBadge } from "#/components/feedback";
+import { Money } from "#/components/money";
 import { BackLink, PageHeader } from "#/components/page-header";
 import { Panel, PanelHeader } from "#/components/panel";
 import { RecordNotFound } from "#/components/route-fallbacks";
@@ -23,11 +24,7 @@ import {
 	updateTransactionFn,
 } from "#/features/transactions/transactions.functions";
 import { isUuid } from "#/lib/ids";
-import {
-	type CurrencyCode,
-	formatMoney,
-	minorToInputString,
-} from "#/lib/money";
+import { type CurrencyCode, minorToInputString } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
 import { notify } from "#/lib/toast";
 import { useAction } from "#/lib/use-action";
@@ -98,8 +95,6 @@ function EditTransaction() {
 	const remove = useServerFn(deleteTransactionFn);
 	const { run, pending, error } = useAction();
 	const isRefund = t.type === "REFUND";
-	const money = (minor: number, currency = t.currency) =>
-		formatMoney(minor, currency as CurrencyCode);
 	const blockedByRefunds = !isRefund && t.refunds.length > 0;
 
 	return (
@@ -110,16 +105,15 @@ function EditTransaction() {
 				badge={<StatusBadge>{isRefund ? "Refund" : "Expense"}</StatusBadge>}
 				description={
 					<>
-						<span
+						<Money
+							minor={isRefund ? -t.amountMinor : t.amountMinor}
+							currency={t.currency}
 							className={
 								isRefund
-									? "font-medium text-success tabular-nums"
-									: "font-medium text-foreground tabular-nums"
+									? "font-semibold text-success"
+									: "font-semibold text-foreground"
 							}
-						>
-							{isRefund ? "−" : ""}
-							{money(t.amountMinor)}
-						</span>{" "}
+						/>{" "}
 						on <span className="tabular-nums">{t.occurredOn}</span>
 					</>
 				}
@@ -174,9 +168,11 @@ function EditTransaction() {
 								>
 									{t.original.description}
 								</Link>
-								<span className="font-medium whitespace-nowrap tabular-nums">
-									{money(t.original.amountMinor, t.original.currency)}
-								</span>
+								<Money
+									minor={t.original.amountMinor}
+									currency={t.original.currency}
+									className="font-semibold"
+								/>
 							</div>
 						</Panel>
 					)}
@@ -223,9 +219,11 @@ function EditTransaction() {
 													{r.occurredOn}
 												</p>
 											</div>
-											<span className="font-medium whitespace-nowrap text-success tabular-nums">
-												−{money(r.amountMinor)}
-											</span>
+											<Money
+												minor={-r.amountMinor}
+												currency={t.currency}
+												className="font-semibold text-success"
+											/>
 										</li>
 									))}
 								</ul>
@@ -234,13 +232,13 @@ function EditTransaction() {
 								<div>
 									<dt className="text-muted-foreground">Refunded</dt>
 									<dd className="mt-0.5 text-sm font-medium tabular-nums">
-										{money(t.refundedMinor)}
+										<Money minor={t.refundedMinor} currency={t.currency} />
 									</dd>
 								</div>
 								<div>
 									<dt className="text-muted-foreground">Can still refund</dt>
 									<dd className="mt-0.5 text-sm font-medium tabular-nums">
-										{money(t.refundableMinor)}
+										<Money minor={t.refundableMinor} currency={t.currency} />
 									</dd>
 								</div>
 							</dl>

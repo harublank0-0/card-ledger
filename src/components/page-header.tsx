@@ -35,11 +35,11 @@ export function PageHeader({
 	actions?: ReactNode;
 }) {
 	return (
-		<header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+		<header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 			<div className="min-w-0">
 				{back}
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-					<h1 className="text-2xl font-semibold tracking-tight text-foreground">
+					<h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight text-foreground">
 						{title}
 					</h1>
 					{badge}

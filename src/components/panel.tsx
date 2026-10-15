@@ -100,13 +100,13 @@ export function Stat({
 	return (
 		<Root
 			aria-labelledby={labelId}
-			className={cn("min-w-0 bg-card px-4 py-3.5 sm:px-5 sm:py-4", className)}
+			className={cn("min-w-0 bg-card px-4 py-4 sm:px-6 sm:py-5", className)}
 		>
 			<Label id={labelId} className="text-xs font-medium text-muted-foreground">
 				{label}
 			</Label>
-			<div className="mt-1.5 grid gap-0.5">{children}</div>
-			{footer && <div className="mt-2 text-xs">{footer}</div>}
+			<div className="mt-2 grid gap-1">{children}</div>
+			{footer && <div className="mt-3 text-xs">{footer}</div>}
 		</Root>
 	);
 }
@@ -116,7 +116,7 @@ export function Figure({ className, ...props }: ComponentProps<"p">) {
 	return (
 		<p
 			className={cn(
-				"text-xl font-semibold tracking-tight text-foreground tabular-nums",
+				"text-[1.625rem] leading-tight font-semibold tracking-tight text-foreground tabular-nums",
 				className,
 			)}
 			{...props}

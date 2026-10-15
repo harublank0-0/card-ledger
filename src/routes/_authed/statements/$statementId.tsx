@@ -10,6 +10,7 @@ import { useState } from "react";
 
 import { ConfirmDialog } from "#/components/confirm-dialog";
 import { ActionError } from "#/components/feedback";
+import { Money } from "#/components/money";
 import { BackLink, PageHeader } from "#/components/page-header";
 import {
 	Figure,
@@ -91,15 +92,23 @@ function StatementDetail() {
 			<div className="grid gap-6">
 				<StatGroup pairs>
 					<Stat label="Statement balance">
-						<Figure>{money(s.balanceMinor)}</Figure>
+						<Figure>
+							<Money minor={s.balanceMinor} currency={s.currency} figure />
+						</Figure>
 					</Stat>
 					<Stat label="Minimum due">
 						<Figure>
-							{s.minimumDueMinor === null ? "—" : money(s.minimumDueMinor)}
+							{s.minimumDueMinor === null ? (
+								"—"
+							) : (
+								<Money minor={s.minimumDueMinor} currency={s.currency} figure />
+							)}
 						</Figure>
 					</Stat>
 					<Stat label="Paid">
-						<Figure>{money(s.paidMinor)}</Figure>
+						<Figure>
+							<Money minor={s.paidMinor} currency={s.currency} figure />
+						</Figure>
 					</Stat>
 					<Stat label={s.overpaidMinor > 0 ? "Credit" : "Still owed"}>
 						<Figure
@@ -109,9 +118,13 @@ function StatementDetail() {
 									: undefined
 							}
 						>
-							{money(
-								s.overpaidMinor > 0 ? s.overpaidMinor : s.outstandingMinor,
-							)}
+							<Money
+								minor={
+									s.overpaidMinor > 0 ? s.overpaidMinor : s.outstandingMinor
+								}
+								currency={s.currency}
+								figure
+							/>
 						</Figure>
 					</Stat>
 				</StatGroup>
@@ -139,9 +152,11 @@ function StatementDetail() {
 											)}
 										</div>
 										<span className="flex items-center gap-1">
-											<span className="font-medium tabular-nums">
-												{money(p.amountMinor)}
-											</span>
+											<Money
+												minor={p.amountMinor}
+												currency={s.currency}
+												className="font-semibold"
+											/>
 											<ConfirmDialog
 												trigger={
 													<Button

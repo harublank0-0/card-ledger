@@ -48,6 +48,27 @@ export function formatCalendarDate(year: number, month: number, day: number) {
 	return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+const SHORT_MONTHS = [
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+] as const;
+
+/** "2026-10-05" → { day: "5", month: "Oct" } for a date tile. Pure string work, no time zone. */
+export function dayAndMonth(date: CalendarDate) {
+	const { month, day } = parseCalendarDate(date);
+	return { day: String(day), month: SHORT_MONTHS[month - 1] as string };
+}
+
 /** Add whole months, clamping the day to the target month's length (Jan 31 + 1 = Feb 28/29). */
 export function addMonths(date: CalendarDate, months: number): CalendarDate {
 	const { year, month, day } = parseCalendarDate(date);
