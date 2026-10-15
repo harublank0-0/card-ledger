@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	formatMoney,
+	formatMoneyParts,
 	minorToInputString,
 	parseMoney,
 	sumMinor,
@@ -119,6 +120,35 @@ describe("summing", () => {
 		expect(Object.fromEntries(totalsByCurrency(items))).toEqual({
 			NPR: 1250,
 			USD: 999,
+		});
+	});
+});
+
+describe("formatMoneyParts", () => {
+	// The display splits an amount so the currency code can be set smaller than the number.
+	// Put back together, it must say exactly what formatMoney says.
+	const joined = (p: { sign: string; code: string; amount: string }) =>
+		`${p.sign}${p.code} ${p.amount}`;
+	const plain = (s: string) => s.replaceAll(" ", " ");
+
+	it.each([
+		[400_000, "NPR"],
+		[-50_000, "NPR"],
+		[999, "USD"],
+		[0, "USD"],
+		[1_500, "JPY"],
+		[-1, "EUR"],
+	] as const)("%i %s reads the same as formatMoney", (minor, currency) => {
+		expect(joined(formatMoneyParts(minor, currency))).toBe(
+			plain(formatMoney(minor, currency)),
+		);
+	});
+
+	it("keeps the sign out of the code and the number", () => {
+		expect(formatMoneyParts(-50_000, "NPR")).toEqual({
+			sign: "-",
+			code: "NPR",
+			amount: "500.00",
 		});
 	});
 });

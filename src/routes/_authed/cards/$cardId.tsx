@@ -1,6 +1,14 @@
-import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	notFound,
+	useRouter,
+} from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
+import { BackLink, PageHeader } from "#/components/page-header";
+import { RecordNotFound } from "#/components/route-fallbacks";
+import { Button } from "#/components/ui/button";
 import { CardForm } from "#/features/payment-methods/components/card-form";
 import {
 	getPaymentMethodFn,
@@ -10,6 +18,7 @@ import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
 import { minorToInputString } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
+import { notify } from "#/lib/toast";
 
 export const Route = createFileRoute("/_authed/cards/$cardId")({
 	head: pageTitle("Edit card"),
@@ -20,7 +29,14 @@ export const Route = createFileRoute("/_authed/cards/$cardId")({
 		return card;
 	},
 	notFoundComponent: () => (
-		<p className="text-muted-foreground">Card not found.</p>
+		<RecordNotFound
+			title="Card not found"
+			back={
+				<Button asChild variant="outline">
+					<Link to="/cards">Back to cards</Link>
+				</Button>
+			}
+		/>
 	),
 	component: EditCard,
 });
@@ -31,8 +47,16 @@ function EditCard() {
 	const update = useServerFn(updatePaymentMethodFn);
 
 	return (
-		<section>
-			<h1 className="mb-4 text-2xl font-semibold">Edit card</h1>
+		<div className="max-w-2xl">
+			<PageHeader
+				back={<BackLink to="/cards">Cards</BackLink>}
+				title="Edit card"
+				description={
+					<>
+						{card.name} <span className="tabular-nums">•••• {card.last4}</span>
+					</>
+				}
+			/>
 			<CardForm
 				submitLabel="Save changes"
 				initialValues={{
@@ -55,8 +79,9 @@ function EditCard() {
 					await update({ data: { id: card.id, values } });
 					await router.invalidate();
 					await router.navigate({ to: "/cards" });
+					notify("Changes saved");
 				}}
 			/>
-		</section>
+		</div>
 	);
 }

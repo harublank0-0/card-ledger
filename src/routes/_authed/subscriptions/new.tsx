@@ -1,11 +1,13 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
+import { BackLink, PageHeader } from "#/components/page-header";
 import { getTodayFn } from "#/features/notifications/notifications.functions";
 import { listPaymentMethodsFn } from "#/features/payment-methods/payment-methods.functions";
 import { SubscriptionForm } from "#/features/subscriptions/components/subscription-form";
 import { createSubscriptionFn } from "#/features/subscriptions/subscriptions.functions";
 import { pageTitle } from "#/lib/page-title";
+import { notify } from "#/lib/toast";
 
 export const Route = createFileRoute("/_authed/subscriptions/new")({
 	head: pageTitle("Add subscription"),
@@ -25,8 +27,12 @@ function NewSubscription() {
 	const create = useServerFn(createSubscriptionFn);
 
 	return (
-		<section>
-			<h1 className="mb-4 text-2xl font-semibold">Add subscription</h1>
+		<div className="max-w-2xl">
+			<PageHeader
+				back={<BackLink to="/subscriptions">Subscriptions</BackLink>}
+				title="Add subscription"
+				description="Something you pay for on a schedule. Renewals are worked out from the billing date."
+			/>
 			<SubscriptionForm
 				cards={cards}
 				submitLabel="Save subscription"
@@ -48,8 +54,9 @@ function NewSubscription() {
 					await create({ data: values });
 					await router.invalidate();
 					await router.navigate({ to: "/subscriptions" });
+					notify("Subscription saved");
 				}}
 			/>
-		</section>
+		</div>
 	);
 }

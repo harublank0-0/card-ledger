@@ -4,6 +4,7 @@ import {
 	addDays,
 	addMonths,
 	compareCalendarDates,
+	dayAndMonth,
 	daysInMonth,
 	diffInDays,
 	isLeapYear,
@@ -163,5 +164,17 @@ describe("safeTimeZone", () => {
 
 	it("never returns something todayIn would reject, even if the fallback is bad too", () => {
 		expect(safeTimeZone("nope", "also-nope")).toBe("UTC");
+	});
+});
+
+describe("dayAndMonth", () => {
+	it("gives the day without padding and a short English month, with no time zone involved", () => {
+		expect(dayAndMonth("2026-10-05")).toEqual({ day: "5", month: "Oct" });
+		expect(dayAndMonth("2024-02-29")).toEqual({ day: "29", month: "Feb" });
+		expect(dayAndMonth("2026-12-31")).toEqual({ day: "31", month: "Dec" });
+	});
+
+	it("refuses something that is not a calendar date", () => {
+		expect(() => dayAndMonth("2026-02-30")).toThrow();
 	});
 });

@@ -5,8 +5,14 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Archive, ArchiveRestore, ReceiptText } from "lucide-react";
 import { useState } from "react";
 
+import { ActionError, StatusBadge } from "#/components/feedback";
+import { Money } from "#/components/money";
+import { BackLink, PageHeader } from "#/components/page-header";
+import { Panel, PanelHeader } from "#/components/panel";
+import { RecordNotFound } from "#/components/route-fallbacks";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
@@ -19,10 +25,12 @@ import {
 	setSubscriptionArchivedFn,
 	updateSubscriptionFn,
 } from "#/features/subscriptions/subscriptions.functions";
+import { describeInterval } from "#/features/subscriptions/subscriptions.logic";
 import { isUuid } from "#/lib/ids";
 import type { CurrencyCode } from "#/lib/money";
 import { minorToInputString } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
+import { notify } from "#/lib/toast";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/subscriptions/$subscriptionId")({
@@ -43,7 +51,14 @@ export const Route = createFileRoute("/_authed/subscriptions/$subscriptionId")({
 		return { subscription, cards: options };
 	},
 	notFoundComponent: () => (
-		<p className="text-muted-foreground">Subscription not found.</p>
+		<RecordNotFound
+			title="Subscription not found"
+			back={
+				<Button asChild variant="outline">
+					<Link to="/subscriptions">Back to subscriptions</Link>
+				</Button>
+			}
+		/>
 	),
 	component: EditSubscription,
 });
@@ -57,111 +72,189 @@ function EditSubscription() {
 	const setArchived = useServerFn(setSubscriptionArchivedFn);
 	const [endDate, setEndDate] = useState("");
 	const { run, pending, error } = useAction();
+	const active = s.status === "ACTIVE";
 
 	return (
-		<section className="grid gap-6">
-			<h1 className="text-2xl font-semibold">{s.name}</h1>
-
-			<div className="grid max-w-xl gap-3 rounded-xl border bg-card p-5 shadow-sm">
-				{s.status === "ACTIVE" ? (
+		<div>
+			<PageHeader
+				back={<BackLink to="/subscriptions">Subscriptions</BackLink>}
+				title={s.name}
+				badge={
 					<>
-						<p className="text-sm font-medium">Cancel subscription</p>
-						<p className="text-sm text-muted-foreground">
-							Marks it as cancelled and stops expected renewals. The record and
-							history are kept.
-						</p>
-						<div className="grid gap-1.5">
-							<Label htmlFor="endDate">Access ends on (optional)</Label>
-							<Input
-								id="endDate"
-								type="date"
-								value={endDate}
-								onChange={(e) => setEndDate(e.target.value)}
-							/>
-						</div>
-						<div>
-							<Button
-								variant="destructive"
-								disabled={pending}
-								onClick={() =>
-									run(() => cancel({ data: { id: s.id, expiresOn: endDate } }))
-								}
-							>
-								Mark as cancelled
-							</Button>
-						</div>
+						{!active && <StatusBadge>Cancelled</StatusBadge>}
+						{s.archived && <StatusBadge>Archived</StatusBadge>}
 					</>
-				) : (
+				}
+				description={
 					<>
-						<p className="text-sm font-medium">
-							Cancelled{s.cancelledOn ? ` on ${s.cancelledOn}` : ""}
-						</p>
-						<div>
-							<Button
-								variant="outline"
-								disabled={pending}
-								onClick={() => run(() => reactivate({ data: { id: s.id } }))}
-							>
-								Reactivate
-							</Button>
-						</div>
+						<Money
+							minor={s.amountMinor}
+							currency={s.currency}
+							className="font-semibold text-foreground"
+						/>{" "}
+						{describeInterval(s.intervalCount, s.intervalUnit).toLowerCase()}
 					</>
-				)}
-				<div>
-					<Button asChild variant="outline" size="sm">
+				}
+				actions={
+					<Button asChild variant="outline">
 						<Link to="/transactions/new" search={{ subscriptionId: s.id }}>
+							<ReceiptText aria-hidden="true" />
 							Record charge
 						</Link>
 					</Button>
-				</div>
-				<div>
-					<Button
-						variant="ghost"
-						size="sm"
-						disabled={pending}
-						onClick={() =>
-							run(() =>
-								setArchived({ data: { id: s.id, archived: !s.archived } }),
-							)
-						}
-					>
-						{s.archived ? "Restore from archive" : "Archive"}
-					</Button>
-				</div>
-				{error && (
-					<p role="alert" className="text-sm text-destructive">
-						{error}
-					</p>
-				)}
-			</div>
-
-			<SubscriptionForm
-				// Cancel and Reactivate change `expiresOn` on the server. A form the user has
-				// already touched keeps its old values, so pressing "Save changes" afterwards
-				// would write the stale end date back. Re-initialise it when they change.
-				key={`${s.status}|${s.expiresOn ?? ""}|${s.cancelledOn ?? ""}`}
-				cards={cards}
-				submitLabel="Save changes"
-				initialValues={{
-					name: s.name,
-					amount: minorToInputString(s.amountMinor, s.currency as CurrencyCode),
-					currency: s.currency as CurrencyCode,
-					intervalCount: String(s.intervalCount),
-					intervalUnit: s.intervalUnit,
-					anchorDate: s.anchorDate,
-					paymentMethodId: s.paymentMethodId ?? "",
-					autoRenew: s.autoRenew,
-					expiresOn: s.expiresOn ?? "",
-					cancellationDeadline: s.cancellationDeadline ?? "",
-					notes: s.notes ?? "",
-				}}
-				onCancel={() => router.navigate({ to: "/subscriptions" })}
-				onSubmit={async (values) => {
-					await update({ data: { id: s.id, values } });
-					await router.invalidate();
-					await router.navigate({ to: "/subscriptions" });
-				}}
+				}
 			/>
-		</section>
+
+			<div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+				<section aria-labelledby="edit-title" className="grid gap-3">
+					<h2 id="edit-title" className="text-[15px] font-semibold">
+						Details
+					</h2>
+					<SubscriptionForm
+						// Cancel and Reactivate change `expiresOn` on the server. A form the user has
+						// already touched keeps its old values, so pressing "Save changes" afterwards
+						// would write the stale end date back. Re-initialise it when they change.
+						key={`${s.status}|${s.expiresOn ?? ""}|${s.cancelledOn ?? ""}`}
+						cards={cards}
+						submitLabel="Save changes"
+						initialValues={{
+							name: s.name,
+							amount: minorToInputString(
+								s.amountMinor,
+								s.currency as CurrencyCode,
+							),
+							currency: s.currency as CurrencyCode,
+							intervalCount: String(s.intervalCount),
+							intervalUnit: s.intervalUnit,
+							anchorDate: s.anchorDate,
+							paymentMethodId: s.paymentMethodId ?? "",
+							autoRenew: s.autoRenew,
+							expiresOn: s.expiresOn ?? "",
+							cancellationDeadline: s.cancellationDeadline ?? "",
+							notes: s.notes ?? "",
+						}}
+						onCancel={() => router.navigate({ to: "/subscriptions" })}
+						onSubmit={async (values) => {
+							await update({ data: { id: s.id, values } });
+							await router.invalidate();
+							await router.navigate({ to: "/subscriptions" });
+							notify("Changes saved");
+						}}
+					/>
+				</section>
+
+				<aside className="grid gap-6 lg:pt-9">
+					<Panel aria-labelledby="status-title">
+						<PanelHeader
+							id="status-title"
+							title={active ? "Cancel subscription" : "Cancelled"}
+							description={
+								!active && s.cancelledOn ? (
+									<span className="tabular-nums">On {s.cancelledOn}</span>
+								) : undefined
+							}
+						/>
+						<div className="grid gap-4 px-4 py-4 sm:px-5">
+							{active ? (
+								<>
+									<p className="text-sm text-muted-foreground">
+										Marks it as cancelled and stops expected renewals. The
+										record and history are kept.
+									</p>
+									<div className="grid gap-1.5">
+										<Label htmlFor="endDate">Access ends on (optional)</Label>
+										<Input
+											id="endDate"
+											type="date"
+											value={endDate}
+											onChange={(e) => setEndDate(e.target.value)}
+										/>
+									</div>
+									<div>
+										<Button
+											variant="destructive-outline"
+											disabled={pending}
+											onClick={async () => {
+												const outcome = await run(() =>
+													cancel({ data: { id: s.id, expiresOn: endDate } }),
+												);
+												if (outcome === "done")
+													notify("Subscription cancelled");
+											}}
+										>
+											Mark as cancelled
+										</Button>
+									</div>
+								</>
+							) : (
+								<>
+									<p className="text-sm text-muted-foreground">
+										No renewals are expected. Reactivate it if you are paying
+										for it again.
+									</p>
+									<div>
+										<Button
+											variant="outline"
+											disabled={pending}
+											onClick={async () => {
+												const outcome = await run(() =>
+													reactivate({ data: { id: s.id } }),
+												);
+												if (outcome === "done")
+													notify("Subscription reactivated");
+											}}
+										>
+											Reactivate
+										</Button>
+									</div>
+								</>
+							)}
+							<ActionError error={error} />
+						</div>
+					</Panel>
+
+					<section
+						aria-labelledby="archive-title"
+						className="grid gap-3 rounded-xl border border-dashed p-4 sm:p-5"
+					>
+						<div>
+							<h2 id="archive-title" className="text-[15px] font-semibold">
+								{s.archived ? "Archived" : "Archive"}
+							</h2>
+							<p className="mt-1 text-sm text-muted-foreground">
+								{s.archived
+									? "Hidden from your subscription list. Its history is kept."
+									: "Hide it from your lists once you no longer need it. Its history is kept."}
+							</p>
+						</div>
+						<div>
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={pending}
+								onClick={async () => {
+									const outcome = await run(() =>
+										setArchived({ data: { id: s.id, archived: !s.archived } }),
+									);
+									if (outcome === "done")
+										notify(
+											s.archived
+												? "Subscription restored"
+												: "Subscription archived",
+										);
+								}}
+							>
+								{s.archived ? (
+									<ArchiveRestore aria-hidden="true" />
+								) : (
+									<Archive aria-hidden="true" />
+								)}
+								{s.archived ? "Restore from archive" : "Archive"}
+							</Button>
+						</div>
+					</section>
+				</aside>
+			</div>
+		</div>
 	);
 }

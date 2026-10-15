@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { renderWithRouter } from "#/test/render";
 
+// Amounts set the currency code in its own element; compare what a reader sees.
+const textOf = (html: string) => html.replace(/<[^>]*>/g, "");
+
 import type { DashboardData } from "../dashboard.types";
 import { DashboardView } from "./dashboard-view";
 
@@ -158,13 +161,14 @@ describe("DashboardView: empty account", () => {
 describe("DashboardView: several currencies", () => {
 	it("keeps NPR and USD separate everywhere", async () => {
 		const html = await renderWithRouter(<DashboardView data={busy} />);
-		expect(html).toContain("NPR 4,000.00");
-		expect(html).toContain("USD 25.00");
-		expect(html).toContain("NPR 749.00");
-		expect(html).toContain("USD 9.99");
+		const text = textOf(html);
+		expect(text).toContain("NPR 4,000.00");
+		expect(text).toContain("USD 25.00");
+		expect(text).toContain("NPR 749.00");
+		expect(text).toContain("USD 9.99");
 		// No invented combined figure (4,000.00 + 25.00, or 749.00 + 9.99).
 		for (const combined of ["4,025.00", "758.99"])
-			expect(html).not.toContain(combined);
+			expect(text).not.toContain(combined);
 		expect(html).not.toContain("Get started"); // data exists, no onboarding
 	});
 
@@ -175,10 +179,10 @@ describe("DashboardView: several currencies", () => {
 		expect(html).toContain("USD, March 2025</caption>");
 		expect(html).toContain('<th scope="row"');
 		expect(html).toContain('<th scope="col">Category</th>');
-		expect(html).toContain("refunded NPR 2,000.00");
+		expect(textOf(html)).toContain("refunded NPR 2,000.00");
 		// The decorative bars are hidden from assistive tech; the numbers are real text.
 		expect(html).toContain('aria-hidden="true"');
-		expect(html).toContain("NPR 3,000.00");
+		expect(textOf(html)).toContain("NPR 3,000.00");
 	});
 
 	it("lists overdue payments before upcoming renewals, with links to the right pages", async () => {
@@ -196,7 +200,7 @@ describe("DashboardView: several currencies", () => {
 		const html = await renderWithRouter(<DashboardView data={busy} />);
 		expect(html).toContain("Returned shoes");
 		expect(html).toContain("Refund</span>");
-		expect(html).toMatch(/-NPR 500\.00/);
+		expect(textOf(html)).toMatch(/-NPR 500\.00/);
 		expect(html).toContain('href="/transactions/t2"');
 	});
 

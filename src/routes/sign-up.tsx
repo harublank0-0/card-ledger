@@ -3,8 +3,10 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 
+import { BrandMark } from "#/components/brand";
+import { ActionError } from "#/components/feedback";
 import { FormField } from "#/components/form-field";
-import { Button } from "#/components/ui/button";
+import { SubmitButton } from "#/components/form-layout";
 import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
 import { pageTitle } from "#/lib/page-title";
@@ -46,11 +48,17 @@ function SignUp() {
 
 	if (!signupAllowed) {
 		return (
-			<main className="mx-auto grid min-h-screen max-w-sm content-center gap-4 p-6">
-				<h1 className="text-2xl font-semibold">Sign-up is closed</h1>
+			<main className="mx-auto grid min-h-screen w-full max-w-sm content-center gap-4 px-4 py-10">
+				<BrandMark className="size-9" />
+				<h1 className="text-2xl font-semibold tracking-tight">
+					Sign-up is closed
+				</h1>
 				<p className="text-sm text-muted-foreground">
 					This instance does not accept new accounts.{" "}
-					<Link to="/sign-in" className="font-medium text-foreground underline">
+					<Link
+						to="/sign-in"
+						className="font-medium text-foreground underline decoration-border-strong underline-offset-4 hover:decoration-foreground"
+					>
 						Sign in
 					</Link>
 				</p>
@@ -59,16 +67,21 @@ function SignUp() {
 	}
 
 	return (
-		<main className="mx-auto grid min-h-screen max-w-sm content-center gap-6 p-6">
-			<div>
-				<h1 className="text-2xl font-semibold">Create your account</h1>
-				<p className="text-sm text-muted-foreground">
-					Your data stays on this server. Registration closes after the first
-					account.
-				</p>
+		<main className="mx-auto grid min-h-screen w-full max-w-sm content-center gap-6 px-4 py-10">
+			<div className="grid justify-items-start gap-4">
+				<BrandMark className="size-9" />
+				<div>
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Create your account
+					</h1>
+					<p className="text-sm text-muted-foreground">
+						Your data stays on this server. Registration closes after the first
+						account.
+					</p>
+				</div>
 			</div>
 			<form
-				className="grid gap-4 rounded-xl border bg-card p-5 shadow-sm"
+				className="grid gap-4 rounded-xl border bg-card p-5 shadow-panel sm:p-6"
 				onSubmit={(e) => {
 					e.preventDefault();
 					void form.handleSubmit();
@@ -128,16 +141,16 @@ function SignUp() {
 						</FormField>
 					)}
 				</form.Field>
-				{error && (
-					<p role="alert" className="text-sm text-destructive">
-						{error}
-					</p>
-				)}
+				<ActionError error={error} />
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Creating…" : "Create account"}
-						</Button>
+						<SubmitButton
+							submitting={isSubmitting}
+							pendingLabel="Creating…"
+							className="mt-1 w-full"
+						>
+							Create account
+						</SubmitButton>
 					)}
 				</form.Subscribe>
 			</form>

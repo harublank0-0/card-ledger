@@ -5,8 +5,14 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { Trash2, Undo2 } from "lucide-react";
 
+import { ConfirmDialog } from "#/components/confirm-dialog";
+import { ActionError, StatusBadge } from "#/components/feedback";
+import { Money } from "#/components/money";
+import { BackLink, PageHeader } from "#/components/page-header";
+import { Panel, PanelHeader } from "#/components/panel";
+import { RecordNotFound } from "#/components/route-fallbacks";
 import { Button } from "#/components/ui/button";
 import { listCategoriesFn } from "#/features/categories/categories.functions";
 import { listPaymentMethodsFn } from "#/features/payment-methods/payment-methods.functions";
@@ -18,12 +24,9 @@ import {
 	updateTransactionFn,
 } from "#/features/transactions/transactions.functions";
 import { isUuid } from "#/lib/ids";
-import {
-	type CurrencyCode,
-	formatMoney,
-	minorToInputString,
-} from "#/lib/money";
+import { type CurrencyCode, minorToInputString } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
+import { notify } from "#/lib/toast";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/transactions/$transactionId")({
@@ -68,7 +71,14 @@ export const Route = createFileRoute("/_authed/transactions/$transactionId")({
 		};
 	},
 	notFoundComponent: () => (
-		<p className="text-muted-foreground">Transaction not found.</p>
+		<RecordNotFound
+			title="Transaction not found"
+			back={
+				<Button asChild variant="outline">
+					<Link to="/transactions">Back to transactions</Link>
+				</Button>
+			}
+		/>
 	),
 	component: EditTransaction,
 });
@@ -83,145 +93,196 @@ function EditTransaction() {
 	const router = useRouter();
 	const update = useServerFn(updateTransactionFn);
 	const remove = useServerFn(deleteTransactionFn);
-	const [confirming, setConfirming] = useState(false);
 	const { run, pending, error } = useAction();
 	const isRefund = t.type === "REFUND";
-	const money = (minor: number, currency = t.currency) =>
-		formatMoney(minor, currency as CurrencyCode);
+	const blockedByRefunds = !isRefund && t.refunds.length > 0;
 
 	return (
-		<section className="grid gap-6">
-			<div>
-				<h1 className="text-2xl font-semibold">
-					{t.description}
-					<span className="ml-2 rounded bg-secondary px-1.5 py-0.5 align-middle text-xs text-muted-foreground">
-						{isRefund ? "Refund" : "Expense"}
-					</span>
-				</h1>
-				<p className="text-muted-foreground">
-					{isRefund ? "−" : ""}
-					{money(t.amountMinor)} · {t.occurredOn}
-				</p>
-			</div>
-
-			{isRefund && t.original && (
-				<div className="max-w-xl rounded-xl border bg-card p-4 text-sm shadow-sm">
-					Refund of{" "}
-					<Link
-						to="/transactions/$transactionId"
-						params={{ transactionId: t.original.id }}
-						className="font-medium underline"
-					>
-						{t.original.description}
-					</Link>{" "}
-					({money(t.original.amountMinor, t.original.currency)})
-				</div>
-			)}
-
-			{!isRefund && (
-				<div className="grid max-w-xl gap-3 rounded-xl border bg-card p-5 shadow-sm">
-					<p className="text-sm font-medium">Refunds</p>
-					{t.refunds.length === 0 ? (
-						<p className="text-sm text-muted-foreground">
-							No refunds recorded.
-						</p>
-					) : (
-						<ul className="grid gap-1 text-sm">
-							{t.refunds.map((r) => (
-								<li key={r.id} className="flex justify-between gap-3">
-									<Link
-										to="/transactions/$transactionId"
-										params={{ transactionId: r.id }}
-										className="hover:underline"
-									>
-										{r.occurredOn} · {r.description}
-									</Link>
-									<span>−{money(r.amountMinor)}</span>
-								</li>
-							))}
-						</ul>
-					)}
-					<p className="text-xs text-muted-foreground">
-						Refunded {money(t.refundedMinor)} · can still refund{" "}
-						{money(t.refundableMinor)}
-					</p>
-					{t.refundableMinor > 0 && (
-						<div>
-							<Button asChild variant="outline" size="sm">
-								<Link to="/transactions/new" search={{ refundOfId: t.id }}>
-									Record refund
-								</Link>
-							</Button>
-						</div>
-					)}
-				</div>
-			)}
-
-			<TransactionForm
-				key={t.id}
-				initialValues={{
-					description: t.description,
-					amount: minorToInputString(t.amountMinor, t.currency as CurrencyCode),
-					currency: t.currency as CurrencyCode,
-					occurredOn: t.occurredOn,
-					categoryId: t.categoryId ?? "",
-					paymentMethodId: t.paymentMethodId ?? "",
-					subscriptionId: t.subscriptionId ?? "",
-					refundOfId: t.refundOfId ?? "",
-					notes: t.notes ?? "",
-				}}
-				cards={cards}
-				categories={categories}
-				subscriptions={subscriptions}
-				isRefund={isRefund}
-				autoCurrencyFromCard={false}
-				submitLabel="Save changes"
-				onCancel={() => router.navigate({ to: "/transactions" })}
-				onSubmit={async (values) => {
-					await update({ data: { id: t.id, values } });
-					await router.invalidate();
-					await router.navigate({ to: "/transactions" });
-				}}
+		<div>
+			<PageHeader
+				back={<BackLink to="/transactions">Transactions</BackLink>}
+				title={t.description}
+				badge={<StatusBadge>{isRefund ? "Refund" : "Expense"}</StatusBadge>}
+				description={
+					<>
+						<Money
+							minor={isRefund ? -t.amountMinor : t.amountMinor}
+							currency={t.currency}
+							className={
+								isRefund
+									? "font-semibold text-success"
+									: "font-semibold text-foreground"
+							}
+						/>{" "}
+						on <span className="tabular-nums">{t.occurredOn}</span>
+					</>
+				}
 			/>
 
-			<div className="grid max-w-xl gap-3 rounded-xl border bg-card p-5 shadow-sm">
-				<p className="text-sm font-medium">Delete</p>
-				<p className="text-sm text-muted-foreground">
-					This permanently removes the transaction from your ledger.
-					{!isRefund && t.refunds.length > 0 && " Delete its refunds first."}
-				</p>
-				{error && (
-					<p role="alert" className="text-sm text-destructive">
-						{error}
-					</p>
-				)}
-				{confirming ? (
-					<div className="flex gap-2">
-						<Button
-							variant="destructive"
-							disabled={pending}
-							onClick={async () => {
-								const outcome = await run(async () => {
-									await remove({ data: { id: t.id } });
-									await router.navigate({ to: "/transactions" });
-								});
-								if (outcome === "failed") setConfirming(false);
-							}}
-						>
-							Yes, delete it
-						</Button>
-						<Button variant="ghost" onClick={() => setConfirming(false)}>
-							Keep it
-						</Button>
-					</div>
-				) : (
-					<div>
-						<Button variant="outline" onClick={() => setConfirming(true)}>
-							Delete transaction
-						</Button>
-					</div>
-				)}
+			<div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+				<section aria-labelledby="edit-title" className="grid gap-3">
+					<h2 id="edit-title" className="text-[15px] font-semibold">
+						Details
+					</h2>
+					<TransactionForm
+						key={t.id}
+						initialValues={{
+							description: t.description,
+							amount: minorToInputString(
+								t.amountMinor,
+								t.currency as CurrencyCode,
+							),
+							currency: t.currency as CurrencyCode,
+							occurredOn: t.occurredOn,
+							categoryId: t.categoryId ?? "",
+							paymentMethodId: t.paymentMethodId ?? "",
+							subscriptionId: t.subscriptionId ?? "",
+							refundOfId: t.refundOfId ?? "",
+							notes: t.notes ?? "",
+						}}
+						cards={cards}
+						categories={categories}
+						subscriptions={subscriptions}
+						isRefund={isRefund}
+						autoCurrencyFromCard={false}
+						submitLabel="Save changes"
+						onCancel={() => router.navigate({ to: "/transactions" })}
+						onSubmit={async (values) => {
+							await update({ data: { id: t.id, values } });
+							await router.invalidate();
+							await router.navigate({ to: "/transactions" });
+							notify("Changes saved");
+						}}
+					/>
+				</section>
+
+				<aside className="grid gap-6 lg:pt-9">
+					{isRefund && t.original && (
+						<Panel aria-labelledby="original-title">
+							<PanelHeader id="original-title" title="Refund of" />
+							<div className="flex items-start justify-between gap-3 px-4 py-3 text-sm sm:px-5">
+								<Link
+									to="/transactions/$transactionId"
+									params={{ transactionId: t.original.id }}
+									className="font-medium underline decoration-border-strong underline-offset-4 hover:decoration-foreground"
+								>
+									{t.original.description}
+								</Link>
+								<Money
+									minor={t.original.amountMinor}
+									currency={t.original.currency}
+									className="font-semibold"
+								/>
+							</div>
+						</Panel>
+					)}
+
+					{!isRefund && (
+						<Panel aria-labelledby="refunds-title">
+							<PanelHeader
+								id="refunds-title"
+								title="Refunds"
+								actions={
+									t.refundableMinor > 0 && (
+										<Button asChild variant="outline" size="sm">
+											<Link
+												to="/transactions/new"
+												search={{ refundOfId: t.id }}
+											>
+												<Undo2 aria-hidden="true" />
+												Record refund
+											</Link>
+										</Button>
+									)
+								}
+							/>
+							{t.refunds.length === 0 ? (
+								<p className="px-4 py-3 text-sm text-muted-foreground sm:px-5">
+									No refunds recorded.
+								</p>
+							) : (
+								<ul className="divide-y text-sm">
+									{t.refunds.map((r) => (
+										<li
+											key={r.id}
+											className="flex items-start justify-between gap-3 px-4 py-2.5 sm:px-5"
+										>
+											<div className="min-w-0">
+												<Link
+													to="/transactions/$transactionId"
+													params={{ transactionId: r.id }}
+													className="font-medium hover:underline"
+												>
+													{r.description}
+												</Link>
+												<p className="text-xs text-muted-foreground tabular-nums">
+													{r.occurredOn}
+												</p>
+											</div>
+											<Money
+												minor={-r.amountMinor}
+												currency={t.currency}
+												className="font-semibold text-success"
+											/>
+										</li>
+									))}
+								</ul>
+							)}
+							<dl className="grid grid-cols-2 gap-3 border-t bg-background/60 px-4 py-3 text-xs sm:px-5">
+								<div>
+									<dt className="text-muted-foreground">Refunded</dt>
+									<dd className="mt-0.5 text-sm font-medium tabular-nums">
+										<Money minor={t.refundedMinor} currency={t.currency} />
+									</dd>
+								</div>
+								<div>
+									<dt className="text-muted-foreground">Can still refund</dt>
+									<dd className="mt-0.5 text-sm font-medium tabular-nums">
+										<Money minor={t.refundableMinor} currency={t.currency} />
+									</dd>
+								</div>
+							</dl>
+						</Panel>
+					)}
+
+					<section
+						aria-labelledby="delete-title"
+						className="grid gap-3 rounded-xl border border-dashed p-4 sm:p-5"
+					>
+						<div>
+							<h2 id="delete-title" className="text-[15px] font-semibold">
+								Delete
+							</h2>
+							<p className="mt-1 text-sm text-muted-foreground">
+								This permanently removes the transaction from your ledger.
+								{blockedByRefunds && " Delete its refunds first."}
+							</p>
+						</div>
+						<ActionError error={error} />
+						<div>
+							<ConfirmDialog
+								trigger={
+									<Button variant="destructive-outline" size="sm">
+										<Trash2 aria-hidden="true" />
+										Delete transaction
+									</Button>
+								}
+								title="Delete this transaction?"
+								description="It is removed from your ledger and from every total. This cannot be undone."
+								confirmLabel="Yes, delete it"
+								pending={pending}
+								onConfirm={() =>
+									run(async () => {
+										await remove({ data: { id: t.id } });
+										await router.navigate({ to: "/transactions" });
+										notify("Transaction deleted");
+									})
+								}
+							/>
+						</div>
+					</section>
+				</aside>
 			</div>
-		</section>
+		</div>
 	);
 }

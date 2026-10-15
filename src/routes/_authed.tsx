@@ -1,14 +1,7 @@
-import {
-	createFileRoute,
-	Link,
-	Outlet,
-	redirect,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-import { Button } from "#/components/ui/button";
-import { authClient } from "#/lib/auth-client";
+import { AppShell } from "#/components/app-shell";
 import { getSessionFn } from "#/lib/session.functions";
-import { reloadTo } from "#/lib/session-change";
 
 // Route guards are UX only. Every server function also enforces auth via authMiddleware.
 export const Route = createFileRoute("/_authed")({
@@ -22,85 +15,12 @@ export const Route = createFileRoute("/_authed")({
 	component: AuthedLayout,
 });
 
-const navClass =
-	"rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground";
-
 function AuthedLayout() {
 	const { user } = Route.useRouteContext();
 
 	return (
-		<div className="mx-auto max-w-5xl p-4 sm:p-6">
-			<header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-				<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-					<Link to="/" className="whitespace-nowrap text-lg font-semibold">
-						Card Ledger
-					</Link>
-					<nav className="flex flex-wrap gap-1" aria-label="Main">
-						<Link
-							to="/"
-							className={navClass}
-							activeProps={{ className: "bg-secondary text-foreground" }}
-							activeOptions={{ exact: true }}
-						>
-							Dashboard
-						</Link>
-						<Link
-							to="/subscriptions"
-							className={navClass}
-							activeProps={{ className: "bg-secondary text-foreground" }}
-							activeOptions={{ exact: false }}
-						>
-							Subscriptions
-						</Link>
-						<Link
-							to="/transactions"
-							className={navClass}
-							activeProps={{ className: "bg-secondary text-foreground" }}
-							activeOptions={{ exact: false }}
-						>
-							Transactions
-						</Link>
-						<Link
-							to="/statements"
-							className={navClass}
-							activeProps={{ className: "bg-secondary text-foreground" }}
-							activeOptions={{ exact: false }}
-						>
-							Statements
-						</Link>
-						<Link
-							to="/cards"
-							className={navClass}
-							activeProps={{ className: "bg-secondary text-foreground" }}
-							activeOptions={{ exact: false }}
-						>
-							Cards
-						</Link>
-						<Link
-							to="/settings"
-							className={navClass}
-							activeProps={{ className: "bg-secondary text-foreground" }}
-							activeOptions={{ exact: false }}
-						>
-							Settings
-						</Link>
-					</nav>
-				</div>
-				<div className="flex items-center gap-3 text-sm text-muted-foreground">
-					<span className="hidden sm:inline">{user.email}</span>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={async () => {
-							await authClient.signOut();
-							reloadTo("/sign-in");
-						}}
-					>
-						Sign out
-					</Button>
-				</div>
-			</header>
+		<AppShell email={user.email}>
 			<Outlet />
-		</div>
+		</AppShell>
 	);
 }

@@ -3,6 +3,23 @@
 All notable changes are listed here, newest first. Card Ledger is pre-1.0: anything may change
 between 0.x releases, and every release says what to do when upgrading.
 
+## Unreleased
+
+### Changed
+
+- **A redesigned interface.** A dark sidebar (a slide-in menu on phones), a clear heading with
+  the main action on every page, and the ledger as a real table: amounts right-aligned in tabular
+  figures with the currency code set small beside them, filters as a toolbar above it, the whole
+  row clickable. Large headline figures, date tiles on the dashboard's lists, and cards shown as
+  card faces. Summary figures share one panel
+  instead of a card each. Statuses always carry words, and coloured ones an icon; red is kept for
+  errors and late payments and amber for warnings (a statement or cancel-by date within 7 days).
+  Deleting a transaction, statement or payment now asks in a small dialog, saving shows a short
+  confirmation, and slow pages keep the layout while they load. Motion is brief and switched off
+  when the system asks for reduced motion. Categories now have their own place in the navigation.
+  Design notes: [ADR 0012](docs/decisions/0012-visual-design-system.md).
+- Nothing to migrate: no schema, data or configuration change, and no new dependency.
+
 ## 0.1.1 — 2026-10-12
 
 A packaging and documentation release. **The application, its database schema and its

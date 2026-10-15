@@ -1,7 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 
+import { ActionError, InlineAlert } from "#/components/feedback";
 import { FormField } from "#/components/form-field";
+import { FormPanel, SubmitButton } from "#/components/form-layout";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 
@@ -42,21 +44,34 @@ export function StatementForm({
 	});
 
 	return (
-		<form
-			className="grid max-w-xl gap-4 rounded-xl border bg-card p-5 shadow-sm"
+		<FormPanel
 			onSubmit={(e) => {
 				e.preventDefault();
 				void form.handleSubmit();
 			}}
+			actions={
+				<>
+					<Button type="button" variant="ghost" onClick={onCancel}>
+						Cancel
+					</Button>
+					<form.Subscribe selector={(s) => s.isSubmitting}>
+						{(isSubmitting) => (
+							<SubmitButton submitting={isSubmitting}>
+								{submitLabel}
+							</SubmitButton>
+						)}
+					</form.Subscribe>
+				</>
+			}
 		>
-			<p className="rounded-md bg-secondary p-3 text-sm text-muted-foreground">
+			<InlineAlert tone="info">
 				Enter the figures printed on your bank statement for{" "}
 				<span className="font-medium text-foreground">{cardLabel}</span> (
 				{initialValues.currency}). They are not calculated from your own
 				transactions.
-			</p>
+			</InlineAlert>
 
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-5 sm:grid-cols-2">
 				<form.Field name="periodStart">
 					{(field) => (
 						<FormField
@@ -111,7 +126,7 @@ export function StatementForm({
 				)}
 			</form.Field>
 
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-5 sm:grid-cols-2">
 				<form.Field name="balance">
 					{(field) => (
 						<FormField
@@ -148,24 +163,7 @@ export function StatementForm({
 				</form.Field>
 			</div>
 
-			{error && (
-				<p role="alert" className="text-sm text-destructive">
-					{error}
-				</p>
-			)}
-
-			<div className="flex gap-2">
-				<form.Subscribe selector={(s) => s.isSubmitting}>
-					{(isSubmitting) => (
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Saving…" : submitLabel}
-						</Button>
-					)}
-				</form.Subscribe>
-				<Button type="button" variant="ghost" onClick={onCancel}>
-					Cancel
-				</Button>
-			</div>
-		</form>
+			<ActionError error={error} />
+		</FormPanel>
 	);
 }

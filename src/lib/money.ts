@@ -100,6 +100,34 @@ export function formatMoney(
 	}).format(minor / 10 ** exponent);
 }
 
+/**
+ * The pieces of `formatMoney`, so the code can be typeset apart from the number:
+ * -50000 NPR → { sign: "-", code: "NPR", amount: "500.00" }. Display only.
+ */
+export function formatMoneyParts(
+	minor: number,
+	currency: CurrencyCode,
+	locale = "en-US",
+) {
+	const exponent = exponentOf(currency);
+	const parts = new Intl.NumberFormat(locale, {
+		style: "currency",
+		currency,
+		currencyDisplay: "code",
+		minimumFractionDigits: exponent,
+		maximumFractionDigits: exponent,
+	}).formatToParts(minor / 10 ** exponent);
+	let sign = "";
+	let code = "";
+	let amount = "";
+	for (const part of parts) {
+		if (part.type === "minusSign") sign = "-";
+		else if (part.type === "currency") code = part.value;
+		else if (part.type !== "literal") amount += part.value;
+	}
+	return { sign, code, amount };
+}
+
 /** Sum amounts of one currency. Mixing currencies is a bug, so it throws. */
 export function sumMinor(
 	items: ReadonlyArray<{ amountMinor: number; currency: string }>,

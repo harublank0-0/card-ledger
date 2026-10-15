@@ -1,7 +1,9 @@
 import { useState } from "react";
 
+import { ActionError } from "#/components/feedback";
 import { FormField } from "#/components/form-field";
-import { Button } from "#/components/ui/button";
+import { SubmitButton } from "#/components/form-layout";
+import { SettingsSection } from "#/components/settings-section";
 import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
 import { reloadTo } from "#/lib/session-change";
@@ -47,29 +49,21 @@ export function DeleteAccount({ summary }: { summary: AccountSummary }) {
 	const ready = password.length > 0 && confirmation === DELETE_CONFIRMATION;
 
 	return (
-		<section
-			aria-labelledby="delete-title"
-			className="grid gap-3 rounded-xl border border-destructive/40 bg-card p-5 shadow-sm"
-		>
-			<div>
-				<h2 id="delete-title" className="text-lg font-medium">
-					Delete account
-				</h2>
-				<p className="text-sm text-muted-foreground">
+		<SettingsSection
+			id="delete-title"
+			title="Delete account"
+			description={
+				<>
 					This permanently deletes your account and everything in it:{" "}
 					<span className="font-medium text-foreground">
 						{describeAccountContents(summary)}
 					</span>
 					. It cannot be undone.
-				</p>
-				<p className="mt-1 text-sm">
-					<a href="/api/export/json" download className="underline">
-						Download your data first
-					</a>
-				</p>
-			</div>
+				</>
+			}
+		>
 			<form
-				className="grid gap-3"
+				className="overflow-hidden rounded-xl border border-destructive-line bg-card shadow-panel"
 				onSubmit={async (e) => {
 					e.preventDefault();
 					if (!ready) return;
@@ -84,38 +78,56 @@ export function DeleteAccount({ summary }: { summary: AccountSummary }) {
 					reloadTo("/sign-in?deleted=true");
 				}}
 			>
-				<FormField label="Your password" htmlFor="deletePassword" errors={[]}>
-					<Input
-						id="deletePassword"
-						type="password"
-						autoComplete="current-password"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-					/>
-				</FormField>
-				<FormField
-					label={`Type ${DELETE_CONFIRMATION} to confirm`}
-					htmlFor="deleteConfirm"
-					errors={[]}
-				>
-					<Input
-						id="deleteConfirm"
-						autoComplete="off"
-						value={confirmation}
-						onChange={(e) => setConfirmation(e.target.value)}
-					/>
-				</FormField>
-				{error && (
-					<p role="alert" className="text-sm text-destructive">
-						{error}
+				<div className="grid gap-4 px-4 py-4 sm:px-5">
+					<p className="text-sm">
+						<a
+							href="/api/export/json"
+							download
+							className="font-medium underline decoration-border-strong underline-offset-4 hover:decoration-foreground"
+						>
+							Download your data first
+						</a>
 					</p>
-				)}
-				<div>
-					<Button type="submit" variant="destructive" disabled={!ready || busy}>
-						{busy ? "Deleting…" : "Delete my account and data"}
-					</Button>
+					<div className="grid gap-4 sm:grid-cols-2">
+						<FormField
+							label="Your password"
+							htmlFor="deletePassword"
+							errors={[]}
+						>
+							<Input
+								id="deletePassword"
+								type="password"
+								autoComplete="current-password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+							/>
+						</FormField>
+						<FormField
+							label={`Type ${DELETE_CONFIRMATION} to confirm`}
+							htmlFor="deleteConfirm"
+							errors={[]}
+						>
+							<Input
+								id="deleteConfirm"
+								autoComplete="off"
+								value={confirmation}
+								onChange={(e) => setConfirmation(e.target.value)}
+							/>
+						</FormField>
+					</div>
+					<ActionError error={error} />
+				</div>
+				<div className="flex justify-end border-t border-destructive-line/70 bg-destructive-soft/50 px-4 py-3 sm:px-5">
+					<SubmitButton
+						variant="destructive"
+						submitting={busy}
+						disabled={!ready}
+						pendingLabel="Deleting…"
+					>
+						Delete my account and data
+					</SubmitButton>
 				</div>
 			</form>
-		</section>
+		</SettingsSection>
 	);
 }

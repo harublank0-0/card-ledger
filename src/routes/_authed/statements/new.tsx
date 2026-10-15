@@ -5,8 +5,13 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { ChevronRight, CreditCard } from "lucide-react";
 import { z } from "zod";
 
+import { EmptyState } from "#/components/feedback";
+import { BackLink, PageHeader } from "#/components/page-header";
+import { Panel } from "#/components/panel";
+import { RecordNotFound } from "#/components/route-fallbacks";
 import { Button } from "#/components/ui/button";
 import { listPaymentMethodsFn } from "#/features/payment-methods/payment-methods.functions";
 import { StatementForm } from "#/features/statements/components/statement-form";
@@ -15,6 +20,7 @@ import {
 	getStatementDefaultsFn,
 } from "#/features/statements/statements.functions";
 import { pageTitle } from "#/lib/page-title";
+import { notify } from "#/lib/toast";
 
 export const Route = createFileRoute("/_authed/statements/new")({
 	head: pageTitle("Add statement"),
@@ -32,7 +38,14 @@ export const Route = createFileRoute("/_authed/statements/new")({
 		return { cards, defaults };
 	},
 	notFoundComponent: () => (
-		<p className="text-muted-foreground">That card could not be found.</p>
+		<RecordNotFound
+			title="That card could not be found"
+			back={
+				<Button asChild variant="outline">
+					<Link to="/statements">Back to statements</Link>
+				</Button>
+			}
+		/>
 	),
 	component: NewStatement,
 });
@@ -41,46 +54,76 @@ function NewStatement() {
 	const { cards, defaults } = Route.useLoaderData();
 	const router = useRouter();
 	const create = useServerFn(createStatementFn);
+	const back = <BackLink to="/statements">Statements</BackLink>;
 
 	if (!defaults) {
 		return (
-			<section className="grid max-w-xl gap-4">
-				<h1 className="text-2xl font-semibold">Add statement</h1>
+			<div className="max-w-2xl">
+				<PageHeader
+					back={back}
+					title="Add statement"
+					description={
+						cards.length === 0 ? undefined : "Which card is this statement for?"
+					}
+				/>
 				{cards.length === 0 ? (
-					<div className="rounded-xl border bg-card p-6">
-						<p className="font-medium">Add a card first</p>
-						<p className="mt-1 text-sm text-muted-foreground">
+					<Panel>
+						<EmptyState
+							icon={CreditCard}
+							title="Add a card first"
+							action={
+								<Button asChild>
+									<Link to="/cards/new">Add card</Link>
+								</Button>
+							}
+						>
 							Statements belong to a card.
-						</p>
-						<Button asChild className="mt-3">
-							<Link to="/cards/new">Add card</Link>
-						</Button>
-					</div>
+						</EmptyState>
+					</Panel>
 				) : (
-					<div className="grid gap-2">
-						<p className="text-sm text-muted-foreground">
-							Which card is this statement for?
-						</p>
-						{cards.map((c) => (
-							<Link
-								key={c.id}
-								to="/statements/new"
-								search={{ cardId: c.id }}
-								className="rounded-xl border bg-card p-3 shadow-sm hover:underline"
-							>
-								{c.name} •••• {c.last4} ({c.currency})
-							</Link>
-						))}
-					</div>
+					<Panel aria-label="Cards">
+						<ul className="divide-y">
+							{cards.map((c) => (
+								<li key={c.id}>
+									<Link
+										to="/statements/new"
+										search={{ cardId: c.id }}
+										className="group flex items-center gap-3 px-4 py-3.5 transition-[color,background-color,border-color,text-decoration-color] hover:bg-background/80 focus-visible:bg-background/80 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring sm:px-5"
+									>
+										<span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
+											<CreditCard aria-hidden="true" className="size-4" />
+										</span>
+										<span className="min-w-0 flex-1">
+											<span className="block font-medium">
+												{c.name}{" "}
+												<span className="tabular-nums">•••• {c.last4}</span>
+											</span>
+											<span className="block text-xs text-muted-foreground">
+												{c.currency}
+											</span>
+										</span>
+										<ChevronRight
+											aria-hidden="true"
+											className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5"
+										/>
+									</Link>
+								</li>
+							))}
+						</ul>
+					</Panel>
 				)}
-			</section>
+			</div>
 		);
 	}
 
 	const { card, suggestion, today } = defaults;
 	return (
-		<section className="grid gap-4">
-			<h1 className="text-2xl font-semibold">Add statement</h1>
+		<div className="max-w-2xl">
+			<PageHeader
+				back={back}
+				title="Add statement"
+				description="Copy the figures from the statement your bank sent."
+			/>
 			<StatementForm
 				key={card.id}
 				cardLabel={`${card.name} •••• ${card.last4}`}
@@ -102,8 +145,9 @@ function NewStatement() {
 						to: "/statements/$statementId",
 						params: { statementId: id },
 					});
+					notify("Statement saved");
 				}}
 			/>
-		</section>
+		</div>
 	);
 }

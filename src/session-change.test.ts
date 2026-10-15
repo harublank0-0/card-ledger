@@ -24,7 +24,7 @@ describe("reloadTo", () => {
 // proof needs a browser; this keeps every session-changing flow on a full document load.
 describe("flows that change the session", () => {
 	it.each([
-		["sign out", "src/routes/_authed.tsx"],
+		["sign out", "src/components/app-shell.tsx"],
 		["sign in", "src/routes/sign-in.tsx"],
 		["sign up", "src/routes/sign-up.tsx"],
 		["account deletion", "src/features/account/components/delete-account.tsx"],

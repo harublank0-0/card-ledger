@@ -1,8 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 
+import { ActionError } from "#/components/feedback";
 import { FormField } from "#/components/form-field";
-import { Button } from "#/components/ui/button";
+import { SubmitButton } from "#/components/form-layout";
 import { Input } from "#/components/ui/input";
 
 import {
@@ -34,13 +35,13 @@ export function PaymentForm({
 
 	return (
 		<form
-			className="grid gap-3"
+			className="grid gap-4"
 			onSubmit={(e) => {
 				e.preventDefault();
 				void form.handleSubmit();
 			}}
 		>
-			<div className="grid gap-3 sm:grid-cols-2">
+			<div className="grid gap-4 sm:grid-cols-2">
 				<form.Field name="amount">
 					{(field) => (
 						<FormField
@@ -92,17 +93,13 @@ export function PaymentForm({
 					</FormField>
 				)}
 			</form.Field>
-			{error && (
-				<p role="alert" className="text-sm text-destructive">
-					{error}
-				</p>
-			)}
+			<ActionError error={error} />
 			<div>
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Saving…" : "Record payment"}
-						</Button>
+						<SubmitButton submitting={isSubmitting}>
+							Record payment
+						</SubmitButton>
 					)}
 				</form.Subscribe>
 			</div>

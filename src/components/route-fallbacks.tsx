@@ -1,22 +1,59 @@
 import { Link } from "@tanstack/react-router";
+import type { LucideIcon } from "lucide-react";
+import { CircleAlert, Compass } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Button } from "#/components/ui/button";
 import { GENERIC_ERROR_MESSAGE, toClientError } from "#/lib/client-errors";
 
+function Fallback({
+	icon: Icon,
+	tone,
+	title,
+	children,
+	actions,
+}: {
+	icon: LucideIcon;
+	tone: "neutral" | "danger";
+	title: string;
+	children: ReactNode;
+	actions: ReactNode;
+}) {
+	return (
+		<section className="mx-auto grid max-w-md justify-items-center gap-3 px-6 py-16 text-center">
+			<div
+				className={
+					tone === "danger"
+						? "flex size-11 items-center justify-center rounded-full bg-destructive-soft text-destructive"
+						: "flex size-11 items-center justify-center rounded-full bg-secondary text-muted-foreground"
+				}
+			>
+				<Icon aria-hidden="true" className="size-5" />
+			</div>
+			<h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+			{children}
+			<div className="mt-2 flex flex-wrap justify-center gap-2">{actions}</div>
+		</section>
+	);
+}
+
 /** Shown for a URL that matches no page, and for a `notFound()` no route handles itself. */
 export function RouteNotFound() {
 	return (
-		<section className="mx-auto grid max-w-md gap-3 p-6 text-center">
-			<h1 className="text-2xl font-semibold">Page not found</h1>
-			<p className="text-sm text-muted-foreground">
-				That page does not exist, or it is not yours to see.
-			</p>
-			<div>
+		<Fallback
+			icon={Compass}
+			tone="neutral"
+			title="Page not found"
+			actions={
 				<Button asChild variant="outline">
 					<Link to="/">Back to the dashboard</Link>
 				</Button>
-			</div>
-		</section>
+			}
+		>
+			<p className="text-sm text-muted-foreground">
+				That page does not exist, or it is not yours to see.
+			</p>
+		</Fallback>
 	);
 }
 
@@ -38,17 +75,39 @@ export function RouteError({
 			? safe.message
 			: GENERIC_ERROR_MESSAGE;
 	return (
-		<section className="mx-auto grid max-w-md gap-3 p-6 text-center">
-			<h1 className="text-2xl font-semibold">Something went wrong</h1>
+		<Fallback
+			icon={CircleAlert}
+			tone="danger"
+			title="Something went wrong"
+			actions={
+				<>
+					<Button onClick={reset}>Try again</Button>
+					<Button asChild variant="outline">
+						<Link to="/">Back to the dashboard</Link>
+					</Button>
+				</>
+			}
+		>
 			<p role="alert" className="text-sm text-muted-foreground">
 				{message}
 			</p>
-			<div className="flex justify-center gap-2">
-				<Button onClick={reset}>Try again</Button>
-				<Button asChild variant="outline">
-					<Link to="/">Back to the dashboard</Link>
-				</Button>
-			</div>
-		</section>
+		</Fallback>
+	);
+}
+
+/** A detail route's own "not found" (a record that is gone or not yours), inside the shell. */
+export function RecordNotFound({
+	title,
+	back,
+}: {
+	title: string;
+	back: ReactNode;
+}) {
+	return (
+		<Fallback icon={Compass} tone="neutral" title={title} actions={back}>
+			<p className="text-sm text-muted-foreground">
+				It may have been deleted, or the link is wrong.
+			</p>
+		</Fallback>
 	);
 }

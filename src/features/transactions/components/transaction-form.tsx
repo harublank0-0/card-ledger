@@ -2,7 +2,9 @@ import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 
+import { ActionError, InlineAlert } from "#/components/feedback";
 import { FormField } from "#/components/form-field";
+import { FormPanel, SubmitButton } from "#/components/form-layout";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import {
@@ -73,22 +75,38 @@ export function TransactionForm({
 	});
 
 	return (
-		<form
-			className="grid max-w-xl gap-4 rounded-xl border bg-card p-5 shadow-sm"
+		<FormPanel
 			onSubmit={(e) => {
 				e.preventDefault();
 				void form.handleSubmit();
 			}}
+			actions={
+				<>
+					<Button type="button" variant="ghost" onClick={onCancel}>
+						Cancel
+					</Button>
+					<form.Subscribe selector={(s) => s.isSubmitting}>
+						{(isSubmitting) => (
+							<SubmitButton submitting={isSubmitting}>
+								{submitLabel}
+							</SubmitButton>
+						)}
+					</form.Subscribe>
+				</>
+			}
 		>
 			{!isRefund && (
-				<p className="rounded-md bg-secondary p-3 text-sm text-muted-foreground">
+				<InlineAlert tone="info">
 					Record things you bought. Paying your credit card bill is not an
 					expense; record it as a payment on the card's{" "}
-					<Link to="/statements" className="font-medium underline">
+					<Link
+						to="/statements"
+						className="font-medium text-foreground underline underline-offset-4"
+					>
 						statement
 					</Link>
 					.
-				</p>
+				</InlineAlert>
 			)}
 
 			<form.Field name="description">
@@ -108,7 +126,7 @@ export function TransactionForm({
 				)}
 			</form.Field>
 
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-5 sm:grid-cols-2">
 				<form.Field name="amount">
 					{(field) => (
 						<FormField
@@ -176,7 +194,7 @@ export function TransactionForm({
 				)}
 			</form.Field>
 
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-5 sm:grid-cols-2">
 				<form.Field name="categoryId">
 					{(field) => (
 						<FormField
@@ -295,24 +313,7 @@ export function TransactionForm({
 				)}
 			</form.Field>
 
-			{error && (
-				<p role="alert" className="text-sm text-destructive">
-					{error}
-				</p>
-			)}
-
-			<div className="flex gap-2">
-				<form.Subscribe selector={(s) => s.isSubmitting}>
-					{(isSubmitting) => (
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Saving…" : submitLabel}
-						</Button>
-					)}
-				</form.Subscribe>
-				<Button type="button" variant="ghost" onClick={onCancel}>
-					Cancel
-				</Button>
-			</div>
-		</form>
+			<ActionError error={error} />
+		</FormPanel>
 	);
 }
