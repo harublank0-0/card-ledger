@@ -24,14 +24,16 @@ beyond push access to tags and the right to publish a release.
 git fetch origin
 git switch main
 git pull --ff-only
-git log --oneline -1          # must be the merge commit you meant to release
+git log --oneline -1          # must be the merge of the release pull request
+grep "^## 0.1.0 — " CHANGELOG.md   # must print the dated heading; nothing means the notes are not merged
 git tag -a v0.1.0 -m "Card Ledger 0.1.0"
 git push origin v0.1.0
 ```
 
-`git tag -a` tags whatever is checked out, so the `git log` line is the check. Tag only after the
-merge: a tag created earlier points at an older commit, and the release notes then describe code
-that the tag does not contain.
+`git tag -a` tags whatever is checked out, so the `git log` and `grep` lines are the check: any
+merge commit looks plausible in `git log`, but only the merged notes have the dated heading. Tag
+only after the merge: a tag created earlier points at an older commit, and the release notes then
+describe code that the tag does not contain.
 
 ## The image
 
@@ -79,9 +81,12 @@ awk -v v="$VERSION" 'index($0, "## " v " ") == 1 {f=1; next} /^## / {f=0} f' CHA
 
 ## Mistakes this order avoids
 
-- **A tag before the merge.** The release then describes commits the tag does not contain. Delete
-  the wrong tag (`git tag -d` and `git push origin --delete`) **before** creating a release from
-  it, because the draft-release page happily attaches to an existing tag.
+- **A tag before the merge.** The release then describes commits the tag does not contain, and
+  the tag ruleset means a pushed tag cannot be deleted or moved. It happened on 0.2.0: the tag was
+  pushed together with the release branch, on the previous merge, and the image workflow published
+  from it at once. Because the notes were the only change, the tag was kept and the notes say so.
+  Had code been missing, the fix would have been the next version. Wait for the merge before
+  running the tag commands at all.
 - **Relative links in the body.** They resolve against the release URL and break.
 - **Moving a published tag.** The tag ruleset blocks it on purpose. To correct a release, publish
   the next version.

@@ -175,7 +175,9 @@ describe("the changelog's headings", () => {
 describe("the project records that 0.1.1 and its image are published", () => {
 	it("says so in AGENTS.md", () => {
 		const agents = read("AGENTS.md");
-		expect(agents).toMatch(/`v0\.1\.0` and `v0\.1\.1` are published/);
+		expect(agents).toMatch(
+			/`v0\.1\.0`, `v0\.1\.1` and `v0\.2\.0` are published/,
+		);
 		expect(agents).toContain("ghcr.io/harublank0-0/card-ledger");
 	});
 
@@ -244,5 +246,36 @@ describe("the 0.2.0 notes", () => {
 		const limits = notes.slice(notes.indexOf("### Known limitations"));
 		expect(limits).toMatch(/screen reader/i);
 		expect(limits).toMatch(/Firefox/);
+	});
+});
+
+describe("the project records that 0.2.0 is published", () => {
+	it("says so in AGENTS.md, with the image it published", () => {
+		const agents = read("AGENTS.md");
+		expect(agents).toMatch(
+			/`v0\.1\.0`, `v0\.1\.1` and `v0\.2\.0` are published/,
+		);
+		expect(agents).toContain("ghcr.io/harublank0-0/card-ledger:0.2.0");
+	});
+
+	it("has a row for it in the roadmap that says where the tag is", () => {
+		const row =
+			read("docs/roadmap.md").match(/^\| yes \| R-03 .*$/m)?.[0] ?? "";
+		expect(row).toContain("0.2.0");
+		expect(row).toContain("57a4628");
+	});
+
+	it("ticks an audit checklist item for it", () => {
+		expect(read("docs/pre-publication-audit.md")).toMatch(
+			/- \[x\] .*`v0\.2\.0`/,
+		);
+	});
+});
+
+describe("the roadmap's progress table", () => {
+	// A blank line ends a Markdown table: the rows after it render as loose text with pipes.
+	// The U-01 row sat behind one.
+	it("has no blank line between its rows", () => {
+		expect(read("docs/roadmap.md")).not.toMatch(/^\| yes \| .*\n\n\| yes \| /m);
 	});
 });
