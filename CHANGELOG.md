@@ -3,7 +3,12 @@
 All notable changes are listed here, newest first. Card Ledger is pre-1.0: anything may change
 between 0.x releases, and every release says what to do when upgrading.
 
-## Unreleased
+## 0.2.0 — 2026-10-15
+
+A new interface. Every screen has been rebuilt on one design system; what Card Ledger stores and
+does is the same as in 0.1.1. **There is no schema, data, configuration or dependency change**, so
+there is nothing to migrate. Card Ledger is still pre-1.0 and has **not had an independent
+security audit**; read the known limitations before running it.
 
 ### Changed
 
@@ -16,9 +21,109 @@ between 0.x releases, and every release says what to do when upgrading.
   errors and late payments and amber for warnings (a statement or cancel-by date within 7 days).
   Deleting a transaction, statement or payment now asks in a small dialog, saving shows a short
   confirmation, and slow pages keep the layout while they load. Motion is brief and switched off
-  when the system asks for reduced motion. Categories now have their own place in the navigation.
-  Design notes: [ADR 0012](docs/decisions/0012-visual-design-system.md).
-- Nothing to migrate: no schema, data or configuration change, and no new dependency.
+  when the system asks for reduced motion. Keyboard focus is a solid outline, and a skip link
+  jumps past the navigation. Categories now have their own place in the navigation.
+  Design notes: [ADR 0012](./docs/decisions/0012-visual-design-system.md).
+- **The README screenshots** show the new interface, taken from the synthetic demo account.
+
+### Fixed
+
+- **The image name in the self-hosting guide and `.env.example` is lowercase.** Docker rejects
+  the capitalisation GitHub shows for the account (`haruBlank0-0`), so the line copied from the
+  0.1.1 guide failed with "repository name must be lowercase". A test now rejects a capitalised
+  registry name anywhere in the repository.
+
+### Upgrading from 0.1.1
+
+Take a backup first, as before any change ([backups](./docs/backup-restore.md)). Then:
+
+- **Prebuilt image:** set `CARD_LEDGER_IMAGE=ghcr.io/harublank0-0/card-ledger:0.2.0` in `.env`,
+  then run `docker compose pull` and `docker compose up -d --no-build`. If you pinned the `0.1`
+  tag, it stays on 0.1.1: a new minor version is always your choice.
+- **Built from source:** follow the guide's upgrade steps, which are unchanged.
+
+The `migrate` service finds nothing to apply. Going back to 0.1.1 needs only the old image or
+commit, since the database is untouched.
+
+### Install
+
+You need Docker with Compose v2.
+
+```sh
+git clone https://github.com/haruBlank0-0/card-ledger.git
+cd card-ledger
+cp .env.example .env     # set POSTGRES_PASSWORD and BETTER_AUTH_SECRET (the guide shows how)
+docker compose up -d --build
+curl -fsS http://localhost:3000/api/health    # must print {"status":"ok"}
+```
+
+Or skip the build: set `CARD_LEDGER_IMAGE=ghcr.io/harublank0-0/card-ledger:0.2.0` in `.env` and
+run `docker compose pull && docker compose up -d --no-build`. The image is built for
+`linux/amd64` and `linux/arm64`. The full guide, including HTTPS, email, upgrades and
+troubleshooting, is [docs/self-hosting.md](./docs/self-hosting.md), and
+[backups](./docs/backup-restore.md) should be set up before you rely on it.
+
+### How it was checked
+
+- The automated test suite runs in CI on every pull request, together with the lint and format
+  check, type check, build, licence check, dependency audit and the Docker smoke test of the whole
+  stack. New tests cover the shared interface pieces: success messages, status badges and alerts,
+  statement status colours, the reduced-motion rule, amounts split into code and number, and date
+  tiles.
+- The interface was driven with Playwright against a production build and the demo account, in
+  Chromium and (for whole-row links) WebKit: every screen at desktop and phone sizes, no clipped
+  control and no sideways page scroll at widths from 390 to 1440 pixels, no console errors, and 20
+  workflow checks (filters, adding and deleting with the dialog, recording a payment, settings,
+  the phone menu, slow-page loading, the skip link, reduced motion).
+- Every text and background colour pair was measured for contrast; the ratios are in ADR 0012.
+- The image was built from the tagged commit on a native runner per architecture and passed the
+  13-check smoke test before it was pushed, as for 0.1.1. `0.2.0` and `0.2` are the manifest
+  `sha256:0fefafb3288faff5240bc876ea62a565a55119529df7ac179f9e07f138766199`.
+- The `v0.2.0` tag is on `57a4628`, the commit just before these notes were merged, so the
+  `CHANGELOG.md` inside the tag still lists these changes as "Unreleased". The application is the
+  same: the notes changed only this file and one of its tests.
+- The review behind 0.1.0 was model-assisted and is **not** an independent audit; what was checked,
+  and what was not, is recorded in
+  [docs/pre-publication-audit.md](./docs/pre-publication-audit.md).
+
+### Known limitations
+
+Unchanged from 0.1.1, plus one new item. Please read these before running it.
+
+- **Not independently audited.** The review was done with a model's help. A financial application
+  deserves a human audit; treat this as unaudited software and keep it off the public internet
+  unless you have reviewed it yourself.
+- **Reminders can go to unverified addresses.** Email addresses are not verified. With
+  `SIGNUP_MODE=open` and SMTP configured, anyone who can reach the app can register any address and
+  have reminders emailed to it. The server logs a warning at start-up when it sees this
+  combination. Use `first-user` or `closed` when you configure SMTP.
+- **Unbounded lists.** The statements list returns every statement; only the transaction list is
+  paginated. Fine for one person's data, not for a very large account.
+- **Deleting the only account re-opens first-user registration**, until someone creates a new one.
+- **Restores are tested on PostgreSQL 17 only.** Restoring across PostgreSQL major versions has
+  not been tried.
+- **Untested deployment examples.** The guide's HTTPS reverse proxy (Caddy, nginx), Tailscale, SSH
+  tunnel, cron and systemd backup schedules and `age` encryption snippets have not been run by any
+  test, and the stack has not been installed on a clean VPS, on Linux or Windows hosts by hand, or
+  against a real SMTP relay.
+- **The image is not signed.** It carries OCI labels, but there is no signature or SBOM
+  attestation yet, and the base image is a moving tag rebuilt on each release. Check the commit
+  label against the release if that matters to you.
+- **Size.** The application image is roughly 1.1 to 1.2 GB.
+- **The new interface was only seen on macOS.** It has not been tried with a real screen reader,
+  in Firefox, with Windows or Linux system fonts, or on a real phone (only at emulated phone
+  sizes). Reports are welcome.
+
+### Reporting problems
+
+Report security issues privately through GitHub's private vulnerability reporting, as described in
+[SECURITY.md](./SECURITY.md); please do not open a public issue for them. For everything else open
+an issue, and never paste real financial data, backups or `.env` files into one.
+
+### Licence
+
+[AGPL-3.0-only](./LICENSE). Contributions need a DCO sign-off (`git commit -s`) and there is no
+CLA; see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## 0.1.1 — 2026-10-12
 

@@ -215,3 +215,34 @@ describe("the 0.1.1 notes", () => {
 		expect(notes).toContain("ghcr.io/harublank0-0/card-ledger:0.1.1");
 	});
 });
+
+describe("the changelog's links", () => {
+	// A release body is generated from a changelog section, and the generator only pins links
+	// written as `./path` to the tag (docs/releasing.md). Any other relative link resolves against
+	// the release page and is dead there; the 0.2.0 notes nearly shipped one.
+	it("are absolute or start with ./, so the release body can point them at the tag", () => {
+		const targets = [...changelog.matchAll(/\]\(([^)\s]+)\)/g)].map(
+			(match) => match[1],
+		);
+		expect(targets.length).toBeGreaterThan(5);
+		for (const target of targets) {
+			expect(target, target).toMatch(/^(\.\/|https:\/\/)/);
+		}
+	});
+});
+
+describe("the 0.2.0 notes", () => {
+	it("name the image to pull and say there is nothing to migrate", () => {
+		const notes = section(/^## 0\.2\.0/m);
+		expect(notes).toContain("ghcr.io/harublank0-0/card-ledger:0.2.0");
+		expect(notes).toMatch(/nothing to migrate/i);
+		expect(notes.split("\n")[0]).toMatch(/^## 0\.2\.0 — \d{4}-\d{2}-\d{2}$/);
+	});
+
+	it("say where the new interface was not checked", () => {
+		const notes = section(/^## 0\.2\.0/m);
+		const limits = notes.slice(notes.indexOf("### Known limitations"));
+		expect(limits).toMatch(/screen reader/i);
+		expect(limits).toMatch(/Firefox/);
+	});
+});
