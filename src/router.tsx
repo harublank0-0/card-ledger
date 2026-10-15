@@ -1,6 +1,7 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { RouteError, RouteNotFound } from "./components/route-fallbacks";
+import { RoutePending } from "./components/route-pending";
 import { getContext } from "./integrations/tanstack-query/root-provider";
 import { routeTree } from "./routeTree.gen";
 
@@ -15,6 +16,11 @@ export function getRouter() {
 		defaultPreloadStaleTime: 0,
 		defaultErrorComponent: RouteError,
 		defaultNotFoundComponent: RouteNotFound,
+		// A slow page shows its outline in place of the content (the shell stays put); fast
+		// ones only show the progress bar in the shell.
+		defaultPendingComponent: RoutePending,
+		defaultPendingMs: 600,
+		defaultPendingMinMs: 300,
 	});
 
 	setupRouterSsrQueryIntegration({ router, queryClient: context.queryClient });
