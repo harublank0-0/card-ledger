@@ -236,7 +236,7 @@ describe("the 0.2.0 notes", () => {
 		const notes = section(/^## 0\.2\.0/m);
 		expect(notes).toContain("ghcr.io/harublank0-0/card-ledger:0.2.0");
 		expect(notes).toMatch(/nothing to migrate/i);
-		expect(notes).not.toMatch(/unreleased/i);
+		expect(notes.split("\n")[0]).toMatch(/^## 0\.2\.0 — \d{4}-\d{2}-\d{2}$/);
 	});
 
 	it("say where the new interface was not checked", () => {

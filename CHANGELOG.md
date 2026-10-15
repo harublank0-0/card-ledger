@@ -76,8 +76,12 @@ troubleshooting, is [docs/self-hosting.md](./docs/self-hosting.md), and
   workflow checks (filters, adding and deleting with the dialog, recording a payment, settings,
   the phone menu, slow-page loading, the skip link, reduced motion).
 - Every text and background colour pair was measured for contrast; the ratios are in ADR 0012.
-- The image is built from the tagged commit on a native runner per architecture and passes the
-  13-check smoke test before it is pushed, as for 0.1.1.
+- The image was built from the tagged commit on a native runner per architecture and passed the
+  13-check smoke test before it was pushed, as for 0.1.1. `0.2.0` and `0.2` are the manifest
+  `sha256:0fefafb3288faff5240bc876ea62a565a55119529df7ac179f9e07f138766199`.
+- The `v0.2.0` tag is on `57a4628`, the commit just before these notes were merged, so the
+  `CHANGELOG.md` inside the tag still lists these changes as "Unreleased". The application is the
+  same: the notes changed only this file and one of its tests.
 - The review behind 0.1.0 was model-assisted and is **not** an independent audit; what was checked,
   and what was not, is recorded in
   [docs/pre-publication-audit.md](./docs/pre-publication-audit.md).
