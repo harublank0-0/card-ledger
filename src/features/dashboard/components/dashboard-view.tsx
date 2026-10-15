@@ -1,6 +1,25 @@
 import { Link } from "@tanstack/react-router";
+import { cn } from "cn";
+import {
+	CalendarClock,
+	CircleAlert,
+	Clock,
+	CreditCard,
+	type LucideIcon,
+	Plus,
+	Repeat,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
+import { StatusBadge } from "#/components/feedback";
+import { PageHeader } from "#/components/page-header";
+import {
+	Figure,
+	Panel,
+	PanelHeader,
+	Stat,
+	StatGroup,
+} from "#/components/panel";
 import { Button } from "#/components/ui/button";
 import { signedAmount } from "#/features/transactions/transactions.logic";
 import { type CurrencyCode, formatMoney } from "#/lib/money";
@@ -17,37 +36,21 @@ const money = (minor: number, currency: string) =>
 	formatMoney(minor, currency as CurrencyCode);
 
 const MAX_UPCOMING = 10;
+/** A cancel-by date this close is a warning, not just a reminder. */
+const CANCEL_BY_WARNING_DAYS = 7;
 
-function Tile({
-	id,
-	title,
-	children,
-}: {
-	id: string;
-	title: string;
-	children: ReactNode;
-}) {
-	return (
-		<section
-			aria-labelledby={id}
-			className="rounded-xl border bg-card p-4 shadow-sm"
-		>
-			<h2 id={id} className="text-xs font-normal text-muted-foreground">
-				{title}
-			</h2>
-			<div className="mt-1 grid gap-1">{children}</div>
-		</section>
-	);
-}
+const linkClass =
+	"font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 function EventLink({
 	event,
+	className,
 	children,
 }: {
 	event: UpcomingEvent;
+	className?: string;
 	children: ReactNode;
 }) {
-	const className = "hover:underline";
 	switch (event.target.type) {
 		case "subscription":
 			return (
@@ -82,6 +85,60 @@ function EventLink({
 	}
 }
 
+const KIND_ICON: Record<UpcomingEvent["kind"], LucideIcon> = {
+	STATEMENT_OVERDUE: CircleAlert,
+	STATEMENT_DUE: CreditCard,
+	CARD_DUE_DAY: CreditCard,
+	CANCEL_BY: Clock,
+	RENEWAL: Repeat,
+	EXPIRY: CalendarClock,
+};
+
+function eventTone(event: UpcomingEvent, tone: "danger" | "neutral") {
+	if (tone === "danger") return "danger";
+	if (event.kind === "CANCEL_BY" && event.daysUntil <= CANCEL_BY_WARNING_DAYS)
+		return "warning";
+	return "neutral";
+}
+
+const ICON_TONE = {
+	danger: "bg-destructive-soft text-destructive",
+	warning: "bg-warning-soft text-warning",
+	neutral: "bg-secondary text-muted-foreground",
+} as const;
+
+function MonthSwitcher({ data }: { data: DashboardData }) {
+	return (
+		<nav
+			aria-label="Month"
+			className="flex items-center rounded-lg border bg-card p-0.5 shadow-xs"
+		>
+			<Button asChild variant="ghost" size="sm" className="h-7 px-2.5">
+				<Link to="/" search={{ month: data.previousMonth }}>
+					Previous
+				</Link>
+			</Button>
+			<span
+				className="min-w-30 px-2 text-center text-sm font-semibold text-foreground"
+				aria-live="polite"
+			>
+				{formatMonthLabel(data.month)}
+			</span>
+			{data.nextMonth ? (
+				<Button asChild variant="ghost" size="sm" className="h-7 px-2.5">
+					<Link to="/" search={{ month: data.nextMonth }}>
+						Next
+					</Link>
+				</Button>
+			) : (
+				<Button variant="ghost" size="sm" className="h-7 px-2.5" disabled>
+					Next
+				</Button>
+			)}
+		</nav>
+	);
+}
+
 export function DashboardView({ data }: { data: DashboardData }) {
 	const monthLabel = formatMonthLabel(data.month);
 	const showHints =
@@ -91,326 +148,353 @@ export function DashboardView({ data }: { data: DashboardData }) {
 	const upcoming = data.upcoming.slice(0, MAX_UPCOMING);
 
 	return (
-		<div className="grid gap-6">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h1 className="text-2xl font-semibold">Dashboard</h1>
-				<nav aria-label="Month" className="flex items-center gap-2">
-					<Button asChild variant="outline" size="sm">
-						<Link to="/" search={{ month: data.previousMonth }}>
-							Previous
-						</Link>
-					</Button>
-					<span
-						className="min-w-32 text-center text-sm font-medium"
-						aria-live="polite"
-					>
-						{monthLabel}
-					</span>
-					{data.nextMonth ? (
-						<Button asChild variant="outline" size="sm">
-							<Link to="/" search={{ month: data.nextMonth }}>
-								Next
+		<div>
+			<PageHeader
+				title="Dashboard"
+				actions={
+					<>
+						<MonthSwitcher data={data} />
+						<Button asChild>
+							<Link to="/transactions/new">
+								<Plus aria-hidden="true" />
+								Add transaction
 							</Link>
 						</Button>
-					) : (
-						<Button variant="outline" size="sm" disabled>
-							Next
-						</Button>
-					)}
-				</nav>
-			</div>
+					</>
+				}
+			/>
 
-			{showHints && (
-				<section
-					aria-labelledby="hints-title"
-					className="rounded-xl border bg-card p-4 shadow-sm"
-				>
-					<h2 id="hints-title" className="font-medium">
-						Get started
-					</h2>
-					<ul className="mt-2 grid gap-1 text-sm">
-						{data.counts.cards === 0 && (
-							<li>
-								<Link to="/cards/new" className="underline">
-									Add a credit card
-								</Link>{" "}
-								(only the last four digits are stored)
-							</li>
-						)}
-						{data.counts.subscriptions === 0 && (
-							<li>
-								<Link to="/subscriptions/new" className="underline">
-									Track a subscription
-								</Link>{" "}
-								to see what renews next
-							</li>
-						)}
-						{data.counts.transactions === 0 && (
-							<li>
-								<Link to="/transactions/new" className="underline">
-									Record a transaction
-								</Link>{" "}
-								to see where your money goes
-							</li>
-						)}
-					</ul>
-				</section>
-			)}
-
-			<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-				<Tile id="spent-title" title={`Spent in ${monthLabel}`}>
-					{data.spending.length === 0 ? (
-						<p className="text-sm text-muted-foreground">
-							Nothing recorded this month.
-						</p>
-					) : (
-						data.spending.map((t) => (
-							<div key={t.currency}>
-								<p className="text-2xl font-semibold">
-									{money(t.netMinor, t.currency)}
-								</p>
-								<p className="text-xs text-muted-foreground">
-									Spent {money(t.spentMinor, t.currency)}
-									{t.refundedMinor > 0 &&
-										` · refunded ${money(t.refundedMinor, t.currency)}`}
-								</p>
-							</div>
-						))
-					)}
-				</Tile>
-
-				<Tile id="subs-title" title="Subscriptions">
-					<p className="text-2xl font-semibold">
-						{data.subscriptions.activeCount}
-						<span className="ml-1 text-sm font-normal text-muted-foreground">
-							active
-						</span>
-					</p>
-					{data.subscriptions.commitments.length === 0 ? (
-						<p className="text-xs text-muted-foreground">
-							No monthly commitment yet.
-						</p>
-					) : (
-						data.subscriptions.commitments.map((c) => (
-							<p key={c.currency} className="text-sm">
-								<span className="font-medium">
-									{money(c.monthlyMinor, c.currency)}
-								</span>
-								<span className="text-muted-foreground"> per month</span>
-							</p>
-						))
-					)}
-					<Link to="/subscriptions" className="text-xs underline">
-						Manage subscriptions
-					</Link>
-				</Tile>
-
-				<Tile id="owed-title" title="Owed on cards">
-					{data.owed.outstanding.length === 0 ? (
-						<p className="text-sm text-muted-foreground">
-							Nothing owed on recorded statements.
-						</p>
-					) : (
-						data.owed.outstanding.map((o) => (
-							<p key={o.currency} className="text-2xl font-semibold">
-								{money(o.outstandingMinor, o.currency)}
-							</p>
-						))
-					)}
-					{data.owed.overdueCount > 0 && (
-						<Link
-							to="/statements"
-							className="text-sm font-medium text-destructive underline"
-						>
-							{data.owed.overdueCount} overdue
-						</Link>
-					)}
-					{data.owed.overdueCount === 0 && (
-						<Link to="/statements" className="text-xs underline">
-							View statements
-						</Link>
-					)}
-				</Tile>
-			</div>
-
-			<div className="grid gap-6 lg:grid-cols-2">
-				<section
-					aria-labelledby="upcoming-title"
-					className="rounded-xl border bg-card p-4 shadow-sm"
-				>
-					<h2 id="upcoming-title" className="font-medium">
-						Coming up{" "}
-						<span className="text-sm font-normal text-muted-foreground">
-							(next {UPCOMING_HORIZON_DAYS} days)
-						</span>
-					</h2>
-					{upcoming.length === 0 ? (
-						<p className="mt-2 text-sm text-muted-foreground">
-							Nothing due in the next {UPCOMING_HORIZON_DAYS} days.
-						</p>
-					) : (
-						<ul className="mt-2 grid gap-2">
-							{upcoming.map((event) => {
-								const { text, tone } = describeUpcoming(event);
-								return (
-									<li
-										key={`${event.kind}-${event.target.id}-${event.date}`}
-										className="flex items-start justify-between gap-3 text-sm"
-									>
-										<EventLink event={event}>
-											<span
-												className={
-													tone === "danger"
-														? "font-medium text-destructive"
-														: ""
-												}
-											>
-												{text}
-											</span>
-										</EventLink>
-										{event.amountMinor !== undefined && event.currency && (
-											<span className="whitespace-nowrap font-medium">
-												{money(event.amountMinor, event.currency)}
-											</span>
-										)}
-									</li>
-								);
-							})}
-						</ul>
-					)}
-					{data.upcoming.length > MAX_UPCOMING && (
-						<p className="mt-2 text-xs text-muted-foreground">
-							Showing the first {MAX_UPCOMING} of {data.upcoming.length}.
-						</p>
-					)}
-				</section>
-
-				<section
-					aria-labelledby="categories-title"
-					className="rounded-xl border bg-card p-4 shadow-sm"
-				>
-					<h2 id="categories-title" className="font-medium">
-						Spending by category
-					</h2>
-					{data.byCategory.length === 0 ? (
-						<p className="mt-2 text-sm text-muted-foreground">
-							No spending recorded in {monthLabel}.
-						</p>
-					) : (
-						<div className="mt-2 grid gap-5">
-							{data.byCategory.map((breakdown) => (
-								<table key={breakdown.currency} className="w-full text-sm">
-									<caption className="mb-1 text-left text-xs text-muted-foreground">
-										{breakdown.currency}, {monthLabel}
-									</caption>
-									<thead className="sr-only">
-										<tr>
-											<th scope="col">Category</th>
-											<th scope="col">Net spending</th>
-										</tr>
-									</thead>
-									<tbody>
-										{breakdown.rows.map((row) => (
-											<tr key={row.categoryId ?? "uncategorized"}>
-												<th
-													scope="row"
-													className="w-full py-1 pr-3 text-left font-normal"
-												>
-													<span className="block">{row.name}</span>
-													<span
-														aria-hidden="true"
-														className="mt-1 block h-1.5 rounded bg-secondary"
-													>
-														<span
-															className="block h-full rounded bg-primary"
-															style={{
-																width: `${barPercent(row.netMinor, breakdown.maxNetMinor)}%`,
-															}}
-														/>
-													</span>
-												</th>
-												<td className="whitespace-nowrap py-1 text-right align-top font-medium">
-													{money(row.netMinor, breakdown.currency)}
-													{row.refundedMinor > 0 && (
-														<span className="block text-xs font-normal text-muted-foreground">
-															refunded{" "}
-															{money(row.refundedMinor, breakdown.currency)}
-														</span>
-													)}
-												</td>
-											</tr>
-										))}
-									</tbody>
-									<tfoot>
-										<tr>
-											<th scope="row" className="pt-2 text-left font-medium">
-												Total
-											</th>
-											<td className="pt-2 text-right font-semibold">
-												{money(breakdown.netMinor, breakdown.currency)}
-											</td>
-										</tr>
-									</tfoot>
-								</table>
-							))}
-						</div>
-					)}
-				</section>
-			</div>
-
-			<section
-				aria-labelledby="recent-title"
-				className="rounded-xl border bg-card p-4 shadow-sm"
-			>
-				<div className="flex items-center justify-between gap-3">
-					<h2 id="recent-title" className="font-medium">
-						Recent transactions
-					</h2>
-					<Link to="/transactions" className="text-sm underline">
-						View all
-					</Link>
-				</div>
-				{data.recent.length === 0 ? (
-					<p className="mt-2 text-sm text-muted-foreground">
-						No transactions yet.
-					</p>
-				) : (
-					<ul className="mt-2 grid gap-2">
-						{data.recent.map((t) => (
-							<li
-								key={t.id}
-								className="flex items-start justify-between gap-3 text-sm"
-							>
-								<div className="min-w-0">
-									<Link
-										to="/transactions/$transactionId"
-										params={{ transactionId: t.id }}
-										className="font-medium hover:underline"
-									>
-										{t.description}
+			<div className="grid gap-6">
+				{showHints && (
+					<Panel aria-labelledby="hints-title">
+						<PanelHeader
+							id="hints-title"
+							title="Get started"
+							description="A few records are all it takes to fill this page."
+						/>
+						<ul className="grid divide-y text-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+							{data.counts.cards === 0 && (
+								<li className="px-4 py-3.5 sm:px-5">
+									<Link to="/cards/new" className={linkClass}>
+										Add a credit card
 									</Link>
-									{t.type === "REFUND" && (
-										<span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
-											Refund
-										</span>
-									)}
-									<p className="text-xs text-muted-foreground">
-										{t.occurredOn} · {t.category?.name ?? "Uncategorized"}
-										{t.paymentMethod
-											? ` · ${t.paymentMethod.name} •••• ${t.paymentMethod.last4}`
-											: ""}
+									<p className="text-muted-foreground">
+										(only the last four digits are stored)
+									</p>
+								</li>
+							)}
+							{data.counts.subscriptions === 0 && (
+								<li className="px-4 py-3.5 sm:px-5">
+									<Link to="/subscriptions/new" className={linkClass}>
+										Track a subscription
+									</Link>
+									<p className="text-muted-foreground">
+										to see what renews next
+									</p>
+								</li>
+							)}
+							{data.counts.transactions === 0 && (
+								<li className="px-4 py-3.5 sm:px-5">
+									<Link to="/transactions/new" className={linkClass}>
+										Record a transaction
+									</Link>
+									<p className="text-muted-foreground">
+										to see where your money goes
+									</p>
+								</li>
+							)}
+						</ul>
+					</Panel>
+				)}
+
+				<StatGroup>
+					<Stat labelId="spent-title" label={`Spent in ${monthLabel}`}>
+						{data.spending.length === 0 ? (
+							<p className="text-sm text-muted-foreground">
+								Nothing recorded this month.
+							</p>
+						) : (
+							data.spending.map((t) => (
+								<div key={t.currency} className="not-first:mt-2">
+									<Figure>{money(t.netMinor, t.currency)}</Figure>
+									<p className="text-xs text-muted-foreground tabular-nums">
+										Spent {money(t.spentMinor, t.currency)}
+										{t.refundedMinor > 0 &&
+											`, refunded ${money(t.refundedMinor, t.currency)}`}
 									</p>
 								</div>
-								<span
-									className={`whitespace-nowrap font-medium ${t.type === "REFUND" ? "text-emerald-700" : ""}`}
+							))
+						)}
+					</Stat>
+
+					<Stat
+						labelId="owed-title"
+						label="Owed on cards"
+						footer={
+							data.owed.overdueCount > 0 ? (
+								<Link
+									to="/statements"
+									className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-destructive"
 								>
-									{money(signedAmount(t.type, t.amountMinor), t.currency)}
-								</span>
-							</li>
-						))}
-					</ul>
-				)}
-			</section>
+									<StatusBadge tone="danger">
+										{data.owed.overdueCount} overdue
+									</StatusBadge>
+								</Link>
+							) : (
+								<Link to="/statements" className={linkClass}>
+									View statements
+								</Link>
+							)
+						}
+					>
+						{data.owed.outstanding.length === 0 ? (
+							<p className="text-sm text-muted-foreground">
+								Nothing owed on recorded statements.
+							</p>
+						) : (
+							data.owed.outstanding.map((o) => (
+								<Figure key={o.currency}>
+									{money(o.outstandingMinor, o.currency)}
+								</Figure>
+							))
+						)}
+					</Stat>
+
+					<Stat
+						labelId="subs-title"
+						label="Subscriptions"
+						footer={
+							<Link to="/subscriptions" className={linkClass}>
+								Manage subscriptions
+							</Link>
+						}
+					>
+						<Figure>
+							{data.subscriptions.activeCount}
+							<span className="ml-1.5 text-sm font-normal text-muted-foreground">
+								active
+							</span>
+						</Figure>
+						{data.subscriptions.commitments.length === 0 ? (
+							<p className="text-xs text-muted-foreground">
+								No monthly commitment yet.
+							</p>
+						) : (
+							data.subscriptions.commitments.map((c) => (
+								<p key={c.currency} className="text-sm tabular-nums">
+									<span className="font-medium">
+										{money(c.monthlyMinor, c.currency)}
+									</span>
+									<span className="text-muted-foreground"> per month</span>
+								</p>
+							))
+						)}
+					</Stat>
+				</StatGroup>
+
+				<div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+					<div className="grid gap-6">
+						<Panel aria-labelledby="recent-title">
+							<PanelHeader
+								id="recent-title"
+								title="Recent transactions"
+								actions={
+									<Button asChild variant="ghost" size="sm">
+										<Link to="/transactions">View all</Link>
+									</Button>
+								}
+							/>
+							{data.recent.length === 0 ? (
+								<p className="px-4 py-6 text-sm text-muted-foreground sm:px-5">
+									No transactions yet.
+								</p>
+							) : (
+								<ul className="divide-y">
+									{data.recent.map((t) => (
+										<li
+											key={t.id}
+											className="relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-background/80 sm:gap-4 sm:px-5"
+										>
+											<span className="hidden w-[5.5rem] shrink-0 pt-px text-sm whitespace-nowrap text-muted-foreground tabular-nums sm:block">
+												{t.occurredOn}
+											</span>
+											<div className="min-w-0 flex-1">
+												<p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+													<Link
+														to="/transactions/$transactionId"
+														params={{ transactionId: t.id }}
+														className="font-medium text-foreground outline-none after:absolute after:inset-0 hover:underline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring"
+													>
+														{t.description}
+													</Link>
+													{t.type === "REFUND" && (
+														<StatusBadge>Refund</StatusBadge>
+													)}
+												</p>
+												<p className="truncate text-xs text-muted-foreground">
+													<span className="tabular-nums sm:hidden">
+														{t.occurredOn} ·{" "}
+													</span>
+													{t.category?.name ?? "Uncategorized"}
+													{t.paymentMethod
+														? ` · ${t.paymentMethod.name} •••• ${t.paymentMethod.last4}`
+														: ""}
+												</p>
+											</div>
+											<span
+												className={cn(
+													"shrink-0 font-medium whitespace-nowrap tabular-nums",
+													t.type === "REFUND" && "text-success",
+												)}
+											>
+												{money(signedAmount(t.type, t.amountMinor), t.currency)}
+											</span>
+										</li>
+									))}
+								</ul>
+							)}
+						</Panel>
+
+						<Panel aria-labelledby="upcoming-title">
+							<PanelHeader
+								id="upcoming-title"
+								title="Coming up"
+								description={`Next ${UPCOMING_HORIZON_DAYS} days, overdue first`}
+							/>
+							{upcoming.length === 0 ? (
+								<p className="px-4 py-6 text-sm text-muted-foreground sm:px-5">
+									Nothing due in the next {UPCOMING_HORIZON_DAYS} days.
+								</p>
+							) : (
+								<ul className="divide-y">
+									{upcoming.map((event) => {
+										const { text, tone } = describeUpcoming(event);
+										const shown = eventTone(event, tone);
+										const Icon = KIND_ICON[event.kind];
+										return (
+											<li
+												key={`${event.kind}-${event.target.id}-${event.date}`}
+												className="relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-background/80 sm:px-5"
+											>
+												<span
+													className={cn(
+														"mt-px flex size-7 shrink-0 items-center justify-center rounded-full",
+														ICON_TONE[shown],
+													)}
+												>
+													<Icon aria-hidden="true" className="size-3.5" />
+												</span>
+												<div className="min-w-0 flex-1">
+													<EventLink
+														event={event}
+														className={cn(
+															"outline-none after:absolute after:inset-0 hover:underline focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring",
+															shown === "danger"
+																? "font-medium text-destructive"
+																: "text-foreground",
+														)}
+													>
+														{text}
+													</EventLink>
+													<p className="text-xs text-muted-foreground tabular-nums">
+														{event.date}
+													</p>
+												</div>
+												{event.amountMinor !== undefined && event.currency && (
+													<span className="shrink-0 pt-px font-medium whitespace-nowrap tabular-nums">
+														{money(event.amountMinor, event.currency)}
+													</span>
+												)}
+											</li>
+										);
+									})}
+								</ul>
+							)}
+							{data.upcoming.length > MAX_UPCOMING && (
+								<p className="border-t px-4 py-2.5 text-xs text-muted-foreground sm:px-5">
+									Showing the first {MAX_UPCOMING} of {data.upcoming.length}.
+								</p>
+							)}
+						</Panel>
+					</div>
+
+					<Panel aria-labelledby="categories-title">
+						<PanelHeader
+							id="categories-title"
+							title="Spending by category"
+							description={monthLabel}
+						/>
+						{data.byCategory.length === 0 ? (
+							<p className="px-4 py-6 text-sm text-muted-foreground sm:px-5">
+								No spending recorded in {monthLabel}.
+							</p>
+						) : (
+							<div className="grid divide-y">
+								{data.byCategory.map((breakdown) => (
+									<table key={breakdown.currency} className="w-full text-sm">
+										<caption className="px-4 pt-4 pb-1 text-left text-xs font-medium text-muted-foreground sm:px-5">
+											{breakdown.currency}, {monthLabel}
+										</caption>
+										<thead className="sr-only">
+											<tr>
+												<th scope="col">Category</th>
+												<th scope="col">Net spending</th>
+											</tr>
+										</thead>
+										<tbody>
+											{breakdown.rows.map((row) => (
+												<tr key={row.categoryId ?? "uncategorized"}>
+													<th
+														scope="row"
+														className="w-full py-2 pr-3 pl-4 text-left font-normal sm:pl-5"
+													>
+														<span className="block text-foreground">
+															{row.name}
+														</span>
+														<span
+															aria-hidden="true"
+															className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-secondary"
+														>
+															<span
+																className="block h-full rounded-full bg-[#3d4a5e]"
+																style={{
+																	width: `${barPercent(row.netMinor, breakdown.maxNetMinor)}%`,
+																}}
+															/>
+														</span>
+													</th>
+													<td className="py-2 pr-4 text-right align-top font-medium whitespace-nowrap tabular-nums sm:pr-5">
+														{money(row.netMinor, breakdown.currency)}
+														{row.refundedMinor > 0 && (
+															<span className="block text-xs font-normal text-muted-foreground">
+																refunded{" "}
+																{money(row.refundedMinor, breakdown.currency)}
+															</span>
+														)}
+													</td>
+												</tr>
+											))}
+										</tbody>
+										<tfoot>
+											<tr className="border-t">
+												<th
+													scope="row"
+													className="py-3 pl-4 text-left font-medium sm:pl-5"
+												>
+													Total
+												</th>
+												<td className="py-3 pr-4 text-right font-semibold tabular-nums sm:pr-5">
+													{money(breakdown.netMinor, breakdown.currency)}
+												</td>
+											</tr>
+										</tfoot>
+									</table>
+								))}
+							</div>
+						)}
+					</Panel>
+				</div>
+			</div>
 		</div>
 	);
 }

@@ -5,11 +5,24 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { ConfirmDialog } from "#/components/confirm-dialog";
+import { ActionError } from "#/components/feedback";
+import { BackLink, PageHeader } from "#/components/page-header";
+import {
+	Figure,
+	Panel,
+	PanelHeader,
+	Stat,
+	StatGroup,
+} from "#/components/panel";
+import { RecordNotFound } from "#/components/route-fallbacks";
 import { Button } from "#/components/ui/button";
 import { PaymentForm } from "#/features/statements/components/payment-form";
 import { StatementForm } from "#/features/statements/components/statement-form";
+import { StatementStatusBadge } from "#/features/statements/components/statement-status";
 import {
 	addPaymentFn,
 	deletePaymentFn,
@@ -17,7 +30,6 @@ import {
 	getStatementFn,
 	updateStatementFn,
 } from "#/features/statements/statements.functions";
-import { statusLabel } from "#/features/statements/statements.logic";
 import { isUuid } from "#/lib/ids";
 import {
 	type CurrencyCode,
@@ -25,6 +37,7 @@ import {
 	minorToInputString,
 } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
+import { notify } from "#/lib/toast";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/statements/$statementId")({
@@ -36,16 +49,17 @@ export const Route = createFileRoute("/_authed/statements/$statementId")({
 		return { statement: result.statement, today: result.today };
 	},
 	notFoundComponent: () => (
-		<p className="text-muted-foreground">Statement not found.</p>
+		<RecordNotFound
+			title="Statement not found"
+			back={
+				<Button asChild variant="outline">
+					<Link to="/statements">Back to statements</Link>
+				</Button>
+			}
+		/>
 	),
 	component: StatementDetail,
 });
-
-const TONE = {
-	danger: "bg-destructive/10 text-destructive",
-	neutral: "bg-secondary text-muted-foreground",
-	success: "bg-emerald-100 text-emerald-800",
-} as const;
 
 function StatementDetail() {
 	const { statement: s, today } = Route.useLoaderData();
@@ -54,220 +68,220 @@ function StatementDetail() {
 	const addPayment = useServerFn(addPaymentFn);
 	const removePayment = useServerFn(deletePaymentFn);
 	const remove = useServerFn(deleteStatementFn);
-	const [confirmingPayment, setConfirmingPayment] = useState<string | null>(
-		null,
-	);
-	const [confirmingDelete, setConfirmingDelete] = useState(false);
 	const { run, pending, error } = useAction();
+	// One action runs at a time; its failure is shown next to the part of the page it came from.
+	const [errorAt, setErrorAt] = useState<"payments" | "statement">("payments");
 	const money = (minor: number) =>
 		formatMoney(minor, s.currency as CurrencyCode);
-	const label = statusLabel(s);
+	const cardLabel = `${s.card.name} •••• ${s.card.last4}`;
 
 	return (
-		<section className="grid gap-6">
-			<div>
-				<h1 className="text-2xl font-semibold">
-					{s.card.name} •••• {s.card.last4}
-					<span
-						className={`ml-2 rounded px-1.5 py-0.5 align-middle text-xs ${TONE[label.tone]}`}
-					>
-						{label.label}
+		<div>
+			<PageHeader
+				back={<BackLink to="/statements">Statements</BackLink>}
+				title={cardLabel}
+				badge={<StatementStatusBadge statement={s} />}
+				description={
+					<span className="tabular-nums">
+						{s.periodStart} to {s.periodEnd}, due {s.dueDate}
 					</span>
-				</h1>
-				<p className="text-muted-foreground">
-					{s.periodStart} to {s.periodEnd} · due {s.dueDate}
-				</p>
-			</div>
+				}
+			/>
 
-			<div className="grid max-w-xl gap-3 rounded-xl border bg-card p-5 shadow-sm">
-				<dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-					<div>
-						<dt className="text-muted-foreground">Statement balance</dt>
-						<dd className="font-medium">{money(s.balanceMinor)}</dd>
-					</div>
-					<div>
-						<dt className="text-muted-foreground">Minimum due</dt>
-						<dd className="font-medium">
+			<div className="grid gap-6">
+				<StatGroup pairs>
+					<Stat label="Statement balance">
+						<Figure>{money(s.balanceMinor)}</Figure>
+					</Stat>
+					<Stat label="Minimum due">
+						<Figure>
 							{s.minimumDueMinor === null ? "—" : money(s.minimumDueMinor)}
-						</dd>
-					</div>
-					<div>
-						<dt className="text-muted-foreground">Paid</dt>
-						<dd className="font-medium">{money(s.paidMinor)}</dd>
-					</div>
-					<div>
-						<dt className="text-muted-foreground">
-							{s.overpaidMinor > 0 ? "Credit" : "Still owed"}
-						</dt>
-						<dd className="font-medium">
+						</Figure>
+					</Stat>
+					<Stat label="Paid">
+						<Figure>{money(s.paidMinor)}</Figure>
+					</Stat>
+					<Stat label={s.overpaidMinor > 0 ? "Credit" : "Still owed"}>
+						<Figure
+							className={
+								s.status === "OVERDUE" && s.outstandingMinor > 0
+									? "text-destructive"
+									: undefined
+							}
+						>
 							{money(
 								s.overpaidMinor > 0 ? s.overpaidMinor : s.outstandingMinor,
 							)}
-						</dd>
-					</div>
-				</dl>
-			</div>
+						</Figure>
+					</Stat>
+				</StatGroup>
 
-			<div className="grid max-w-xl gap-4 rounded-xl border bg-card p-5 shadow-sm">
-				<p className="text-sm font-medium">Payments</p>
-				{s.payments.length === 0 ? (
-					<p className="text-sm text-muted-foreground">
-						No payments recorded yet.
-					</p>
-				) : (
-					<ul className="grid gap-2 text-sm">
-						{s.payments.map((p) => (
-							<li
-								key={p.id}
-								className="flex items-center justify-between gap-3"
-							>
-								<span>
-									{p.paidOn}
-									{p.notes && (
-										<span className="text-muted-foreground"> · {p.notes}</span>
-									)}
-								</span>
-								<span className="flex items-center gap-2">
-									<span className="font-medium">{money(p.amountMinor)}</span>
-									{confirmingPayment === p.id ? (
-										<>
-											<Button
-												size="sm"
-												variant="destructive"
-												disabled={pending}
-												onClick={() =>
-													run(async () => {
-														await removePayment({ data: { id: p.id } });
-														setConfirmingPayment(null);
-													})
+				<div className="grid items-start gap-6 lg:grid-cols-2">
+					<Panel aria-labelledby="payments-title">
+						<PanelHeader id="payments-title" title="Payments" />
+						{s.payments.length === 0 ? (
+							<p className="px-4 py-3 text-sm text-muted-foreground sm:px-5">
+								No payments recorded yet.
+							</p>
+						) : (
+							<ul className="divide-y text-sm">
+								{s.payments.map((p) => (
+									<li
+										key={p.id}
+										className="flex items-center justify-between gap-3 px-4 py-2 sm:px-5"
+									>
+										<div className="min-w-0">
+											<p className="tabular-nums">{p.paidOn}</p>
+											{p.notes && (
+												<p className="truncate text-xs text-muted-foreground">
+													{p.notes}
+												</p>
+											)}
+										</div>
+										<span className="flex items-center gap-1">
+											<span className="font-medium tabular-nums">
+												{money(p.amountMinor)}
+											</span>
+											<ConfirmDialog
+												trigger={
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														className="hover:bg-destructive-soft hover:text-destructive"
+													>
+														<Trash2 aria-hidden="true" />
+														<span className="sr-only">
+															Delete the payment of {p.paidOn}
+														</span>
+													</Button>
 												}
-											>
-												Yes, delete
-											</Button>
-											<Button
-												size="sm"
-												variant="ghost"
-												onClick={() => setConfirmingPayment(null)}
-											>
-												Keep
-											</Button>
-										</>
-									) : (
-										<Button
-											size="sm"
-											variant="ghost"
-											onClick={() => setConfirmingPayment(p.id)}
-										>
-											Delete
-										</Button>
-									)}
-								</span>
-							</li>
-						))}
-					</ul>
-				)}
-				<div className="border-t pt-4">
-					<p className="mb-2 text-sm font-medium">Record a payment</p>
-					<p className="mb-3 text-xs text-muted-foreground">
-						Paying your card bill is not an expense, so it is not added to your
-						transactions or spending.
-					</p>
-					<PaymentForm
-						key={`${s.payments.length}-${s.paidMinor}`}
-						initialValues={{
-							statementId: s.id,
-							currency: s.currency as CurrencyCode,
-							amount:
-								s.outstandingMinor > 0
-									? minorToInputString(
-											s.outstandingMinor,
-											s.currency as CurrencyCode,
-										)
-									: "",
-							paidOn: today,
-							notes: "",
-						}}
-						onSubmit={async (values) => {
-							await addPayment({ data: values });
-							await router.invalidate();
-						}}
-					/>
-				</div>
-				{error && (
-					<p role="alert" className="text-sm text-destructive">
-						{error}
-					</p>
-				)}
-			</div>
+												title="Delete this payment?"
+												description={`The ${money(p.amountMinor)} paid on ${p.paidOn} is removed and the amount owed goes back up.`}
+												confirmLabel="Yes, delete"
+												pending={pending}
+												onConfirm={() => {
+													setErrorAt("payments");
+													return run(async () => {
+														await removePayment({ data: { id: p.id } });
+														notify("Payment deleted");
+													});
+												}}
+											/>
+										</span>
+									</li>
+								))}
+							</ul>
+						)}
+						<div className="grid gap-3 border-t bg-background/40 px-4 py-4 sm:px-5">
+							<div>
+								<h3 className="text-sm font-semibold">Record a payment</h3>
+								<p className="text-xs text-muted-foreground">
+									Paying your card bill is not an expense, so it is not added to
+									your transactions or spending.
+								</p>
+							</div>
+							<PaymentForm
+								key={`${s.payments.length}-${s.paidMinor}`}
+								initialValues={{
+									statementId: s.id,
+									currency: s.currency as CurrencyCode,
+									amount:
+										s.outstandingMinor > 0
+											? minorToInputString(
+													s.outstandingMinor,
+													s.currency as CurrencyCode,
+												)
+											: "",
+									paidOn: today,
+									notes: "",
+								}}
+								onSubmit={async (values) => {
+									await addPayment({ data: values });
+									await router.invalidate();
+									notify("Payment recorded");
+								}}
+							/>
+							{errorAt === "payments" && <ActionError error={error} />}
+						</div>
+					</Panel>
 
-			<div className="grid gap-2">
-				<p className="text-sm font-medium">Edit statement</p>
-				<StatementForm
-					key={`${s.id}-${s.balanceMinor}-${s.dueDate}-${s.periodStart}-${s.periodEnd}`}
-					cardLabel={`${s.card.name} •••• ${s.card.last4}`}
-					submitLabel="Save changes"
-					initialValues={{
-						paymentMethodId: s.paymentMethodId,
-						currency: s.currency as CurrencyCode,
-						periodStart: s.periodStart,
-						periodEnd: s.periodEnd,
-						dueDate: s.dueDate,
-						balance: minorToInputString(
-							s.balanceMinor,
-							s.currency as CurrencyCode,
-						),
-						minimumDue:
-							s.minimumDueMinor === null
-								? ""
-								: minorToInputString(
-										s.minimumDueMinor,
+					<div className="grid gap-6">
+						<section aria-labelledby="edit-title" className="grid gap-3">
+							<h2 id="edit-title" className="text-[15px] font-semibold">
+								Edit statement
+							</h2>
+							<StatementForm
+								key={`${s.id}-${s.balanceMinor}-${s.dueDate}-${s.periodStart}-${s.periodEnd}`}
+								cardLabel={cardLabel}
+								submitLabel="Save changes"
+								initialValues={{
+									paymentMethodId: s.paymentMethodId,
+									currency: s.currency as CurrencyCode,
+									periodStart: s.periodStart,
+									periodEnd: s.periodEnd,
+									dueDate: s.dueDate,
+									balance: minorToInputString(
+										s.balanceMinor,
 										s.currency as CurrencyCode,
 									),
-					}}
-					onCancel={() => router.navigate({ to: "/statements" })}
-					onSubmit={async (values) => {
-						await update({ data: { id: s.id, values } });
-						await router.invalidate();
-						await router.navigate({ to: "/statements" });
-					}}
-				/>
-			</div>
-
-			<div className="grid max-w-xl gap-3 rounded-xl border bg-card p-5 shadow-sm">
-				<p className="text-sm font-medium">Delete statement</p>
-				<p className="text-sm text-muted-foreground">
-					This permanently removes the statement.
-					{s.payments.length > 0 && " Delete its payments first."}
-				</p>
-				{confirmingDelete ? (
-					<div className="flex gap-2">
-						<Button
-							variant="destructive"
-							disabled={pending}
-							onClick={() =>
-								run(async () => {
-									await remove({ data: { id: s.id } });
+									minimumDue:
+										s.minimumDueMinor === null
+											? ""
+											: minorToInputString(
+													s.minimumDueMinor,
+													s.currency as CurrencyCode,
+												),
+								}}
+								onCancel={() => router.navigate({ to: "/statements" })}
+								onSubmit={async (values) => {
+									await update({ data: { id: s.id, values } });
+									await router.invalidate();
 									await router.navigate({ to: "/statements" });
-								}).finally(() => setConfirmingDelete(false))
-							}
+									notify("Changes saved");
+								}}
+							/>
+						</section>
+
+						<section
+							aria-labelledby="delete-title"
+							className="grid gap-3 rounded-xl border border-dashed p-4 sm:p-5"
 						>
-							Yes, delete it
-						</Button>
-						<Button variant="ghost" onClick={() => setConfirmingDelete(false)}>
-							Keep it
-						</Button>
+							<div>
+								<h2 id="delete-title" className="text-[15px] font-semibold">
+									Delete statement
+								</h2>
+								<p className="mt-1 text-sm text-muted-foreground">
+									This permanently removes the statement.
+									{s.payments.length > 0 && " Delete its payments first."}
+								</p>
+							</div>
+							{errorAt === "statement" && <ActionError error={error} />}
+							<div>
+								<ConfirmDialog
+									trigger={
+										<Button variant="destructive-outline" size="sm">
+											<Trash2 aria-hidden="true" />
+											Delete statement
+										</Button>
+									}
+									title="Delete this statement?"
+									description="The statement and its figures are removed. This cannot be undone."
+									confirmLabel="Yes, delete it"
+									pending={pending}
+									onConfirm={() => {
+										setErrorAt("statement");
+										return run(async () => {
+											await remove({ data: { id: s.id } });
+											await router.navigate({ to: "/statements" });
+											notify("Statement deleted");
+										});
+									}}
+								/>
+							</div>
+						</section>
 					</div>
-				) : (
-					<div>
-						<Button variant="outline" onClick={() => setConfirmingDelete(true)}>
-							Delete statement
-						</Button>
-					</div>
-				)}
-				<Link to="/statements" className="text-sm underline">
-					Back to statements
-				</Link>
+				</div>
 			</div>
-		</section>
+		</div>
 	);
 }

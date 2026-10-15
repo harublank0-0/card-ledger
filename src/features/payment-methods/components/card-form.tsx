@@ -1,7 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 
+import { ActionError, InlineAlert } from "#/components/feedback";
 import { FormField } from "#/components/form-field";
+import { FormPanel, SubmitButton } from "#/components/form-layout";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import {
@@ -54,17 +56,30 @@ export function CardForm({
 	});
 
 	return (
-		<form
-			className="grid max-w-xl gap-4 rounded-xl border bg-card p-5 shadow-sm"
+		<FormPanel
 			onSubmit={(e) => {
 				e.preventDefault();
 				void form.handleSubmit();
 			}}
+			actions={
+				<>
+					<Button type="button" variant="ghost" onClick={onCancel}>
+						Cancel
+					</Button>
+					<form.Subscribe selector={(s) => s.isSubmitting}>
+						{(isSubmitting) => (
+							<SubmitButton submitting={isSubmitting}>
+								{submitLabel}
+							</SubmitButton>
+						)}
+					</form.Subscribe>
+				</>
+			}
 		>
-			<p className="rounded-md bg-secondary p-3 text-sm text-muted-foreground">
+			<InlineAlert tone="info">
 				Card Ledger never stores your full card number, CVV or PIN. Only the
 				last four digits are saved so you can recognise the card.
-			</p>
+			</InlineAlert>
 
 			<form.Field name="name">
 				{(field) => (
@@ -84,7 +99,7 @@ export function CardForm({
 				)}
 			</form.Field>
 
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-5 sm:grid-cols-2">
 				<form.Field name="issuer">
 					{(field) => (
 						<FormField
@@ -131,7 +146,7 @@ export function CardForm({
 				</form.Field>
 			</div>
 
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-5 sm:grid-cols-2">
 				<form.Field name="currency">
 					{(field) => (
 						<FormField
@@ -178,7 +193,7 @@ export function CardForm({
 				</form.Field>
 			</div>
 
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-5 sm:grid-cols-2">
 				<form.Field name="statementDay">
 					{(field) => (
 						<FormField
@@ -217,24 +232,7 @@ export function CardForm({
 				</form.Field>
 			</div>
 
-			{error && (
-				<p role="alert" className="text-sm text-destructive">
-					{error}
-				</p>
-			)}
-
-			<div className="flex gap-2">
-				<form.Subscribe selector={(s) => s.isSubmitting}>
-					{(isSubmitting) => (
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Saving…" : submitLabel}
-						</Button>
-					)}
-				</form.Subscribe>
-				<Button type="button" variant="ghost" onClick={onCancel}>
-					Cancel
-				</Button>
-			</div>
-		</form>
+			<ActionError error={error} />
+		</FormPanel>
 	);
 }

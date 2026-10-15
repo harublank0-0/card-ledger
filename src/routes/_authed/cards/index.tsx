@@ -1,8 +1,40 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import {
+	Archive,
+	ArchiveRestore,
+	CreditCard,
+	Ellipsis,
+	FilePlus,
+	Pencil,
+	Plus,
+} from "lucide-react";
 import { z } from "zod";
 
+import { ActionError, EmptyState, StatusBadge } from "#/components/feedback";
+import { PageHeader } from "#/components/page-header";
+import { Panel } from "#/components/panel";
+import {
+	segmentedGroupClass,
+	segmentedItemClass,
+} from "#/components/segmented";
 import { Button } from "#/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
+import {
+	rowLinkClass,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "#/components/ui/table";
 import {
 	listPaymentMethodsFn,
 	setPaymentMethodArchivedFn,
@@ -10,6 +42,7 @@ import {
 import type { CurrencyCode } from "#/lib/money";
 import { formatMoney } from "#/lib/money";
 import { pageTitle } from "#/lib/page-title";
+import { notify } from "#/lib/toast";
 import { useAction } from "#/lib/use-action";
 
 export const Route = createFileRoute("/_authed/cards/")({
@@ -23,125 +56,214 @@ export const Route = createFileRoute("/_authed/cards/")({
 	component: Cards,
 });
 
+const dayLabel = (day: number | null) => (day ? `Day ${day}` : "—");
+
 function Cards() {
 	const cards = Route.useLoaderData();
-	const { archived = false } = Route.useSearch();
 	const { run, pending, error } = useAction();
 	const setArchived = useServerFn(setPaymentMethodArchivedFn);
 
 	return (
-		<section>
-			<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-				<h1 className="text-2xl font-semibold">Cards</h1>
-				<div className="flex items-center gap-2">
-					<Button asChild variant="ghost" size="sm">
-						<Link
-							to="/cards"
-							search={{ archived: archived ? undefined : true }}
-						>
-							{archived ? "Hide archived" : "Show archived"}
+		<div>
+			<PageHeader
+				title="Cards"
+				description="The credit cards you pay with. Only the last four digits are stored."
+				actions={
+					<Button asChild>
+						<Link to="/cards/new">
+							<Plus aria-hidden="true" />
+							Add card
 						</Link>
 					</Button>
-					<Button asChild>
-						<Link to="/cards/new">Add card</Link>
-					</Button>
-				</div>
-			</div>
+				}
+			/>
 
-			{error && (
-				<p role="alert" className="mb-3 text-sm text-destructive">
-					{error}
-				</p>
-			)}
+			<div className="grid gap-4">
+				<ActionError error={error} />
+				<Panel aria-label="Cards">
+					<div className="flex items-center justify-between gap-3 border-b bg-background/50 px-4 py-3 sm:px-5">
+						<nav aria-label="Which cards" className={segmentedGroupClass}>
+							<Link
+								to="/cards"
+								search={{}}
+								activeOptions={{ exact: true }}
+								className={segmentedItemClass}
+							>
+								In use
+							</Link>
+							<Link
+								to="/cards"
+								search={{ archived: true }}
+								activeOptions={{ exact: true }}
+								className={segmentedItemClass}
+							>
+								Including archived
+							</Link>
+						</nav>
+					</div>
 
-			{cards.length === 0 ? (
-				<div className="rounded-xl border bg-card p-8 text-center">
-					<p className="font-medium">No cards yet</p>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Add a credit card to link your subscriptions to it. Only the last
-						four digits are stored.
-					</p>
-				</div>
-			) : (
-				<ul className="grid gap-3 sm:grid-cols-2">
-					{cards.map((card) => (
-						<li
-							key={card.id}
-							className="rounded-xl border bg-card p-4 shadow-sm"
+					{cards.length === 0 ? (
+						<EmptyState
+							icon={CreditCard}
+							title="No cards yet"
+							action={
+								<Button asChild variant="outline">
+									<Link to="/cards/new">Add card</Link>
+								</Button>
+							}
 						>
-							<div className="flex items-start justify-between gap-2">
-								<div>
-									<p className="font-medium">
-										{card.name}
-										{card.archivedAt && (
-											<span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
-												Archived
-											</span>
-										)}
-									</p>
-									<p className="text-sm text-muted-foreground">
-										{card.issuer ? `${card.issuer} · ` : ""}•••• {card.last4}
-									</p>
-								</div>
-								<span className="text-sm font-medium">{card.currency}</span>
-							</div>
-							<dl className="mt-3 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-								<div>
-									<dt>Limit</dt>
-									<dd className="text-sm text-foreground">
-										{card.creditLimitMinor === null
-											? "—"
-											: formatMoney(
-													card.creditLimitMinor,
-													card.currency as CurrencyCode,
-												)}
-									</dd>
-								</div>
-								<div>
-									<dt>Statement</dt>
-									<dd className="text-sm text-foreground">
-										{card.statementDay ? `Day ${card.statementDay}` : "—"}
-									</dd>
-								</div>
-								<div>
-									<dt>Due</dt>
-									<dd className="text-sm text-foreground">
-										{card.paymentDueDay ? `Day ${card.paymentDueDay}` : "—"}
-									</dd>
-								</div>
-							</dl>
-							<div className="mt-3 flex gap-2">
-								<Button asChild variant="outline" size="sm">
-									<Link to="/cards/$cardId" params={{ cardId: card.id }}>
-										Edit
-									</Link>
-								</Button>
-								{!card.archivedAt && (
-									<Button asChild variant="ghost" size="sm">
-										<Link to="/statements/new" search={{ cardId: card.id }}>
-											Add statement
-										</Link>
-									</Button>
-								)}
-								<Button
-									variant="ghost"
-									size="sm"
-									disabled={pending}
-									onClick={() =>
-										run(() =>
-											setArchived({
-												data: { id: card.id, archived: !card.archivedAt },
-											}),
-										)
-									}
-								>
-									{card.archivedAt ? "Restore" : "Archive"}
-								</Button>
-							</div>
-						</li>
-					))}
-				</ul>
-			)}
-		</section>
+							Add a credit card to link your subscriptions to it. Only the last
+							four digits are stored.
+						</EmptyState>
+					) : (
+						<Table>
+							<caption className="sr-only">Cards</caption>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Card</TableHead>
+									<TableHead className="hidden sm:table-cell">
+										Currency
+									</TableHead>
+									<TableHead numeric className="hidden md:table-cell">
+										Credit limit
+									</TableHead>
+									<TableHead className="hidden md:table-cell">
+										Statement
+									</TableHead>
+									<TableHead className="hidden md:table-cell">
+										Payment due
+									</TableHead>
+									<TableHead className="w-0">
+										<span className="sr-only">Actions</span>
+									</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{cards.map((card) => (
+									<TableRow key={card.id} interactive>
+										<TableCell className="w-full max-w-0 md:max-w-none">
+											<div className="flex items-center gap-3">
+												<span className="hidden size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground sm:flex">
+													<CreditCard aria-hidden="true" className="size-4" />
+												</span>
+												<div className="min-w-0">
+													<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+														<Link
+															to="/cards/$cardId"
+															params={{ cardId: card.id }}
+															className={rowLinkClass}
+														>
+															{card.name}
+														</Link>
+														{card.archivedAt && (
+															<StatusBadge>Archived</StatusBadge>
+														)}
+													</div>
+													<p className="truncate text-xs text-muted-foreground">
+														{card.issuer ? `${card.issuer} · ` : ""}
+														<span className="tabular-nums">
+															•••• {card.last4}
+														</span>
+														<span className="sm:hidden">
+															{" "}
+															· {card.currency}
+														</span>
+													</p>
+												</div>
+											</div>
+										</TableCell>
+										<TableCell className="hidden align-middle sm:table-cell">
+											{card.currency}
+										</TableCell>
+										<TableCell
+											numeric
+											className="hidden align-middle font-normal md:table-cell"
+										>
+											{card.creditLimitMinor === null
+												? "—"
+												: formatMoney(
+														card.creditLimitMinor,
+														card.currency as CurrencyCode,
+													)}
+										</TableCell>
+										<TableCell className="hidden align-middle whitespace-nowrap text-muted-foreground md:table-cell">
+											{dayLabel(card.statementDay)}
+										</TableCell>
+										<TableCell className="hidden align-middle whitespace-nowrap text-muted-foreground md:table-cell">
+											{dayLabel(card.paymentDueDay)}
+										</TableCell>
+										<TableCell className="py-2 pl-1 align-middle">
+											<DropdownMenu modal={false}>
+												<DropdownMenuTrigger asChild>
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														className="relative z-10 data-[state=open]:bg-accent data-[state=open]:text-foreground"
+														disabled={pending}
+													>
+														<Ellipsis aria-hidden="true" />
+														<span className="sr-only">
+															Actions for {card.name}
+														</span>
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="end">
+													<DropdownMenuItem asChild>
+														<Link
+															to="/cards/$cardId"
+															params={{ cardId: card.id }}
+														>
+															<Pencil aria-hidden="true" />
+															Edit card
+														</Link>
+													</DropdownMenuItem>
+													{!card.archivedAt && (
+														<DropdownMenuItem asChild>
+															<Link
+																to="/statements/new"
+																search={{ cardId: card.id }}
+															>
+																<FilePlus aria-hidden="true" />
+																Add statement
+															</Link>
+														</DropdownMenuItem>
+													)}
+													<DropdownMenuSeparator />
+													<DropdownMenuItem
+														onSelect={async () => {
+															const outcome = await run(() =>
+																setArchived({
+																	data: {
+																		id: card.id,
+																		archived: !card.archivedAt,
+																	},
+																}),
+															);
+															if (outcome === "done")
+																notify(
+																	card.archivedAt
+																		? "Card restored"
+																		: "Card archived",
+																);
+														}}
+													>
+														{card.archivedAt ? (
+															<ArchiveRestore aria-hidden="true" />
+														) : (
+															<Archive aria-hidden="true" />
+														)}
+														{card.archivedAt ? "Restore" : "Archive"}
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					)}
+				</Panel>
+			</div>
+		</div>
 	);
 }

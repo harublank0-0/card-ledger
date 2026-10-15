@@ -3,8 +3,10 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 
+import { BrandMark } from "#/components/brand";
+import { ActionError, InlineAlert } from "#/components/feedback";
 import { FormField } from "#/components/form-field";
-import { Button } from "#/components/ui/button";
+import { SubmitButton } from "#/components/form-layout";
 import { Input } from "#/components/ui/input";
 import { authClient } from "#/lib/auth-client";
 import { pageTitle } from "#/lib/page-title";
@@ -51,18 +53,25 @@ function SignIn() {
 	});
 
 	return (
-		<main className="mx-auto grid min-h-screen max-w-sm content-center gap-6 p-6">
-			<div>
-				<h1 className="text-2xl font-semibold">Card Ledger</h1>
-				<p className="text-sm text-muted-foreground">Sign in to your ledger.</p>
+		<main className="mx-auto grid min-h-screen w-full max-w-sm content-center gap-6 px-4 py-10">
+			<div className="grid justify-items-start gap-4">
+				<BrandMark className="size-9" />
+				<div>
+					<h1 className="text-2xl font-semibold tracking-tight">Card Ledger</h1>
+					<p className="text-sm text-muted-foreground">
+						Sign in to your ledger.
+					</p>
+				</div>
 			</div>
 			{search.deleted && (
-				<output className="rounded-md bg-secondary p-3 text-sm">
-					Your account and all of its data were deleted.
+				<output>
+					<InlineAlert tone="success">
+						Your account and all of its data were deleted.
+					</InlineAlert>
 				</output>
 			)}
 			<form
-				className="grid gap-4 rounded-xl border bg-card p-5 shadow-sm"
+				className="grid gap-4 rounded-xl border bg-card p-5 shadow-panel sm:p-6"
 				onSubmit={(e) => {
 					e.preventDefault();
 					void form.handleSubmit();
@@ -104,23 +113,26 @@ function SignIn() {
 						</FormField>
 					)}
 				</form.Field>
-				{error && (
-					<p role="alert" className="text-sm text-destructive">
-						{error}
-					</p>
-				)}
+				<ActionError error={error} />
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
-						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Signing in…" : "Sign in"}
-						</Button>
+						<SubmitButton
+							submitting={isSubmitting}
+							pendingLabel="Signing in…"
+							className="mt-1 w-full"
+						>
+							Sign in
+						</SubmitButton>
 					)}
 				</form.Subscribe>
 			</form>
 			{signupAllowed && (
 				<p className="text-center text-sm text-muted-foreground">
 					First time here?{" "}
-					<Link to="/sign-up" className="font-medium text-foreground underline">
+					<Link
+						to="/sign-up"
+						className="font-medium text-foreground underline decoration-border-strong underline-offset-4 hover:decoration-foreground"
+					>
 						Create the owner account
 					</Link>
 				</p>
